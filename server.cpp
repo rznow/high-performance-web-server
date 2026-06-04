@@ -12,16 +12,20 @@ constexpr int BACKLOG = 4;
 
 int main()
 {
+    //创建socket端口
     int serverfd = socket(AF_INET, SOCK_STREAM, 0);
 
+    //创建地址信息
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(PORT);
     inet_pton(AF_INET, SERVER_IP.data(), &server_addr.sin_addr.s_addr);
 
-
+    //绑定端口和地址以及端口
     bind(serverfd, (const sockaddr*)&server_addr, sizeof(server_addr));
 
+
+    //将socket端口设置为被动接听状态
     listen(serverfd, BACKLOG);
 
     while(1)

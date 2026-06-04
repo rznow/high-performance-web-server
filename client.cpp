@@ -14,6 +14,7 @@ constexpr int PORT = 8888;
 
 int main()
 {
+    //创建socket端口
     int clientfd = socket(AF_INET, SOCK_STREAM, 0);
     if(clientfd == -1)
     {
