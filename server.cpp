@@ -6,14 +6,13 @@
 using namespace std;
 
 constexpr string_view SERVER_IP = "127.0.0.1";
-constexpr int PORT = 9527;
+constexpr int PORT = 8888;
 constexpr int BACKLOG = 4;
 
 
 int main()
 {
     int serverfd = socket(AF_INET, SOCK_STREAM, 0);
-    cout<<serverfd<<endl;
 
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;

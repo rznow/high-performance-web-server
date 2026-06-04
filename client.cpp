@@ -10,7 +10,7 @@ using namespace std;
 */
 
 constexpr string_view SERVER_IP = "127.0.0.1";
-constexpr int PORT = 9527;
+constexpr int PORT = 8888;
 
 int main()
 {
@@ -19,7 +19,6 @@ int main()
     {
         cerr << "socket 创建失败!"<<endl;
     }
-    cout<< clientfd <<endl;
     
     sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
@@ -33,7 +32,7 @@ int main()
     // server_addr.sin_addr.s_addr = inet_addr(SERVER_IP.data()); // 服务器IP（本机）
 
 
-    if(connect(clientfd, (const sockaddr*)&server_addr, sizeof(server_addr))==-1)
+    if(connect(clientfd, (sockaddr*)&server_addr, sizeof(server_addr))==-1)
     {
         cerr << "connect 失败!" << endl;
     }
