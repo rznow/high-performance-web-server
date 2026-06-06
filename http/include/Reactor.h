@@ -6,10 +6,10 @@
 #include <sys/epoll.h>
 #include <memory>
 #include <unordered_map>
-
-#include "Connection.h"
 using namespace std;
 
+
+class Connection;
 //--------------------------------------------Reactor类--------------------------------------------//
 class Reactor
 {
@@ -29,11 +29,15 @@ class Reactor
 
         int push(int _fd);
 
+        int pop(int _fd);
+
         int wait();
 
         const epoll_event& operator[](size_t idx);
 
         int get_count() const;
+
+        int get_no() const;
 
         ~Reactor();
         

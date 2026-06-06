@@ -1,4 +1,5 @@
 #include "Reactor.h"
+#include "Connection.h"
 #include <unistd.h>
 #include <cerrno>
 #include <string>
@@ -37,6 +38,14 @@ int Reactor::push(int _fd)
     return epoll_ctl(epfd, EPOLL_CTL_ADD, _fd, &ev);
 }
 
+int Reactor::pop(int _fd)
+{
+    connections.erase(_fd);         //智能指针,引用计数归零后,Connection自动析构
+    epoll_ctl(epfd, EPOLL_CTL_DEL, _fd, nullptr);
+    count--;
+    return 0;
+}
+
 int Reactor::wait()
 {
     return epoll_wait(epfd, events.data(), capcity, -1);
@@ -49,6 +58,8 @@ const epoll_event& Reactor::operator[](size_t idx)
 
 int Reactor::get_count() const {return count.load();}
 
+int Reactor::get_no() const {return no;}
+
 Reactor::~Reactor(){ close(epfd); };
 
 void Reactor::workloop()
@@ -60,32 +71,15 @@ void Reactor::workloop()
         for(int i=0;i < nready;i++)
         {
             int fd = events[i].data.fd;
+            shared_ptr<Connection> connection = connections[fd];
             if(events[i].events & EPOLLIN)
             {
-                char buffer[1024];
-                int n = read(fd, buffer, sizeof(buffer)-1);
-                if(n == 0)
-                {
-                    epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr);
-                    close(fd);
-                    count--;
-                    continue;
-                }else if(n < 0)
-                {
-                    if(errno == EAGAIN || errno == EWOULDBLOCK)
-                        continue;
-                    epoll_ctl(epfd, EPOLL_CTL_DEL, fd, nullptr);
-                    close(fd);
-                    count--;
-                }else   buffer[n] = '\0';
-                string s = "来自"+to_string(no)+"子Reactor:";
-                write(fd, s.c_str(), s.length());
-                write(fd, buffer, n);
+                connection->handleRead(this);
             }
 
             if(events[i].events & EPOLLOUT)
             {
-                // 可写处理
+                connection->handleWrite();
             }
 
             if(events[i].events & (EPOLLERR | EPOLLHUP))
