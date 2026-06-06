@@ -14,7 +14,7 @@ class Buffer
     public:
         size_t size();
         bool empty();
-        void append(string s);
+        void append(const char* s, size_t len);
         void retrieve(size_t len);
         void retrieveAll();
         const std::string& data() const;

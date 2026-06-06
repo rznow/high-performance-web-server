@@ -7,7 +7,7 @@ SRC = src/main.cpp \
       src/Acceptor.cpp \
 	  src/HttpRequest.cpp
 
-TARGET = server
+TARGET = main
 
 all:
 	$(CXX) $(SRC) $(CXXFLAGS) -o $(TARGET)

@@ -14,9 +14,9 @@ bool Buffer::empty()
     return buffer.length()==0;
 }
 
-void Buffer::append(string s)
+void Buffer::append(const char* s, size_t len)
 {
-    buffer.append(s);
+    buffer.append(s, len);
 }
         
 void Buffer::retrieve(size_t len)
@@ -46,7 +46,7 @@ void Connection::handleRead(Reactor* reactor)
         int n = read(fd, buffer, sizeof(buffer));
         if(n > 0)
         {
-            inputbuffer.append(buffer);
+            inputbuffer.append(buffer, n);
         }   
         else if(n == 0)                         //当读取到关闭请求(0)时,断掉连接
         {
@@ -66,19 +66,13 @@ void Connection::handleRead(Reactor* reactor)
     }
 
     //判断是否为完整GET请求
-    cout<<inputbuffer.data()<<endl;
-    if(HttpRequest::isRequestComplete(inputbuffer))
+    while(HttpRequest::isRequestComplete(inputbuffer))
     {
         HttpRequest httprequest;
         httprequest.parseRequest(inputbuffer);
 
         //获取请求后,处理请求
-        cout<<httprequest.getMethod()<<endl;
-        cout<<httprequest.getPath()<<endl;
-        cout<<httprequest.getVersion()<<endl;
-    }else
-    {
-
+    
     }
 
     
