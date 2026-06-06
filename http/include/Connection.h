@@ -6,12 +6,27 @@ using namespace std;
 
 
 class Reactor;
-class Connection{
+
+class Buffer
+{
+    private:
+        string buffer;
+    public:
+        size_t size();
+        bool empty();
+        void append(string s);
+        void retrieve(size_t len);
+        void retrieveAll();
+        const std::string& data() const;
+};
+
+class Connection
+{
     private:
         int fd;
         bool connected;
-        string inputbuffer;
-        string outputbuffer;
+        Buffer inputbuffer;
+        Buffer outputbuffer;
     public:
         Connection(int _fd);
 

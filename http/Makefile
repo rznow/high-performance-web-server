@@ -4,7 +4,8 @@ CXXFLAGS = -std=c++17 -Iinclude -Wall -g -pthread
 SRC = src/main.cpp \
       src/Reactor.cpp \
       src/Connection.cpp \
-      src/Acceptor.cpp
+      src/Acceptor.cpp \
+	  src/HttpRequest.cpp
 
 TARGET = server
 
