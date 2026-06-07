@@ -56,16 +56,16 @@ int main()
                 }else if(new_fd > 0)
                 {
                     //分给子reactor进行处理
-                    const char message[] = "connect to server!\n";
-                    write(new_fd, message, sizeof(message));
+                    // const char message[] = "connect to server!\n";
+                    // write(new_fd, message, sizeof(message));
 
                     //通过轮询来为子Reactor添加socket端口
                     int idx = next.fetch_add(1) % SUBTHREAD;
 
                     subReactors[idx]->push(new_fd);
 
-                    string msg = "分配到"+to_string(idx)+"号Reactor!\n";
-                    write(new_fd, msg.c_str(), msg.length());
+                    // string msg = "assigned to No."+to_string(idx)+" Reactor!\n";
+                    // write(new_fd, msg.c_str(), msg.length());
                 }
             }
         }

@@ -14,7 +14,6 @@ void HttpRequest::parseRequest(Buffer& buffer)
     size_t pos = buffer.data().find("\r\n\r\n");   //pos为第一个请求的结尾
     if(pos == std::string::npos) return;
     std::string request = buffer.data().substr(0, pos+2);
-    cout << request <<endl;
     //处理请求行
     size_t end = request.find("\r\n");
     if(end == std::string::npos)    return;
