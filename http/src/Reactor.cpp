@@ -79,7 +79,7 @@ void Reactor::workloop()
 
             if(events[i].events & EPOLLOUT)
             {
-                connection->handleWrite();
+                connection->handleWrite(this);
             }
 
             if(events[i].events & (EPOLLERR | EPOLLHUP))
@@ -90,4 +90,22 @@ void Reactor::workloop()
         }
 
     }
+}
+
+void Reactor::enableWrite(int fd)
+{
+    epoll_event ev;
+    ev.data.fd = fd;
+    ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+
+    epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev);
+}
+
+void Reactor::disableWrite(int fd)
+{
+    epoll_event ev;
+    ev.data.fd = fd;
+    ev.events = EPOLLIN | EPOLLET;
+
+    epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev);
 }

@@ -5,7 +5,8 @@ SRC = src/main.cpp \
       src/Reactor.cpp \
       src/Connection.cpp \
       src/Acceptor.cpp \
-	  src/HttpRequest.cpp
+	  src/HttpRequest.cpp \
+	  src/HttpResponse.cpp
 
 TARGET = main
 

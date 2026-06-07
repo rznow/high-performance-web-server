@@ -15,6 +15,7 @@ class Buffer
         size_t size();
         bool empty();
         void append(const char* s, size_t len);
+        void append(const std::string& s);
         void retrieve(size_t len);
         void retrieveAll();
         const std::string& data() const;
@@ -32,7 +33,7 @@ class Connection
 
         void handleRead(Reactor* reactor);
 
-        void handleWrite();
+        void handleWrite(Reactor* reactor);
 
         ~Connection();
 };

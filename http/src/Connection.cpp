@@ -1,6 +1,7 @@
 #include "Connection.h"
 #include "Reactor.h"
 #include "HttpRequest.h"
+#include "HttpResponse.h"
 #include <iostream>
 
 //--------------------------------------------Buffer类--------------------------------------------//
@@ -18,7 +19,12 @@ void Buffer::append(const char* s, size_t len)
 {
     buffer.append(s, len);
 }
-        
+
+void Buffer::append(const std::string& s)
+{
+    buffer.append(s);
+}
+
 void Buffer::retrieve(size_t len)
 {
     buffer.erase(0, len);
@@ -52,7 +58,6 @@ void Connection::handleRead(Reactor* reactor)
         {
             // 对端关闭
             reactor->pop(fd);
-            // cout<<inputbuffer.data()<<endl;
             return;
         }
         else
@@ -72,15 +77,51 @@ void Connection::handleRead(Reactor* reactor)
         httprequest.parseRequest(inputbuffer);
 
         //获取请求后,处理请求
-    
+        /*
+            暂时没后续
+        
+        
+        
+        */
+
+
+        //服务器回应
+        HttpResponse httpresponse;
+        string statusMessage = "OK";
+        httpresponse.setStatus(200, statusMessage);
+        httpresponse.setHeader("Content-Type", "text/html");
+        httpresponse.setBody("hello");
+
+        //注册发送事件
+        outputbuffer.append(httpresponse.toString());
+
+        reactor->enableWrite(fd);
     }
 
     
 }
 
-void Connection::handleWrite()
+void Connection::handleWrite(Reactor* reactor)
 {
-    //处理对应连接的写入
+    //处理对应连接的写入(ET)
+    // cout << outputbuffer.data() <<endl;
+    while(!outputbuffer.empty())
+    {
+        size_t n = write(fd, outputbuffer.data().c_str(), outputbuffer.size());
+        if(n > 0)
+        {
+            outputbuffer.retrieve(n);
+        }else
+        {
+            if(errno == EWOULDBLOCK ||
+                errno == EAGAIN) break;
+            
+            reactor->pop(fd);                   //其他异常
+            return;
+        }
+    }
+    if (outputbuffer.empty())
+    reactor->disableWrite(fd);
 }
 
 Connection::~Connection()

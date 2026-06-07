@@ -42,6 +42,10 @@ class Reactor
         ~Reactor();
         
         void workloop();
+
+        void enableWrite(int fd);
+
+        void disableWrite(int fd);
 };
 
 #endif
