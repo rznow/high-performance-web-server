@@ -17,22 +17,25 @@ void HttpRequest::parseRequest(Buffer& buffer)
     //处理请求行
     size_t end = request.find("\r\n");
     if(end == std::string::npos)    return;
+    //GET
     size_t i = 0;
     while(i < end&& request[i]==' ') i++;
     size_t begin = i;
     while(i < end&& request[i]!=' ') i++;
     setMethod(request.substr(begin,i-begin));
-    cout<< "Method:\t\t" << request.substr(begin,i-begin) <<endl;
+    // cout<< "Method:\t\t" << request.substr(begin,i-begin) <<endl;
+    //Path
     while(i < end&& request[i]==' ') i++;
     begin = i;
     while(i < end&& request[i]!=' ') i++;
     setPath(request.substr(begin,i-begin));
-    cout<< "Path:\t\t" << request.substr(begin,i-begin) <<endl;
+    // cout<< "Path:\t\t" << request.substr(begin,i-begin) <<endl;
+    //Version
     while(i < end&& request[i]==' ') i++;
     begin = i;
     while(i < end&& request[i]!=' ') i++;
     setVersion(request.substr(begin,i-begin));
-    cout<< "Version:\t" << request.substr(begin,i-begin) <<endl;
+    // cout<< "Version:\t" << request.substr(begin,i-begin) <<endl;
     //处理请求头
     i = end + 2;
     while(i < request.size())
@@ -61,10 +64,10 @@ void HttpRequest::parseRequest(Buffer& buffer)
         }
         i = lineEnd + 2;
     }
-    for(auto &i: headers)
-    {
-        cout<<i.first<<":\t\t"<<i.second<<endl;
-    }
+    // for(auto &i: headers)
+    // {
+    //     cout<<i.first<<":\t\t"<<i.second<<endl;
+    // }
     buffer.retrieve(pos+4);
 }
 

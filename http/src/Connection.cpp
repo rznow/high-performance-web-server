@@ -3,6 +3,23 @@
 #include "HttpRequest.h"
 #include "HttpResponse.h"
 #include <iostream>
+#include <fstream>
+
+//读文件
+std::string readFile(const std::string& filename)
+{
+    std::ifstream ifs(filename, std::ios::binary);
+
+    if (!ifs.is_open())
+    {
+        return readFile("www/404.html");
+    }
+    //拷贝整个文件
+    return std::string(
+        std::istreambuf_iterator<char>(ifs),
+        std::istreambuf_iterator<char>()
+    );
+}
 
 //--------------------------------------------Buffer类--------------------------------------------//
 size_t Buffer::size()
@@ -77,20 +94,26 @@ void Connection::handleRead(Reactor* reactor)
         httprequest.parseRequest(inputbuffer);
 
         //获取请求后,处理请求
-        /*
-            暂时没后续
-        
-        
-        
-        */
+        std::string path = httprequest.getPath();
 
+        if(path == "/")
+        {
+            path = "/index.html";
+        }
+        std::string fp = "www" + path;
+        string body = readFile(fp);
 
         //服务器回应
         HttpResponse httpresponse;
-        string statusMessage = "OK";
-        httpresponse.setStatus(200, statusMessage);
+        if(fp == "www/404.html")
+        {
+            httpresponse.setStatus(404, "Not Found");
+        }else
+        {
+            httpresponse.setStatus(200, "OK");
+        }
         httpresponse.setHeader("Content-Type", "text/html");
-        httpresponse.setBody("hello");
+        httpresponse.setBody(body);
 
         //注册发送事件
         outputbuffer.append(httpresponse.toString());
