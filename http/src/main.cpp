@@ -8,6 +8,7 @@
 #include "Connection.h"
 #include "Reactor.h"
 #include "Acceptor.h"
+#include "ThreadPool.hpp"
 using namespace std;
 
 constexpr int PORT = 8080;
@@ -25,13 +26,17 @@ int main()
     vector<unique_ptr<Reactor>> subReactors;
     vector<thread> threads;
 
+    //创建线程池
+    ThreadPool threadpool(4);
+
     for(int i=0;i < SUBTHREAD; i++)
     {
-        subReactors.emplace_back(make_unique<Reactor>(MAXEVENTS,i));
+        subReactors.emplace_back(make_unique<Reactor>(MAXEVENTS, i, &threadpool));
         threads.emplace_back([&subReactors,i]{subReactors[i]->workloop();});
     }
 
     atomic<int> next{0};
+    
     while(1)
     {
         //主reactor中的epoll轮询

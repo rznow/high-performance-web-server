@@ -2,23 +2,48 @@
 #include "Reactor.h"
 #include "HttpRequest.h"
 #include "HttpResponse.h"
+#include "ThreadPool.hpp"
 #include <iostream>
 #include <fstream>
 
 //读文件
-std::string readFile(const std::string& filename)
+std::string readFile(std::string& filename)
 {
     std::ifstream ifs(filename, std::ios::binary);
 
     if (!ifs.is_open())
     {
-        return readFile("www/404.html");
+        filename = "www/404.html";
+        return readFile(filename);
     }
     //拷贝整个文件
     return std::string(
         std::istreambuf_iterator<char>(ifs),
         std::istreambuf_iterator<char>()
     );
+}
+
+std::string getContentType(string path)
+{
+    if(path.ends_with(".html"))
+        return "text/html";
+
+    if(path.ends_with(".css"))
+        return "text/css";
+
+    if(path.ends_with(".js"))
+        return "application/javascript";
+
+    if(path.ends_with(".png"))
+        return "image/png";
+
+    if(path.ends_with(".jpg"))
+        return "image/jpeg";
+
+    if(path.ends_with(".jpeg"))
+        return "image/jpeg";
+
+    return "text/plain";
 }
 
 //--------------------------------------------Buffer类--------------------------------------------//
@@ -58,7 +83,7 @@ const std::string& Buffer::data() const
 }
 
 //--------------------------------------------Connection类--------------------------------------------//
-Connection::Connection(int _fd):fd(_fd),connected(true){};
+Connection::Connection(int _fd,ThreadPool* _pool):fd(_fd),connected(true),pool(_pool){};
 
 void Connection::handleRead(Reactor* reactor)
 {
@@ -100,25 +125,32 @@ void Connection::handleRead(Reactor* reactor)
         {
             path = "/index.html";
         }
-        std::string fp = "www" + path;
-        string body = readFile(fp);
+        
+        pool->enqueue([this,path,reactor]{
+            std::string fp = "www" + path;
+            string body = readFile(fp);
 
-        //服务器回应
-        HttpResponse httpresponse;
-        if(fp == "www/404.html")
-        {
-            httpresponse.setStatus(404, "Not Found");
-        }else
-        {
-            httpresponse.setStatus(200, "OK");
-        }
-        httpresponse.setHeader("Content-Type", "text/html");
-        httpresponse.setBody(body);
+            //服务器回应
+            HttpResponse httpresponse;
+            if(fp == "")
+            {
+                httpresponse.setStatus(404, "Not Found");
+            }else
+            {
+                httpresponse.setStatus(200, "OK");
+            }
+            httpresponse.setHeader("Content-Type", "text/html");
+            httpresponse.setBody(body);
 
-        //注册发送事件
-        outputbuffer.append(httpresponse.toString());
 
-        reactor->enableWrite(fd);
+            // //注册发送事件(需要在主业务逻辑中)
+            // outputbuffer.append(httpresponse.toString());
+
+            // reactor->enableWrite(fd);
+        });
+
+
+        
     }
 
     
@@ -130,7 +162,7 @@ void Connection::handleWrite(Reactor* reactor)
     // cout << outputbuffer.data() <<endl;
     while(!outputbuffer.empty())
     {
-        size_t n = write(fd, outputbuffer.data().c_str(), outputbuffer.size());
+        int n = write(fd, outputbuffer.data().c_str(), outputbuffer.size());
         if(n > 0)
         {
             outputbuffer.retrieve(n);

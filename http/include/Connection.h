@@ -6,7 +6,7 @@ using namespace std;
 
 
 class Reactor;
-
+class ThreadPool;
 class Buffer
 {
     private:
@@ -28,8 +28,9 @@ class Connection
         bool connected;
         Buffer inputbuffer;
         Buffer outputbuffer;
+        ThreadPool *pool;
     public:
-        Connection(int _fd);
+        Connection(int _fd, ThreadPool* _pool);
 
         void handleRead(Reactor* reactor);
 

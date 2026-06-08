@@ -10,6 +10,7 @@ using namespace std;
 
 
 class Connection;
+class ThreadPool;
 //--------------------------------------------Reactor类--------------------------------------------//
 class Reactor
 {
@@ -21,11 +22,11 @@ class Reactor
         vector<epoll_event> events;
         atomic<bool> stop;
         unordered_map<int, shared_ptr<Connection>> connections;  
-        // mutex mtx;
+        ThreadPool* pool;
     public:
         Reactor();
 
-        Reactor(int maxEvents, int i);
+        Reactor(int maxEvents, int i, ThreadPool *_pool);
 
         int push(int _fd);
 

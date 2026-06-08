@@ -1,12 +1,13 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Iinclude -Wall -g -pthread
+CXXFLAGS = -std=c++20 -Iinclude -Wall -g -pthread
 
 SRC = src/main.cpp \
       src/Reactor.cpp \
       src/Connection.cpp \
       src/Acceptor.cpp \
 	  src/HttpRequest.cpp \
-	  src/HttpResponse.cpp
+	  src/HttpResponse.cpp \
+	  src/ThreadPool.cpp
 
 TARGET = main
 

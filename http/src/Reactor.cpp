@@ -1,5 +1,6 @@
 #include "Reactor.h"
 #include "Connection.h"
+#include "HttpRequest.h"
 #include <unistd.h>
 #include <cerrno>
 #include <string>
@@ -17,7 +18,7 @@ Reactor::Reactor()
     stop = false;
 }
 
-Reactor::Reactor(int maxEvents, int i)
+Reactor::Reactor(int maxEvents, int i, ThreadPool* _pool)
 {
     epfd = epoll_create(1);
     events.resize(maxEvents);
@@ -25,6 +26,7 @@ Reactor::Reactor(int maxEvents, int i)
     count = 0;
     stop = false;
     no = i;
+    pool = _pool;
 }
 
 int Reactor::push(int _fd)
@@ -34,7 +36,7 @@ int Reactor::push(int _fd)
     ev.data.fd = _fd;
     ev.events = EPOLLIN | EPOLLET;  //设置为边缘触发
     count++;
-    connections[_fd] = make_shared<Connection>(_fd);
+    connections[_fd] = make_shared<Connection>(_fd, pool);
     return epoll_ctl(epfd, EPOLL_CTL_ADD, _fd, &ev);
 }
 
