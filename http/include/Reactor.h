@@ -36,6 +36,8 @@ class Reactor
 
         Reactor(int maxEvents, int i, ThreadPool *_pool);
 
+        int pushListen(int listenfd);
+
         int push(int _fd);
 
         int pop(int _fd);

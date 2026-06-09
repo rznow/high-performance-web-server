@@ -37,6 +37,16 @@ Reactor::Reactor(int maxEvents, int i, ThreadPool* _pool)
     epoll_ctl(epfd, EPOLL_CTL_ADD, wakeupFd, &ev);
 }
 
+int Reactor::pushListen(int listenfd)
+{
+    epoll_event ev;
+    ev.data.fd = listenfd;
+    ev.events = EPOLLIN;  //listen端口设置为默认水平触发
+    count++;
+    connections[listenfd] = make_shared<Connection>(listenfd, pool);
+    return epoll_ctl(epfd, EPOLL_CTL_ADD, listenfd, &ev);
+}
+
 int Reactor::push(int _fd)
 {
     

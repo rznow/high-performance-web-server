@@ -20,7 +20,7 @@ int main()
     Acceptor acceptor(PORT);
 
     Reactor master;
-    master.push(acceptor.fd());
+    master.pushListen(acceptor.fd());
 
     //创建子Reactor序列
     vector<unique_ptr<Reactor>> subReactors;
