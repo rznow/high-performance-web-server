@@ -141,19 +141,16 @@ void Connection::handleRead(Reactor* reactor)
             }
             httpresponse.setHeader("Content-Type", "text/html");
             httpresponse.setBody(body);
-
+            std::string response = httpresponse.toString();
 
             // //注册发送事件(需要在主业务逻辑中)
-            // outputbuffer.append(httpresponse.toString());
+            reactor->enResponse([this, response, reactor]{
+                outputbuffer.append(response);
 
-            // reactor->enableWrite(fd);
+                reactor->enableWrite(fd);
+            }); 
         });
-
-
-        
     }
-
-    
 }
 
 void Connection::handleWrite(Reactor* reactor)

@@ -6,6 +6,10 @@
 #include <sys/epoll.h>
 #include <memory>
 #include <unordered_map>
+#include <queue>
+#include <functional>
+#include <mutex>
+#include <sys/eventfd.h>
 using namespace std;
 
 
@@ -23,6 +27,10 @@ class Reactor
         atomic<bool> stop;
         unordered_map<int, shared_ptr<Connection>> connections;  
         ThreadPool* pool;
+        queue<function<void()>> responses;
+        mutex mtx;
+
+        int wakeupFd;
     public:
         Reactor();
 
@@ -39,6 +47,10 @@ class Reactor
         int get_count() const;
 
         int get_no() const;
+        
+        void enResponse(function<void()> response);
+
+        void responseLoop();
 
         ~Reactor();
         

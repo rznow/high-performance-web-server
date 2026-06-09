@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cerrno>
 #include <string>
+#include <iostream>
 
 
 //--------------------------------------------Reactor类--------------------------------------------//
@@ -27,11 +28,18 @@ Reactor::Reactor(int maxEvents, int i, ThreadPool* _pool)
     stop = false;
     no = i;
     pool = _pool;
+
+    //eventfd
+    wakeupFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    epoll_event ev;
+    ev.data.fd = 1;
+    ev.events = EPOLLIN | EPOLLET;
+    epoll_ctl(epfd, EPOLL_CTL_ADD, wakeupFd, &ev);
 }
 
 int Reactor::push(int _fd)
 {
-    // lock_guard<mutex> lg(mtx);
+    
     epoll_event ev;
     ev.data.fd = _fd;
     ev.events = EPOLLIN | EPOLLET;  //设置为边缘触发
@@ -62,6 +70,30 @@ int Reactor::get_count() const {return count.load();}
 
 int Reactor::get_no() const {return no;}
 
+void Reactor::enResponse(function<void()> task)
+{
+    lock_guard<mutex> lg(mtx);
+    responses.emplace(move(task));
+
+    //唤醒wait
+    uint64_t one = 1;
+    write(wakeupFd, &one, sizeof(one));
+}
+
+void Reactor::responseLoop()
+{
+    // std::cout<<" ResponsesLoop: "<<responses.size()<<std::endl;
+    while(responses.size())
+    {
+        lock_guard<mutex> lg(mtx);
+        
+        auto response = responses.front();
+
+        responses.pop();
+        response();
+    }
+}
+
 Reactor::~Reactor(){ close(epfd); };
 
 void Reactor::workloop()
@@ -73,23 +105,37 @@ void Reactor::workloop()
         for(int i=0;i < nready;i++)
         {
             int fd = events[i].data.fd;
-            shared_ptr<Connection> connection = connections[fd];
-            if(events[i].events & EPOLLIN)
+            if(fd == wakeupFd) 
             {
-                connection->handleRead(this);
+                uint64_t cnt;
+                while(read(wakeupFd, &cnt, sizeof(cnt)) > 0);
+                
+                continue;
             }
+            if(connections.count(fd) )
+            {
+                shared_ptr<Connection> connection = connections[fd];
+                if(events[i].events & EPOLLIN)
+                {
+                    connection->handleRead(this);
+                }
 
-            if(events[i].events & EPOLLOUT)
-            {
-                connection->handleWrite(this);
-            }
+                if(events[i].events & EPOLLOUT)
+                {
+                    connection->handleWrite(this);
+                }
 
-            if(events[i].events & (EPOLLERR | EPOLLHUP))
-            {
-                // 错误或关闭处理
+                if(events[i].events & (EPOLLERR | EPOLLHUP))
+                {
+                    // 错误或关闭处理
+                }
             }
+            
 
         }
+
+        //处理写回
+        responseLoop();
 
     }
 }
@@ -101,6 +147,7 @@ void Reactor::enableWrite(int fd)
     ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
 
     epoll_ctl(epfd, EPOLL_CTL_MOD, fd, &ev);
+
 }
 
 void Reactor::disableWrite(int fd)
