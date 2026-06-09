@@ -1,20 +1,22 @@
 # MiniWebServer
 
-基于 C++17 从零实现的高并发 HTTP 服务器，采用 **主从 Reactor + Epoll ET（边缘触发）** 事件驱动模型，实现了非阻塞网络通信、HTTP 协议解析、静态资源访问以及异步发送机制。
+基于 C++17 从零实现的高并发 HTTP 服务器，采用 **Main-Reactor + Sub-Reactor + ThreadPool** 架构，基于 **Epoll ET（边缘触发）** 实现事件驱动模型，支持 HTTP 请求解析、静态资源访问、异步业务处理与响应发送。
 
 ---
 
 ## 项目特点
 
 * 基于 Linux Socket 网络编程
-* 主从 Reactor 多线程架构
-* Epoll 边缘触发（ET）模式
+* Main-Reactor + Sub-Reactor 多线程架构
+* Epoll ET（边缘触发）模式
 * 非阻塞 IO
 * HTTP/1.1 请求解析
 * HTTP 响应构造
 * Buffer 缓冲区管理
 * Connection 生命周期管理
-* 静态文件服务器
+* 静态资源服务器
+* ThreadPool 业务线程池
+* eventfd 跨线程唤醒机制
 * 404 页面处理
 * 浏览器访问支持
 
@@ -28,51 +30,102 @@
 * TCP/IP
 * Epoll
 * Reactor
+* eventfd
 * 多线程（std::thread）
 * STL
+* ThreadPool
 
 ---
 
-## 项目架构
+## 整体架构
 
 ```text
-                     +----------------+
-                     |    Acceptor    |
-                     +--------+-------+
-                              |
-                              v
-                     +----------------+
-                     | Master Reactor |
-                     +--------+-------+
-                              |
-                      新连接分发
-                              |
-        +---------------------+---------------------+
-        |                     |                     |
-        v                     v                     v
-+---------------+   +---------------+   +---------------+
-| Sub Reactor 0 |   | Sub Reactor 1 |   | Sub Reactor 2 |
-+-------+-------+   +-------+-------+   +-------+-------+
-        |                   |                   |
-        v                   v                   v
- +--------------+   +--------------+   +--------------+
- | Connection   |   | Connection   |   | Connection   |
- +--------------+   +--------------+   +--------------+
+                          +----------------+
+                          |    Acceptor    |
+                          +--------+-------+
+                                   |
+                                   v
+                          +----------------+
+                          | Main Reactor   |
+                          +--------+-------+
+                                   |
+                            新连接分发
+                                   |
+        +--------------------------+--------------------------+
+        |                          |                          |
+        v                          v                          v
++---------------+        +---------------+        +---------------+
+| Sub Reactor 0 |        | Sub Reactor 1 |        | Sub Reactor 2 |
++-------+-------+        +-------+-------+        +-------+-------+
+        |                        |                        |
+        v                        v                        v
+ +--------------+         +--------------+         +--------------+
+ | Connection   |         | Connection   |         | Connection   |
+ +------+-------+         +------+-------+         +------+-------+
+        |                        |                        |
+        |                        |                        |
+        +------------------------+------------------------+
+                                 |
+                                 v
+                         +---------------+
+                         |  Thread Pool  |
+                         +-------+-------+
+                                 |
+                         业务逻辑处理
+                                 |
+                                 v
+                             eventfd
+                                 |
+                                 v
+                           Sub Reactor
 ```
 
 ---
 
-## 目录结构
+## 并发模型
+
+服务器采用 Main-Reactor + Sub-Reactor + ThreadPool 架构：
+
+### Main Reactor
+
+负责：
+
+* 监听 listenfd
+* accept 新连接
+* 将连接分发给 Sub Reactor
+
+### Sub Reactor
+
+负责：
+
+* EPOLLIN 事件处理
+* EPOLLOUT 事件处理
+* Connection 生命周期管理
+
+### Thread Pool
+
+负责：
+
+* 文件读取
+* HTTP 响应构造
+* 后续业务逻辑扩展
+
+业务线程不直接操作 Socket，而是通过 eventfd 通知对应 Reactor 线程完成发送操作，保证 IO 操作始终在 Reactor 所属线程中执行。
+
+---
+
+## 项目目录
 
 ```text
-http
+MiniWebServer
 ├── include
 │   ├── Acceptor.h
 │   ├── Buffer.h
 │   ├── Connection.h
 │   ├── HttpRequest.h
 │   ├── HttpResponse.h
-│   └── Reactor.h
+│   ├── Reactor.h
+│   └── ThreadPool.h
 │
 ├── src
 │   ├── Acceptor.cpp
@@ -81,6 +134,7 @@ http
 │   ├── HttpRequest.cpp
 │   ├── HttpResponse.cpp
 │   ├── Reactor.cpp
+│   ├── ThreadPool.cpp
 │   └── main.cpp
 │
 ├── www
@@ -108,7 +162,7 @@ TCP连接建立
 Acceptor接收连接
     |
     v
-Master Reactor
+Main Reactor
     |
     v
 分发至Sub Reactor
@@ -123,13 +177,19 @@ Connection::handleRead()
 HttpRequest解析
     |
     v
-查找静态资源
+投递线程池
     |
     v
-HttpResponse构造
+业务逻辑处理
     |
     v
-写入OutputBuffer
+构造HttpResponse
+    |
+    v
+eventfd唤醒Reactor
+    |
+    v
+OutputBuffer
     |
     v
 EPOLLOUT触发
@@ -174,7 +234,7 @@ Version: HTTP/1.1
 /index.html
 /css/style.css
 /js/app.js
-/images/logo.png
+/images/back.png
 ```
 
 访问流程：
@@ -191,9 +251,9 @@ www/index.html
 
 ---
 
-### 404 页面
+### 404 页面处理
 
-当资源不存在时：
+资源不存在时：
 
 ```text
 GET /notfound.html
@@ -213,6 +273,24 @@ www/404.html
 
 ---
 
+### Buffer 缓冲区
+
+实现：
+
+```text
+InputBuffer
+OutputBuffer
+```
+
+支持：
+
+* 数据追加
+* 数据读取
+* 数据清空
+* 半包处理
+
+---
+
 ### 异步发送机制
 
 采用：
@@ -227,22 +305,24 @@ EPOLLOUT
 发送流程：
 
 ```text
-Response
-    ↓
+HttpResponse
+      ↓
 OutputBuffer
-    ↓
+      ↓
+enableWrite()
+      ↓
 EPOLLOUT
-    ↓
+      ↓
 write()
-    ↓
+      ↓
 发送完成
 ```
 
 支持处理：
 
 * 半包发送
-* 内核发送缓冲区写满
-* 边缘触发模式
+* 发送缓冲区写满
+* ET模式下连续发送
 
 ---
 
@@ -260,22 +340,33 @@ make
 make run
 ```
 
+### 浏览器访问
+
+```text
+http://127.0.0.1:8080
+```
+
+---
+
 ## 学习收获
 
 通过本项目深入理解：
 
 * Linux 网络编程
+* TCP/IP 协议
 * Reactor 模型
 * Epoll ET 工作机制
 * HTTP 协议
-* TCP 半包与粘包问题
 * 非阻塞 IO
+* Buffer 设计
+* ThreadPool 实现
+* eventfd 跨线程通信
 * 多线程服务器架构设计
 * C++ 面向对象设计与工程化开发
 
 ---
 
+
 ## License
 
 MIT License
-
