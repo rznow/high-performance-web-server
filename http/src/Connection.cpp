@@ -139,7 +139,7 @@ void Connection::handleRead(Reactor* reactor)
             {
                 httpresponse.setStatus(200, "OK");
             }
-            httpresponse.setHeader("Content-Type", "text/html");
+            httpresponse.setHeader("Content-Type", getContentType(fp));
             httpresponse.setBody(body);
             std::string response = httpresponse.toString();
 

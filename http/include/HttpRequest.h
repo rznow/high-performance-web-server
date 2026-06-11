@@ -30,6 +30,8 @@ class HttpRequest
 
         void setVersion(const std::string& _version);
 
+        void setBody(const std::string& _body);
+
         std::string getHeader(const std::string& key);
         
         const std::string& getMethod() const;
@@ -37,6 +39,8 @@ class HttpRequest
         const std::string& getPath() const;
 
         const std::string& getVersion() const;
+
+        const std::string& getBody() const;
 };
 
 #endif

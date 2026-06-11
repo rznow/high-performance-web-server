@@ -64,12 +64,22 @@ void HttpRequest::parseRequest(Buffer& buffer)
         }
         i = lineEnd + 2;
     }
+    
     for(auto &i: headers)
     {
         cout<<i.first<<":\t\t"<<i.second<<endl;
     }
+    //存在body:
+    int contentLen = 0;
+    if(headers.count("Content-Length"))
+    {
+        contentLen = stoi(headers["Content-Length"]);
+        setBody(buffer.data().substr(pos+4,contentLen));
+        cout<<"Body:\t\t"<<getBody()<<endl;
+    }
     cout<<endl;
-    buffer.retrieve(pos+4);
+    
+    buffer.retrieve(pos+4+contentLen);
 }
 
 void HttpRequest::setMethod(const std::string& _method)
@@ -85,6 +95,11 @@ void HttpRequest::setPath(const std::string& _path)
 void HttpRequest::setVersion(const std::string& _version)
 {
     version = _version;
+}
+
+void HttpRequest::setBody(const std::string& _body)
+{
+    body = _body;
 }
 
 std::string HttpRequest::getHeader(const std::string& key)
@@ -109,4 +124,9 @@ const std::string& HttpRequest::getPath() const
 const std::string& HttpRequest::getVersion() const
 {
     return version;
+}
+
+const std::string& HttpRequest::getBody() const
+{
+    return body;
 }

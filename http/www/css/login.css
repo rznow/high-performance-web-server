@@ -1,0 +1,107 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    height:100vh;
+
+    background:url("/images/back.png")
+               center center/cover
+               no-repeat;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-family:"Microsoft YaHei",sans-serif;
+}
+
+.login-card{
+
+    width:380px;
+
+    background:rgba(255,255,255,0.92);
+
+    padding:40px;
+
+    border-radius:16px;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.25);
+
+    text-align:center;
+}
+
+.login-card h1{
+    color:#333;
+    margin-bottom:10px;
+}
+
+.login-card p{
+    color:#666;
+    margin-bottom:30px;
+}
+
+.input-group{
+    margin-bottom:20px;
+}
+
+.input-group input{
+
+    width:100%;
+
+    padding:12px;
+
+    border:1px solid #ddd;
+
+    border-radius:8px;
+
+    font-size:16px;
+}
+
+.input-group input:focus{
+
+    outline:none;
+
+    border-color:#409eff;
+}
+
+button{
+
+    width:100%;
+
+    padding:12px;
+
+    border:none;
+
+    border-radius:8px;
+
+    background:#409eff;
+
+    color:white;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+
+button:hover{
+
+    background:#66b1ff;
+}
+
+.footer{
+
+    margin-top:20px;
+}
+
+.footer a{
+
+    text-decoration:none;
+
+    color:#409eff;
+}

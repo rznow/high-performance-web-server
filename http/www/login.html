@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniWebServer Login</title>
+
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+
+<body>
+
+<div class="login-container">
+
+    <div class="login-card">
+
+        <h1>MiniWebServer</h1>
+        <p>用户登录</p>
+
+        <form action="/login" method="POST">
+
+            <div class="input-group">
+                <input
+                    type="text"
+                    name="username"
+                    placeholder="用户名"
+                    required
+                >
+            </div>
+
+            <div class="input-group">
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="密码"
+                    required
+                >
+            </div>
+
+            <button type="submit">
+                登录
+            </button>
+
+        </form>
+
+        <div class="footer">
+            <a href="/register.html">注册账号</a>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
