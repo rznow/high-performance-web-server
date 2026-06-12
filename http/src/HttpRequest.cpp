@@ -5,8 +5,23 @@ using namespace std;
 
 bool HttpRequest::isRequestComplete(const Buffer& buffer)
 {
-    //判断请求是否完整
-    return buffer.data().find("\r\n\r\n") != std::string::npos;
+    //判断请求是否完整(包含GET和POST)
+    size_t end = buffer.data().find("\r\n\r\n");
+    if(end == std::string::npos) return false;
+    end += 4;
+    //判断是否为POST
+    size_t pos = buffer.data().find("Content-Length:");
+
+    //不存在请求体, 是GET请求
+    if(pos == std::string::npos) return true;
+    pos += 15;
+
+    //找到content-length行的尾端
+    size_t lineEnd = buffer.data().find("\r\n", pos);
+
+    size_t length = stoi(buffer.data().substr(pos, lineEnd - pos));
+    //判断总大小是否大于等于当前请求的大小
+    return buffer.data().size() >= end + length; 
 }
 
 void HttpRequest::parseRequest(Buffer& buffer)

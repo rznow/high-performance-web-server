@@ -3,48 +3,11 @@
 #include "HttpRequest.h"
 #include "HttpResponse.h"
 #include "ThreadPool.hpp"
+#include "HttpServer.h"
 #include <iostream>
-#include <fstream>
 
-//读文件
-std::string readFile(std::string& filename)
-{
-    std::ifstream ifs(filename, std::ios::binary);
 
-    if (!ifs.is_open())
-    {
-        filename = "www/404.html";
-        return readFile(filename);
-    }
-    //拷贝整个文件
-    return std::string(
-        std::istreambuf_iterator<char>(ifs),
-        std::istreambuf_iterator<char>()
-    );
-}
 
-std::string getContentType(string path)
-{
-    if(path.ends_with(".html"))
-        return "text/html";
-
-    if(path.ends_with(".css"))
-        return "text/css";
-
-    if(path.ends_with(".js"))
-        return "application/javascript";
-
-    if(path.ends_with(".png"))
-        return "image/png";
-
-    if(path.ends_with(".jpg"))
-        return "image/jpeg";
-
-    if(path.ends_with(".jpeg"))
-        return "image/jpeg";
-
-    return "text/plain";
-}
 
 //--------------------------------------------Buffer类--------------------------------------------//
 size_t Buffer::size()
@@ -112,44 +75,41 @@ void Connection::handleRead(Reactor* reactor)
         }
     }
 
-    //判断是否为完整GET请求
+    
+
+
+    //判断是否为完整HTTP请求
     while(HttpRequest::isRequestComplete(inputbuffer))
     {
-        HttpRequest httprequest;
-        httprequest.parseRequest(inputbuffer);
-
-        //获取请求后,处理请求
-        std::string path = httprequest.getPath();
-
-        if(path == "/")
+        HttpRequest request;
+        request.parseRequest(inputbuffer);
+        auto self = shared_from_this();
+        if(request.getMethod() == "GET")
         {
-            path = "/index.html";
+            HttpServer httpServer;
+            HttpResponse resp = httpServer.handleRequest(request);        
+            // //注册发送事件(需要在主业务逻辑中)
+            reactor->enResponse([self, resp = std::move(resp), reactor]{
+                self->outputbuffer.append(resp.toString());
+
+                reactor->enableWrite(self->fd);
+            }); 
+        }else if(request.getMethod() == "POST")
+        {
+            pool->enqueue([request, self, reactor] 
+                {
+                    HttpServer httpServer;
+                    HttpResponse resp = httpServer.handleRequest(request);
+                    // //注册发送事件(需要在主业务逻辑中)
+                    reactor->enResponse([self, resp = std::move(resp), reactor]{
+                        self->outputbuffer.append(resp.toString());
+
+                        reactor->enableWrite(self->fd);
+                    }); 
+                }
+            );
         }
         
-        pool->enqueue([this,path,reactor]{
-            std::string fp = "www" + path;
-            string body = readFile(fp);
-
-            //服务器回应
-            HttpResponse httpresponse;
-            if(fp == "")
-            {
-                httpresponse.setStatus(404, "Not Found");
-            }else
-            {
-                httpresponse.setStatus(200, "OK");
-            }
-            httpresponse.setHeader("Content-Type", getContentType(fp));
-            httpresponse.setBody(body);
-            std::string response = httpresponse.toString();
-
-            // //注册发送事件(需要在主业务逻辑中)
-            reactor->enResponse([this, response, reactor]{
-                outputbuffer.append(response);
-
-                reactor->enableWrite(fd);
-            }); 
-        });
     }
 }
 

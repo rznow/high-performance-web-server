@@ -2,6 +2,7 @@
 #define CONNECTION_H
 #include <string>
 #include <unistd.h>
+#include <memory>
 using namespace std;
 
 
@@ -21,7 +22,7 @@ class Buffer
         const std::string& data() const;
 };
 
-class Connection
+class Connection: public std::enable_shared_from_this<Connection>
 {
     private:
         int fd;

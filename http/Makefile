@@ -7,7 +7,8 @@ SRC = src/main.cpp \
       src/Acceptor.cpp \
 	  src/HttpRequest.cpp \
 	  src/HttpResponse.cpp \
-	  src/ThreadPool.cpp
+	  src/ThreadPool.cpp \
+	  src/HttpServer.cpp
 
 TARGET = main
 
