@@ -19,6 +19,10 @@
 * eventfd 跨线程唤醒机制
 * 404 页面处理
 * 浏览器访问支持
+* MySQL 数据库集成
+* 用户注册功能
+* 用户登录认证
+
 
 ---
 
@@ -34,6 +38,7 @@
 * 多线程（std::thread）
 * STL
 * ThreadPool
+* MySQL
 
 ---
 
@@ -71,13 +76,13 @@
                          |  Thread Pool  |
                          +-------+-------+
                                  |
-                         业务逻辑处理
+                            业务逻辑处理
                                  |
                                  v
-                             eventfd
+                              eventfd
                                  |
                                  v
-                           Sub Reactor
+                            Sub Reactor
 ```
 
 ---
@@ -124,6 +129,8 @@ MiniWebServer
 │   ├── Connection.h
 │   ├── HttpRequest.h
 │   ├── HttpResponse.h
+│   ├── HttpServer.h
+│   ├── MySQL.h
 │   ├── Reactor.h
 │   └── ThreadPool.h
 │
@@ -133,6 +140,8 @@ MiniWebServer
 │   ├── Connection.cpp
 │   ├── HttpRequest.cpp
 │   ├── HttpResponse.cpp
+│   ├── HttpServer.cpp
+│   ├── MySQL.cpp
 │   ├── Reactor.cpp
 │   ├── ThreadPool.cpp
 │   └── main.cpp
@@ -140,6 +149,8 @@ MiniWebServer
 ├── www
 │   ├── index.html
 │   ├── 404.html
+│   ├── login.html
+│   ├── register.html
 │   ├── css
 │   ├── js
 │   └── images
@@ -177,10 +188,10 @@ Connection::handleRead()
 HttpRequest解析
     |
     v
-投递线程池
+投递线程池ThreadPool
     |
     v
-业务逻辑处理
+HttpServer业务逻辑处理
     |
     v
 构造HttpResponse
@@ -361,5 +372,6 @@ http://127.0.0.1:8080
 * Buffer 设计
 * ThreadPool 实现
 * eventfd 跨线程通信
+* MySQL数据库集成
 * 多线程服务器架构设计
 * C++ 面向对象设计与工程化开发
