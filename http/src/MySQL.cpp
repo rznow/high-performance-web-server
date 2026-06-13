@@ -38,7 +38,7 @@ bool MySQL::connect(const std::string& host,
 bool MySQL::query(const std::string& sql)
 {
     // 执行SQL查询
-    if (mysql_query(conn, sql.c_str()))
+    if (mysql_query(conn, sql.c_str())==0)
     {
         
         return true;
@@ -46,42 +46,38 @@ bool MySQL::query(const std::string& sql)
     return false;
 }
 
-std::string MySQL::loginSQL(const std::string& name, const std::string& password)
+bool MySQL::loginSQL(const std::string& name, const std::string& password)
 {
-    std::string sql = "SELECT * FROM user_info WHERE user_name = " + name +';';
+    std::string sql = "SELECT password FROM user_info WHERE user_name = '" + name +"';";
 
-    if(!query(sql)) 
-    {
-        mysql_close(conn);
-        return "";
-    }
+    query(sql);
+
     MYSQL_RES *res = mysql_store_result(conn);
 
     // 处理查询结果
-    MYSQL_ROW row;
-    int num_fields = mysql_num_fields(res);
-    while ((row = mysql_fetch_row(res))) {
-        for (int i = 0; i < num_fields; i++) {
-            std::cout << (row[i] ? row[i] : "NULL") << " ";
-        }
-        std::cout << std::endl;
-    }
+    MYSQL_ROW row = mysql_fetch_row(res);
+    int num_fields = mysql_num_fields(res); //1
 
-    return "";
+    if(row[0] != password) 
+    {
+        std::cout<<" wrong password !"<<std::endl;
+        return false;
+    }
+    std::cout<<" successful login !"<<std::endl;
+    return true;
 }
 
-void MySQL::registerSQL(const std::string& name, const std::string& password)
+bool MySQL::registerSQL(const std::string& name, const std::string& password)
 {
     std::string sql = "INSERT INTO user_info(user_name, password) values('" + name + "', '" + password + "');";
     std::cout<< sql <<std::endl;
     if(!query(sql)) 
     {
-        mysql_close(conn);
-        return;
+        std::cout<<" register failed !"<<std::endl;
+        return false;
     }
-
-    
-
+    std::cout<<" successful register !"<<std::endl;
+    return true;
 }
 
 MYSQL* MySQL::get()

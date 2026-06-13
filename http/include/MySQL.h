@@ -18,9 +18,9 @@ public:
 
     bool query(const std::string& sql);
 
-    std::string loginSQL(const std::string& name, const std::string& password);
+    bool loginSQL(const std::string& name, const std::string& password);
 
-    void registerSQL(const std::string& name, const std::string& password);
+    bool registerSQL(const std::string& name, const std::string& password);
 
     MYSQL* get();
 };
