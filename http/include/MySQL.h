@@ -10,15 +10,17 @@ public:
     ~MySQL();
 
     bool connect(
-        const std::string& host,
-        const std::string& user,
-        const std::string& password,
-        const std::string& db,
-        int port);
+        const std::string& host = "127.0.0.1",
+        const std::string& user = "webserver",
+        const std::string& password = "123456",
+        const std::string& db = "webserver",
+        int port = 3306);
 
     bool query(const std::string& sql);
 
-    MYSQL_RES* storeResult();
+    std::string loginSQL(const std::string& name, const std::string& password);
+
+    void registerSQL(const std::string& name, const std::string& password);
 
     MYSQL* get();
 };

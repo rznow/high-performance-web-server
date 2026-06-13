@@ -1,7 +1,9 @@
 #include "HttpServer.h"
 #include "HttpResponse.h"
 #include "HttpRequest.h"
+#include "MySQL.h"
 #include <fstream>
+#include <iostream>
 
 //读文件
 std::string readFile(std::string& filename)
@@ -46,124 +48,91 @@ std::string getContentType(std::string path)
 
 HttpResponse HttpServer::handleRequest(const HttpRequest& request)
 {
+    std::string path = request.getPath();
+
+    if(path == "/")
+    {
+        path = "/index.html";
+    }
+    path = "www" + path;
+    std::string body = readFile(path);
+
+    //服务器回应
+    HttpResponse httpresponse;
+    if(path == "www/404.html")
+    {
+        httpresponse.setStatus(404, "Not Found");
+    }else
+    {
+        httpresponse.setStatus(200, "OK");
+    }
+    httpresponse.setHeader("Content-Type", getContentType(path));
+    httpresponse.setHeader("Content-Length", std::to_string(body.size()));
+    httpresponse.setBody(body);
+
     if(request.getMethod() == "GET")
-        return handleGet(request);
+        handleGet(request);
     else if(request.getMethod() == "POST")
     {
-        if(request.getPath() == "/login")   return login(request);
-        else if(request.getPath() == "/register") return registerUser(request);
+        handlePost(request);
     }
-
-    HttpResponse response;
-    response.setStatus(404, "Not Found");
-    return response;
-}
-
-HttpResponse HttpServer::handleGet(const HttpRequest& request)
-{
-    std::string path = request.getPath();
-
-    if(path == "/")
-    {
-        path = "/index.html";
-    }
-    path = "www" + path;
-    std::string body = readFile(path);
-
-    //服务器回应
-    HttpResponse httpresponse;
-    if(path == "www/404.html")
-    {
-        httpresponse.setStatus(404, "Not Found");
-    }else
-    {
-        httpresponse.setStatus(200, "OK");
-    }
-    httpresponse.setHeader("Content-Type", getContentType(path));
-    httpresponse.setHeader("Content-Length", std::to_string(body.size()));
-    httpresponse.setBody(body);
 
     return httpresponse;
 }
-HttpResponse HttpServer::handlePost(const HttpRequest& request)
+
+void HttpServer::handleGet(const HttpRequest& request)
 {
-    std::string path = request.getPath();
-
-    if(path == "/")
-    {
-        path = "/index.html";
-    }
-    path = "www" + path;
-    std::string body = readFile(path);
-
-    //服务器回应
-    HttpResponse httpresponse;
-    if(path == "www/404.html")
-    {
-        httpresponse.setStatus(404, "Not Found");
-    }else
-    {
-        httpresponse.setStatus(200, "OK");
-    }
-    httpresponse.setHeader("Content-Type", getContentType(path));
-    httpresponse.setHeader("Content-Length", std::to_string(body.size()));
-    httpresponse.setBody(body);
-
-    return httpresponse;
-}
-HttpResponse HttpServer::login(const HttpRequest& request)
-{
-    std::string path = request.getPath();
-
-    if(path == "/")
-    {
-        path = "/index.html";
-    }
-    path = "www" + path;
-    std::string body = readFile(path);
-
-    //服务器回应
-    HttpResponse httpresponse;
-    if(path == "www/404.html")
-    {
-        httpresponse.setStatus(404, "Not Found");
-    }else
-    {
-        httpresponse.setStatus(200, "OK");
-    }
-    httpresponse.setHeader("Content-Type", getContentType(path));
-    httpresponse.setHeader("Content-Length", std::to_string(body.size()));
-    httpresponse.setBody(body);
-
-    return httpresponse;
-}
-HttpResponse HttpServer::registerUser(const HttpRequest& request)
-{
-    std::string path = request.getPath();
-
-    if(path == "/")
-    {
-        path = "/index.html";
-    }
-    path = "www" + path;
-    std::string body = readFile(path);
-
-    //服务器回应
-    HttpResponse httpresponse;
-    if(path == "www/404.html")
-    {
-        httpresponse.setStatus(404, "Not Found");
-    }else
-    {
-        httpresponse.setStatus(200, "OK");
-    }
-    httpresponse.setHeader("Content-Type", getContentType(path));
-    httpresponse.setHeader("Content-Length", std::to_string(body.size()));
-    httpresponse.setBody(body);
     
+}
+void HttpServer::handlePost(const HttpRequest& request)
+{
+    if(request.getPath() == "/login")   login(request);
+    else if(request.getPath() == "/register") registerUser(request);
+}
+void HttpServer::login(const HttpRequest& request)
+{
+    std::string body = request.getBody();
+    size_t pos = body.find('&');
+    size_t name_pos = body.find('=');
+    std::string name = body.substr(name_pos+1, pos-name_pos-1);
+
+    pos+=10;
+
+    std::string password = body.substr(pos);
+
+    //数据库
+    MySQL mysql;
+    mysql.connect();
+
+    mysql.loginSQL(name, password);
 
 
-    return httpresponse;
+}
+void HttpServer::registerUser(const HttpRequest& request)
+{
+    std::string body = request.getBody();
+    size_t pos = body.find('&');
+    size_t name_pos = body.find('=');
+    std::string name = body.substr(name_pos+1, pos-name_pos-1);
+
+    pos+=10;
+
+    std::string password = body.substr(pos, body.find('&', pos)-pos);
+    pos = body.find('&', pos) + 18;
+
+
+    std::string confirm_password = body.substr(pos);
+    std::cout<<" password: "<<password<<std::endl;
+    std::cout<<" confirm_password: "<<confirm_password<<std::endl;
+    if(password == confirm_password)
+    {
+        //数据库
+        MySQL mysql;
+        mysql.connect();
+
+        mysql.registerSQL(name, password);
+    }
+    
 }
 
 

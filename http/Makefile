@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -Iinclude -Wall -g -pthread
+CXXFLAGS = -std=c++20 -Iinclude -Wall -g -pthread -lmysqlclient
 
 SRC = src/main.cpp \
       src/Reactor.cpp \
@@ -8,7 +8,8 @@ SRC = src/main.cpp \
 	  src/HttpRequest.cpp \
 	  src/HttpResponse.cpp \
 	  src/ThreadPool.cpp \
-	  src/HttpServer.cpp
+	  src/HttpServer.cpp \
+	  src/MySQL.cpp
 
 TARGET = main
 

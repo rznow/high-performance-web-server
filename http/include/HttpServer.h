@@ -9,10 +9,10 @@ public:
     HttpResponse handleRequest(const HttpRequest& request);
 
 private:
-    HttpResponse handleGet(const HttpRequest& request);
-    HttpResponse handlePost(const HttpRequest& request);
-    HttpResponse login(const HttpRequest& request);
-    HttpResponse registerUser(const HttpRequest& request);
+    void handleGet(const HttpRequest& request);
+    void handlePost(const HttpRequest& request);
+    void login(const HttpRequest& request);
+    void registerUser(const HttpRequest& request);
 };
 
 #endif
