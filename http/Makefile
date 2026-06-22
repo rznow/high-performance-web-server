@@ -9,7 +9,8 @@ SRC = src/main.cpp \
 	  src/HttpResponse.cpp \
 	  src/ThreadPool.cpp \
 	  src/HttpServer.cpp \
-	  src/MySQL.cpp
+	  src/MySQL.cpp \
+	  src/MySQLPool.cpp
 
 TARGET = main
 

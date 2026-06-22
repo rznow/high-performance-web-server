@@ -2,6 +2,7 @@
 #include "HttpResponse.h"
 #include "HttpRequest.h"
 #include "MySQL.h"
+#include "MySQLPool.h"
 #include <fstream>
 #include <iostream>
 
@@ -93,6 +94,12 @@ HttpResponse HttpServer::handlePost(const HttpRequest& request)
 {
     if(request.getPath() == "/login")   return login(request);
     else if(request.getPath() == "/register") return registerUser(request);
+
+    HttpResponse resp;
+    resp.setStatus(404, "Not Found");
+    resp.setHeader("Content-Type", "application/json");
+    resp.setBody(R"({"code":404,"msg":"route not found"})");
+    return resp;
 }
 HttpResponse HttpServer::login(const HttpRequest& request)
 {
@@ -134,9 +141,11 @@ HttpResponse HttpServer::login(const HttpRequest& request)
     int result;
 
     {
-        MySQL mysql;
-        mysql.connect();
-        result = mysql.loginSQL(name, password);
+        auto mysql = MySQLPool::getInstance().getConnection();
+        result = mysql->loginSQL(name, password);
+        // MySQL mysql;
+        // mysql.connect();
+        // result = mysql.loginSQL(name, password);
     }
     std::cout<<" result= "<<result<<std::endl;
     HttpResponse resp;
@@ -162,27 +171,74 @@ HttpResponse HttpServer::login(const HttpRequest& request)
 }
 HttpResponse HttpServer::registerUser(const HttpRequest& request)
 {
+    std::unordered_map<std::string, std::string> kv;
+
     std::string body = request.getBody();
-    size_t pos = body.find('&');
-    size_t name_pos = body.find('=');
-    std::string name = body.substr(name_pos+1, pos-name_pos-1);
 
-    pos+=10;
+    size_t start = 0;
+    while(start < body.size())
+    {
+        size_t eq = body.find('=', start);
+        size_t amp = body.find('&', start);
 
-    std::string password = body.substr(pos, body.find('&', pos)-pos);
-    pos = body.find('&', pos) + 18;
+        if(eq == std::string::npos)
+            break;
 
+        std::string key = body.substr(start, eq - start);
 
-    std::string confirm_password = body.substr(pos);
+        std::string value;
+        if(amp == std::string::npos)
+        {
+            value = body.substr(eq + 1);
+            kv[key] = value;
+            break;
+        }
+        else
+        {
+            value = body.substr(eq + 1, amp - eq - 1);
+            kv[key] = value;
+            start = amp + 1;
+        }
+    }
+
+    std::string name = kv["username"];
+    std::string password = kv["password"];
+    std::string confirm_password = kv["confirm_password"];
+    std::cout<<" username: "<<name<<std::endl;
     std::cout<<" password: "<<password<<std::endl;
     std::cout<<" confirm_password: "<<confirm_password<<std::endl;
+
+    int result;
+    HttpResponse resp;
     if(password == confirm_password)
     {
         //数据库
-        MySQL mysql;
-        mysql.connect();
+        auto mysql = MySQLPool::getInstance().getConnection();
+        result = mysql->registerSQL(name, password);
+        std::cout<<" result: "<<result<<std::endl;
 
-        mysql.registerSQL(name, password);
+        
+        if(result == 1)
+        {
+            resp.setStatus(200, "OK");
+            body = R"({"code":0,"msg":"register success"})";
+        }
+        else if(result == 0)
+        {
+            resp.setStatus(401, "Unauthorized");
+            body = R"({"code":1003,"msg":"user already exist"})";
+        }
+        resp.setBody(body);
+        resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Content-Length", std::to_string(body.size()));
+        return resp;
     }
     
+    resp.setStatus(401, "Unauthorized");
+    body = R"({"code":1003,"msg":"wrong confirm_password"})";
+    resp.setBody(body);
+    resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Content-Length", std::to_string(body.size()));
+    return resp;
+
 }

@@ -1,3 +1,4 @@
+
 #include <mysql/mysql.h>
 #include <string>
 class MySQL
@@ -18,9 +19,11 @@ public:
 
     bool query(const std::string& sql);
 
+    bool reconnect();
+
     int loginSQL(const std::string& name, const std::string& password);
 
-    bool registerSQL(const std::string& name, const std::string& password);
+    int registerSQL(const std::string& name, const std::string& password);
 
     MYSQL* get();
 };
