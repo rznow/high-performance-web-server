@@ -46,25 +46,42 @@ bool MySQL::query(const std::string& sql)
     return false;
 }
 
-bool MySQL::loginSQL(const std::string& name, const std::string& password)
+/*
+    *未注册返回-1
+    *密码错误返回0
+    *登录成功返回1
+*/
+int MySQL::loginSQL(const std::string& name, const std::string& password)
 {
     std::string sql = "SELECT password FROM user_info WHERE user_name = '" + name +"';";
 
-    query(sql);
+    if(!query(sql)) return -1;
 
     MYSQL_RES *res = mysql_store_result(conn);
+
+    if(!res)
+    {
+        return -1;
+    }
 
     // 处理查询结果
     MYSQL_ROW row = mysql_fetch_row(res);
     int num_fields = mysql_num_fields(res); //1
+    
+    if(row == nullptr)
+    {
+        mysql_free_result(res);
+        return -1; // 用户不存在
+    }
 
     if(row[0] != password) 
     {
         std::cout<<" wrong password !"<<std::endl;
-        return false;
+        return 0;
     }
+
     std::cout<<" successful login !"<<std::endl;
-    return true;
+    return 1;
 }
 
 bool MySQL::registerSQL(const std::string& name, const std::string& password)

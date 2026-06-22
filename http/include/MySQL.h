@@ -18,7 +18,7 @@ public:
 
     bool query(const std::string& sql);
 
-    bool loginSQL(const std::string& name, const std::string& password);
+    int loginSQL(const std::string& name, const std::string& password);
 
     bool registerSQL(const std::string& name, const std::string& password);
 

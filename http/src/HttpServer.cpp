@@ -48,6 +48,22 @@ std::string getContentType(std::string path)
 
 HttpResponse HttpServer::handleRequest(const HttpRequest& request)
 {
+    if(request.getMethod() == "GET")
+        return handleGet(request);
+    else if(request.getMethod() == "POST")
+    {
+        return handlePost(request);
+    }
+    HttpResponse resp;
+    resp.setStatus(405, "Method Not Allowed");
+    resp.setHeader("Content-Type", "text/plain");
+    resp.setBody("Unsupported HTTP Method");
+
+    return resp;
+}
+
+HttpResponse HttpServer::handleGet(const HttpRequest& request)
+{
     std::string path = request.getPath();
 
     if(path == "/")
@@ -58,57 +74,93 @@ HttpResponse HttpServer::handleRequest(const HttpRequest& request)
     std::string body = readFile(path);
 
     //服务器回应
-    HttpResponse httpresponse;
+    HttpResponse resp;
     if(path == "www/404.html")
     {
-        httpresponse.setStatus(404, "Not Found");
+        resp.setStatus(404, "Not Found");
     }else
     {
-        httpresponse.setStatus(200, "OK");
-    }
-    httpresponse.setHeader("Content-Type", getContentType(path));
-    httpresponse.setHeader("Content-Length", std::to_string(body.size()));
-    httpresponse.setBody(body);
-
-    if(request.getMethod() == "GET")
-        handleGet(request);
-    else if(request.getMethod() == "POST")
-    {
-        handlePost(request);
+        resp.setStatus(200, "OK");
     }
 
-    return httpresponse;
-}
+    resp.setHeader("Content-Type", getContentType(path));
+    resp.setHeader("Content-Length", std::to_string(body.size()));
+    resp.setBody(body);
 
-void HttpServer::handleGet(const HttpRequest& request)
-{
-    
+    return resp;
 }
-void HttpServer::handlePost(const HttpRequest& request)
+HttpResponse HttpServer::handlePost(const HttpRequest& request)
 {
-    if(request.getPath() == "/login")   login(request);
-    else if(request.getPath() == "/register") registerUser(request);
+    if(request.getPath() == "/login")   return login(request);
+    else if(request.getPath() == "/register") return registerUser(request);
 }
-void HttpServer::login(const HttpRequest& request)
+HttpResponse HttpServer::login(const HttpRequest& request)
 {
+    std::unordered_map<std::string, std::string> kv;
+
     std::string body = request.getBody();
-    size_t pos = body.find('&');
-    size_t name_pos = body.find('=');
-    std::string name = body.substr(name_pos+1, pos-name_pos-1);
 
-    pos+=10;
+    size_t start = 0;
+    while(start < body.size())
+    {
+        size_t eq = body.find('=', start);
+        size_t amp = body.find('&', start);
 
-    std::string password = body.substr(pos);
+        if(eq == std::string::npos)
+            break;
 
-    //数据库
-    MySQL mysql;
-    mysql.connect();
+        std::string key = body.substr(start, eq - start);
 
-    mysql.loginSQL(name, password);
+        std::string value;
+        if(amp == std::string::npos)
+        {
+            value = body.substr(eq + 1);
+            kv[key] = value;
+            break;
+        }
+        else
+        {
+            value = body.substr(eq + 1, amp - eq - 1);
+            kv[key] = value;
+            start = amp + 1;
+        }
+    }
 
+    std::string name = kv["username"];
+    std::string password = kv["password"];
+    std::cout<<" username: "<<name<<std::endl;
+    std::cout<<" password: "<<password<<std::endl;
 
+    int result;
+
+    {
+        MySQL mysql;
+        mysql.connect();
+        result = mysql.loginSQL(name, password);
+    }
+    std::cout<<" result= "<<result<<std::endl;
+    HttpResponse resp;
+    if(result == 1)
+    {
+        resp.setStatus(200, "OK");
+        body = R"({"code":0,"msg":"login success"})";
+    }
+    else if(result == 0)
+    {
+        resp.setStatus(401, "Unauthorized");
+        body = R"({"code":1002,"msg":"wrong password"})";
+    }
+    else
+    {
+        resp.setStatus(404, "Unauthorized");
+        body = R"({"code":1001,"msg":"user not exist"})";
+    }
+    resp.setBody(body);
+    resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Content-Length", std::to_string(body.size()));
+    return resp;
 }
-void HttpServer::registerUser(const HttpRequest& request)
+HttpResponse HttpServer::registerUser(const HttpRequest& request)
 {
     std::string body = request.getBody();
     size_t pos = body.find('&');
@@ -134,33 +186,3 @@ void HttpServer::registerUser(const HttpRequest& request)
     }
     
 }
-
-
-
-// //获取请求后,处理请求
-//         std::string path = httprequest.getPath();
-
-//         if(path == "/")
-//         {
-//             path = "/index.html";
-//         }
-//         auto self = shared_from_this();
-//         pool->enqueue([self,path,reactor]{
-//             std::string fp = "www" + path;
-//             string body = readFile(fp);
-
-//             //服务器回应
-//             HttpResponse httpresponse;
-//             if(fp == "")
-//             {
-//                 httpresponse.setStatus(404, "Not Found");
-//             }else
-//             {
-//                 httpresponse.setStatus(200, "OK");
-//             }
-//             httpresponse.setHeader("Content-Type", getContentType(fp));
-//             httpresponse.setBody(body);
-//             std::string response = httpresponse.toString();
-
-            
-//         });

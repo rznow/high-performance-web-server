@@ -3,6 +3,8 @@
 #include <iostream>
 using namespace std;
 
+
+//--------------------------------------------HttpRequest类--------------------------------------------//
 bool HttpRequest::isRequestComplete(const Buffer& buffer)
 {
     //判断请求是否完整(包含GET和POST)
