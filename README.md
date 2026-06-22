@@ -22,6 +22,7 @@
 * MySQL 数据库集成
 * 用户注册功能
 * 用户登录认证
+* MySQL 连接池
 
 
 ---
@@ -117,6 +118,16 @@
 
 业务线程不直接操作 Socket，而是通过 eventfd 通知对应 Reactor 线程完成发送操作，保证 IO 操作始终在 Reactor 所属线程中执行。
 
+### MySQL Pool
+
+负责：
+
+* 管理连接生命周期
+* 实现连接的动态增减
+* 实现连接复用,减少开销
+
+在进行MySQL查询时,从Pool中获取单一连接到当前线程(阻塞),和http请求读写分开,占用线程池中线程资源,通常会有较大的时间开销。
+
 ---
 
 ## 项目目录
@@ -131,6 +142,7 @@ MiniWebServer
 │   ├── HttpResponse.h
 │   ├── HttpServer.h
 │   ├── MySQL.h
+│   ├── MySQLPool.h
 │   ├── Reactor.h
 │   └── ThreadPool.h
 │
@@ -142,6 +154,7 @@ MiniWebServer
 │   ├── HttpResponse.cpp
 │   ├── HttpServer.cpp
 │   ├── MySQL.cpp
+│   ├── MySQLPool.cpp
 │   ├── Reactor.cpp
 │   ├── ThreadPool.cpp
 │   └── main.cpp
@@ -373,5 +386,6 @@ http://127.0.0.1:8080
 * ThreadPool 实现
 * eventfd 跨线程通信
 * MySQL数据库集成
+* MySQL 连接池设计
 * 多线程服务器架构设计
 * C++ 面向对象设计与工程化开发
