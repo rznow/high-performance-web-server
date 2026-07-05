@@ -1,9 +1,9 @@
-#include "Connection.h"
-#include "Reactor.h"
-#include "HttpRequest.h"
-#include "HttpResponse.h"
-#include "ThreadPool.hpp"
-#include "HttpServer.h"
+#include "network/Connection.h"
+#include "network/Reactor.h"
+#include "http/HttpRequest.h"
+#include "http/HttpResponse.h"
+#include "thread/ThreadPool.hpp"
+#include "http/HttpServer.h"
 #include <iostream>
 
 

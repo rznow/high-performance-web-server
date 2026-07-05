@@ -5,10 +5,10 @@
 #include <memory>
 #include <thread>
 
-#include "Connection.h"
-#include "Reactor.h"
-#include "Acceptor.h"
-#include "ThreadPool.hpp"
+#include "network/Connection.h"
+#include "network/Reactor.h"
+#include "network/Acceptor.h"
+#include "thread/ThreadPool.hpp"
 using namespace std;
 
 constexpr int PORT = 8080;

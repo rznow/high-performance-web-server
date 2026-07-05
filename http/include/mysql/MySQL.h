@@ -1,4 +1,3 @@
-
 #include <mysql/mysql.h>
 #include <string>
 class MySQL

@@ -1,5 +1,5 @@
-#include "MySQLPool.h"
-#include "MySQL.h"
+#include "mysql/MySQLPool.h"
+#include "mysql/MySQL.h"
 
 MySQLPool::MySQLPool(size_t _capcity):capcity(_capcity)
 {
@@ -24,6 +24,22 @@ MySQLPool::~MySQLPool()
     }
 }
 
+void MySQLPool::createConns()
+{
+    for(size_t i=0;i<3;i++)
+    {
+        MySQL* mysql = new MySQL();
+
+        if (!mysql->connect())
+        {
+            delete mysql;
+            continue;
+        }
+
+        pool.push(mysql);
+    }
+}
+
 MySQLPool& MySQLPool::getInstance()
 {
     static MySQLPool pool(10);
@@ -40,6 +56,12 @@ std::shared_ptr<MySQL> MySQLPool::getConnection()
         cv.wait(ul, [&]{ return !pool.empty(); });
 
         mysql = pool.front();
+
+        if(pool.size() < capcity)
+        {
+            createConns();
+        }
+
         pool.pop();
     }
 

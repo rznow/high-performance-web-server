@@ -1,4 +1,5 @@
-#include "MySQL.h"
+#include "mysql/MySQL.h"
+#include <mysql/mysql.h>
 #include <iostream>
 
 MySQL::MySQL()

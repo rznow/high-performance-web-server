@@ -1,18 +1,14 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -Iinclude -Wall -g -pthread -lmysqlclient
+CXXFLAGS = -std=c++20 -Iinclude -Wall -g -pthread -lmysqlclient -lssl -lcrypto
 
-SRC = src/main.cpp \
-      src/Reactor.cpp \
-      src/Connection.cpp \
-      src/Acceptor.cpp \
-	  src/HttpRequest.cpp \
-	  src/HttpResponse.cpp \
-	  src/ThreadPool.cpp \
-	  src/HttpServer.cpp \
-	  src/MySQL.cpp \
-	  src/MySQLPool.cpp
+SRC := $(wildcard src/*.cpp) \
+       $(wildcard src/network/*.cpp) \
+       $(wildcard src/http/*.cpp) \
+       $(wildcard src/mysql/*.cpp) \
+       $(wildcard src/auth/*.cpp) \
+       $(wildcard src/common/*.cpp)
 
-TARGET = main
+TARGET = build/main
 
 all:
 	$(CXX) $(SRC) $(CXXFLAGS) -o $(TARGET)

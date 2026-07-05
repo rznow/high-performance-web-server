@@ -1,5 +1,5 @@
-#include "HttpRequest.h"
-#include "Connection.h"
+#include "http/HttpRequest.h"
+#include "network/Connection.h"
 #include <iostream>
 using namespace std;
 

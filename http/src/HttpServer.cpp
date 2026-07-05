@@ -1,8 +1,8 @@
-#include "HttpServer.h"
-#include "HttpResponse.h"
-#include "HttpRequest.h"
-#include "MySQL.h"
-#include "MySQLPool.h"
+#include "http/HttpServer.h"
+#include "http/HttpResponse.h"
+#include "http/HttpRequest.h"
+#include "mysql/MySQL.h"
+#include "mysql/MySQLPool.h"
 #include <fstream>
 #include <iostream>
 

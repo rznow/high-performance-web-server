@@ -12,9 +12,10 @@ private:
     std::queue<MySQL*> pool;
     std::mutex mtx;
     std::condition_variable cv;
-    int capcity;
+    size_t capcity;
     MySQLPool(size_t _capcity = 5);
     ~MySQLPool();
+    void createConns();
 public:
     MySQLPool(const MySQLPool&) = delete;
     MySQLPool& operator=(const MySQLPool&) = delete;

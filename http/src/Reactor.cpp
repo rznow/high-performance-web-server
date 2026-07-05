@@ -1,6 +1,6 @@
-#include "Reactor.h"
-#include "Connection.h"
-#include "HttpRequest.h"
+#include "network/Reactor.h"
+#include "network/Connection.h"
+#include "http/HttpRequest.h"
 #include <unistd.h>
 #include <cerrno>
 #include <string>
