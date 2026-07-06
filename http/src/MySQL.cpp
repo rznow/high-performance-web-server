@@ -1,4 +1,5 @@
 #include "mysql/MySQL.h"
+#include "common/UserInfo.h"
 #include <mysql/mysql.h>
 #include <iostream>
 
@@ -83,9 +84,9 @@ bool MySQL::reconnect()
     *密码错误返回0
     *登录成功返回1
 */
-int MySQL::loginSQL(const std::string& name, const std::string& password)
+int MySQL::loginSQL(const std::string& name, const std::string& password, UserInfo& user)
 {
-    std::string sql = "SELECT password FROM user_info WHERE user_name = '" + name +"';";
+    std::string sql = "SELECT user_id,password FROM user_info WHERE user_name = '" + name +"';";
 
     if(!query(sql)) return -1;
 
@@ -106,11 +107,14 @@ int MySQL::loginSQL(const std::string& name, const std::string& password)
         return -1; // 用户不存在
     }
 
-    if(row[0] != password) 
+    if(row[1] != password) 
     {
         std::cout<<" wrong password !"<<std::endl;
         return 0;
     }
+
+    user.user_id = std::stoi(row[0]);
+    user.user_name = name;
 
     std::cout<<" successful login !"<<std::endl;
     mysql_free_result(res);

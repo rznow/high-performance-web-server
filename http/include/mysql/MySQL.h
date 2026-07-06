@@ -1,5 +1,6 @@
 #include <mysql/mysql.h>
 #include <string>
+class UserInfo;
 class MySQL
 {
 private:
@@ -20,7 +21,7 @@ public:
 
     bool reconnect();
 
-    int loginSQL(const std::string& name, const std::string& password);
+    int loginSQL(const std::string& name, const std::string& password, UserInfo& user);
 
     int registerSQL(const std::string& name, const std::string& password);
 

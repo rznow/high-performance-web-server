@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,11 +18,12 @@
         <h1>MiniWebServer</h1>
         <p>用户登录</p>
 
-        <form action="/login" method="POST">
+        <form id="loginForm">
 
             <div class="input-group">
                 <input
                     type="text"
+                    id="username"
                     name="username"
                     placeholder="用户名"
                     required
@@ -31,6 +33,7 @@
             <div class="input-group">
                 <input
                     type="password"
+                    id="password"
                     name="password"
                     placeholder="密码"
                     required
@@ -51,5 +54,64 @@
 
 </div>
 
+<script>
+
+document.getElementById("loginForm").addEventListener("submit", async function (e) {
+
+    // 阻止表单默认提交
+    e.preventDefault();
+
+    const username =
+        document.getElementById("username").value;
+
+    const password =
+        document.getElementById("password").value;
+
+    try
+    {
+        const response = await fetch("/login", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+
+            body:
+                "username=" + encodeURIComponent(username) +
+                "&password=" + encodeURIComponent(password)
+
+        });
+
+        const data = await response.json();
+
+        if (data.code === 0)
+        {
+            // 保存 JWT
+            localStorage.setItem("token", data.token);
+
+            // 登录成功
+            alert("登录成功！");
+
+            // 跳转主页
+            window.location.href = "/index.html";
+        }
+        else
+        {
+            alert(data.msg);
+        }
+    }
+    catch (err)
+    {
+        console.error(err);
+        alert("服务器连接失败！");
+    }
+
+});
+
+</script>
+
 </body>
+
 </html>
+

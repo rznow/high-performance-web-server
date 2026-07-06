@@ -3,15 +3,16 @@
 #include <chrono>
 #include "common/UserInfo.h"
 #include <string>
+#include <iostream>
 
-std::string JWT::createToken(int userID)
+std::string JWT::createToken(int user_id)
 {
     auto token = jwt::create()
         .set_type("JWT")
         .set_issuer("rznow")
         .set_payload_claim(
-            "userID",
-            jwt::claim(std::to_string(userID)))
+            "user_id",
+            jwt::claim(std::to_string(user_id)))
         .set_expires_at(
             std::chrono::system_clock::now() +
             std::chrono::hours(24))
@@ -33,6 +34,13 @@ bool JWT::verifyToken(const std::string& token,UserInfo& user)
                 .with_issuer("rznow");
 
         verifier.verify(decoded);
+        user.user_id = stoi(
+            decoded.get_payload_claim("user_id")
+                   .as_string());
+
+        user.user_name =
+            decoded.get_payload_claim("user_name")
+                   .as_string();
 
         return true;
     }

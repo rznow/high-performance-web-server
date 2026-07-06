@@ -3,9 +3,9 @@
 
 struct UserInfo
 {
-    int userID;
+    int user_id;
 
-    std::string username;
+    std::string user_name;
 };
 
 #endif

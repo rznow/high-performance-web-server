@@ -3,9 +3,13 @@
 #include "http/HttpRequest.h"
 #include "mysql/MySQL.h"
 #include "mysql/MySQLPool.h"
+#include "JWT.h"
+#include "common/UserInfo.h"
+#include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
 
+using json = nlohmann::json;
 //读文件
 std::string readFile(std::string& filename)
 {
@@ -139,20 +143,27 @@ HttpResponse HttpServer::login(const HttpRequest& request)
     std::cout<<" password: "<<password<<std::endl;
 
     int result;
-
+    UserInfo user;
     {
         auto mysql = MySQLPool::getInstance().getConnection();
-        result = mysql->loginSQL(name, password);
+        result = mysql->loginSQL(name, password, user);
         // MySQL mysql;
         // mysql.connect();
         // result = mysql.loginSQL(name, password);
     }
-    std::cout<<" result= "<<result<<std::endl;
+
+    
     HttpResponse resp;
+    json j;
     if(result == 1)
     {
+        auto token = JWT::createToken(user.user_id);
         resp.setStatus(200, "OK");
-        body = R"({"code":0,"msg":"login success"})";
+        j["code"] = 0;
+        j["msg"] = "login success";
+        j["token"] = token;
+
+        body = j.dump();
     }
     else if(result == 0)
     {
