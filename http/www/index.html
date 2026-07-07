@@ -1,31 +1,199 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
+
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MiniWebServer</title>
 
-    <link rel="stylesheet" href="/css/style.css">
+    <title>MiniForum</title>
+
+    <link rel="stylesheet" href="/css/index.css">
+
 </head>
 
 <body>
 
-    <div class="container">
+<!-- ===================== 顶部导航 ===================== -->
 
-        <h1>MiniWebServer</h1>
+<header class="navbar">
 
-        <p>
-            High Performance HTTP Server Based on
-            Reactor + Epoll + ThreadPool
-        </p>
+    <div class="logo">
+        MiniForum
+    </div>
 
-        <a href="/login.html" class="login-btn">
-            Login
-        </a>
+    <div class="search">
+
+        <input
+            type="text"
+            placeholder="搜索帖子..."
+        >
+
+        <button>
+            搜索
+        </button>
 
     </div>
 
-    <script src="/js/app.js"></script>
+    <div class="nav-user">
+
+        <a href="/login.html">登录</a>
+
+        <a href="/register.html">注册</a>
+
+    </div>
+
+</header>
+
+<!-- ===================== 主体 ===================== -->
+
+<div class="main">
+
+    <!-- 左侧分类 -->
+
+    <aside class="sidebar">
+
+        <h2>板块</h2>
+
+        <ul>
+
+            <li>C++</li>
+
+            <li>Linux</li>
+
+            <li>网络编程</li>
+
+            <li>数据库</li>
+
+            <li>操作系统</li>
+
+            <li>算法</li>
+
+            <li>项目交流</li>
+
+            <li>面试经验</li>
+
+        </ul>
+
+    </aside>
+
+    <!-- 中间帖子 -->
+
+    <main class="content">
+
+        <div class="content-header">
+
+            <h2>帖子广场</h2>
+
+            <button id="newPost">
+                + 发帖
+            </button>
+
+        </div>
+
+        <div id="postList">
+
+            <!-- 后续 JS 动态生成 -->
+
+            <div class="post-card">
+
+                <h3>欢迎来到 MiniForum</h3>
+
+                <p>
+                    这里以后将由 REST API 动态加载帖子。
+                </p>
+
+                <div class="post-footer">
+
+                    <span>作者：admin</span>
+
+                    <span>2026-07-07</span>
+
+                </div>
+
+            </div>
+
+            <div class="post-card">
+
+                <h3>你的 HTTP Server 已经支持 JWT 登录</h3>
+
+                <p>
+                    下一步可以实现发帖、评论、点赞等功能。
+                </p>
+
+                <div class="post-footer">
+
+                    <span>作者：admin</span>
+
+                    <span>2026-07-07</span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- 右侧信息 -->
+
+    <aside class="rightbar">
+
+        <div class="card">
+
+            <h3>用户信息</h3>
+
+            <p id="username">
+                未登录
+            </p>
+
+        </div>
+
+        <div class="card">
+
+            <h3>热门帖子</h3>
+
+            <ul>
+
+                <li>C++ Reactor 网络库</li>
+
+                <li>Linux epoll 教程</li>
+
+                <li>MySQL 连接池</li>
+
+            </ul>
+
+        </div>
+
+        <div class="card">
+
+            <h3>站点信息</h3>
+
+            <p>
+                在线人数：12
+            </p>
+
+            <p>
+                帖子数量：100
+            </p>
+
+        </div>
+
+    </aside>
+
+</div>
+
+<!-- ===================== 浮动发帖按钮 ===================== -->
+
+<a
+    href="/newPost.html"
+    class="floating-button"
+>
+    +
+</a>
+
+<script src="/js/index.js"></script>
 
 </body>
+
 </html>

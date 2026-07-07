@@ -71,28 +71,12 @@ HttpResponse HttpServer::handleGet(const HttpRequest& request)
 {
     std::string path = request.getPath();
 
-    if(path == "/")
+    if(path == "/profile")
     {
-        path = "/index.html";
-    }
-    path = "www" + path;
-    std::string body = readFile(path);
-
-    //服务器回应
-    HttpResponse resp;
-    if(path == "www/404.html")
-    {
-        resp.setStatus(404, "Not Found");
-    }else
-    {
-        resp.setStatus(200, "OK");
+        return profile(request);
     }
 
-    resp.setHeader("Content-Type", getContentType(path));
-    resp.setHeader("Content-Length", std::to_string(body.size()));
-    resp.setBody(body);
-
-    return resp;
+    return index(request);
 }
 HttpResponse HttpServer::handlePost(const HttpRequest& request)
 {
@@ -157,7 +141,7 @@ HttpResponse HttpServer::login(const HttpRequest& request)
     json j;
     if(result == 1)
     {
-        auto token = JWT::createToken(user.user_id);
+        auto token = JWT::createToken(user);
         resp.setStatus(200, "OK");
         j["code"] = 0;
         j["msg"] = "login success";
@@ -180,6 +164,7 @@ HttpResponse HttpServer::login(const HttpRequest& request)
     resp.setHeader("Content-Length", std::to_string(body.size()));
     return resp;
 }
+
 HttpResponse HttpServer::registerUser(const HttpRequest& request)
 {
     std::unordered_map<std::string, std::string> kv;
@@ -252,4 +237,70 @@ HttpResponse HttpServer::registerUser(const HttpRequest& request)
     resp.setHeader("Content-Length", std::to_string(body.size()));
     return resp;
 
+}
+
+
+HttpResponse HttpServer::index(const HttpRequest& request)
+{
+    std::string path = request.getPath();
+    if(path == "/") path = "/index.html";
+    path = "www" + path;
+    std::string body = readFile(path);
+
+
+    //服务器回应
+    HttpResponse resp;
+    if(path == "www/404.html")
+    {
+        resp.setStatus(404, "Not Found");
+    }else
+    {
+        resp.setStatus(200, "OK");
+    }
+    
+    resp.setHeader("Content-Type", getContentType(path));
+    resp.setHeader("Content-Length", std::to_string(body.size()));
+    resp.setBody(body);
+
+    return resp; 
+}
+
+HttpResponse HttpServer::profile(const HttpRequest& request)
+{
+    //服务器回应
+    HttpResponse resp;
+    json j;
+    std::string auth = request.getHeader("Authorization");
+
+    if(auth.starts_with("Bearer "))
+    {
+        auth = auth.substr(7);
+    }
+
+    UserInfo user;
+    if(!JWT::verifyToken(auth, user))
+    {
+        j["code"] = 1003;
+        j["msg"] = "token invalid";
+
+
+        resp.setBody(j.dump());
+        resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Content-Length", std::to_string(j.dump().size()));
+        std::cout<<j.dump()<<std::endl;
+        return resp;
+
+    }
+
+
+    j["code"] = 0;
+    j["user_id"] = user.user_id;
+    j["user_name"] = user.user_name;
+
+    resp.setStatus(200, "OK");
+    resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Content-Length", std::to_string(j.dump().size()));
+    resp.setBody(j.dump());
+    std::cout<<j.dump()<<std::endl;
+    return resp;
 }

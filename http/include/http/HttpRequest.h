@@ -32,7 +32,7 @@ class HttpRequest
 
         void setBody(const std::string& _body);
 
-        std::string getHeader(const std::string& key);
+        std::string getHeader(const std::string& key) const;
         
         const std::string& getMethod() const;
 

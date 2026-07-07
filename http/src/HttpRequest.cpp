@@ -119,7 +119,7 @@ void HttpRequest::setBody(const std::string& _body)
     body = _body;
 }
 
-std::string HttpRequest::getHeader(const std::string& key)
+std::string HttpRequest::getHeader(const std::string& key) const
 {
     auto it = headers.find(key);
 
