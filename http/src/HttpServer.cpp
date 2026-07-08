@@ -6,6 +6,7 @@
 #include "JWT.h"
 #include "common/UserInfo.h"
 #include "common/Post.h"
+#include "service/PostService.h"
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
@@ -244,7 +245,6 @@ HttpResponse HttpServer::registerUser(const HttpRequest& request)
 
 HttpResponse HttpServer::posts(const HttpRequest& request)
 {
-    //服务器回应
     HttpResponse resp;
     json j;
     std::string auth = request.getHeader("Authorization");
@@ -268,6 +268,8 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
 
     }
     Post p;
+    p.user_id = user.user_id;
+    p.user_name = user.user_name;
     std::string body = request.getBody();
 
     size_t pos = body.find(R"("title":)")+9;
@@ -276,6 +278,8 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
     p.title = body.substr(pos, end-pos-2);
     pos = end + 11;
     p.content = body.substr(pos, body.size()-pos-2);
+
+    PostService::getInstance().put(p);
 
     j["code"] = 0;
     j["msg"] = "post success";
