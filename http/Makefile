@@ -1,20 +1,52 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -Iinclude -Wall -g -pthread -lmysqlclient -lssl -lcrypto
 
-SRC := $(wildcard src/*.cpp) \
-       $(wildcard src/network/*.cpp) \
-       $(wildcard src/http/*.cpp) \
-       $(wildcard src/mysql/*.cpp) \
-       $(wildcard src/auth/*.cpp) \
-       $(wildcard src/common/*.cpp)
+CXXFLAGS = -std=c++20 \
+           -Iinclude \
+           -Wall \
+           -g \
+           -pthread
+
+
+LDFLAGS = -lmysqlclient \
+          -lssl \
+          -lcrypto
+
 
 TARGET = build/main
 
-all:
-	$(CXX) $(SRC) $(CXXFLAGS) -o $(TARGET)
 
-run:
-	./$(TARGET)
+SRC = $(wildcard src/*.cpp)
+
+
+OBJ = $(SRC:src/%.cpp=build/%.o)
+
+
+
+$(TARGET): $(OBJ)
+
+	$(CXX) $(OBJ) \
+	$(CXXFLAGS) \
+	$(LDFLAGS) \
+	-o $(TARGET)
+
+
+
+build/%.o: src/%.cpp
+
+	mkdir -p build
+
+	$(CXX) $(CXXFLAGS) \
+	-c $< \
+	-o $@
+
+
 
 clean:
-	rm -f $(TARGET)
+
+	rm -rf build/*.o $(TARGET)
+
+
+
+run:
+
+	./$(TARGET)

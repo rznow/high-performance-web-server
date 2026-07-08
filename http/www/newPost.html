@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>发布帖子</title>
+
+    <link rel="stylesheet" href="/css/index.css">
+
+    <style>
+
+        .editor{
+
+            width:900px;
+
+            margin:100px auto;
+
+            background:white;
+
+            padding:35px;
+
+            border-radius:12px;
+
+            box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+        }
+
+        .editor h2{
+
+            margin-bottom:25px;
+
+            border-bottom:1px solid #ddd;
+
+            padding-bottom:15px;
+
+        }
+
+        .form-group{
+
+            margin-bottom:25px;
+
+        }
+
+        .form-group label{
+
+            display:block;
+
+            margin-bottom:10px;
+
+            font-size:18px;
+
+            font-weight:bold;
+
+        }
+
+        .form-group input{
+
+            width:100%;
+
+            height:45px;
+
+            padding:10px;
+
+            border:1px solid #ddd;
+
+            border-radius:6px;
+
+            outline:none;
+
+            font-size:16px;
+
+        }
+
+        .form-group textarea{
+
+            width:100%;
+
+            height:350px;
+
+            padding:15px;
+
+            resize:vertical;
+
+            border:1px solid #ddd;
+
+            border-radius:6px;
+
+            outline:none;
+
+            font-size:16px;
+
+            line-height:1.8;
+
+        }
+
+        .button-group{
+
+            display:flex;
+
+            justify-content:flex-end;
+
+            gap:15px;
+
+        }
+
+        .button-group button{
+
+            border:none;
+
+            padding:12px 24px;
+
+            border-radius:6px;
+
+            cursor:pointer;
+
+            font-size:16px;
+
+        }
+
+        #publish{
+
+            background:#409EFF;
+
+            color:white;
+
+        }
+
+        #publish:hover{
+
+            background:#2f7de1;
+
+        }
+
+        #cancel{
+
+            background:#e5e5e5;
+
+        }
+
+        #cancel:hover{
+
+            background:#d5d5d5;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <div class="logo">
+
+        MiniForum
+
+    </div>
+
+    <div class="search">
+
+        <input
+                type="text"
+                placeholder="搜索帖子..."
+        >
+
+        <button>
+
+            搜索
+
+        </button>
+
+    </div>
+
+    <div class="nav-user" id="nav-user">
+
+    </div>
+
+</header>
+
+<div class="editor">
+
+    <h2>
+
+        发布帖子
+
+    </h2>
+
+    <div class="form-group">
+
+        <label>
+
+            帖子标题
+
+        </label>
+
+        <input
+                id="title"
+                type="text"
+                placeholder="请输入标题..."
+        >
+
+    </div>
+
+    <div class="form-group">
+
+        <label>
+
+            正文
+
+        </label>
+
+        <textarea
+                id="content"
+                placeholder="分享你的内容..."
+        ></textarea>
+
+    </div>
+
+    <div class="button-group">
+
+        <button
+                id="cancel"
+                onclick="location.href='/'">
+
+            返回首页
+
+        </button>
+
+        <button
+                id="publish">
+
+            发布帖子
+
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+document.getElementById("publish").onclick =
+async function(){
+
+    const title =
+        document.getElementById("title").value;
+
+    const content =
+        document.getElementById("content").value;
+
+    const token =
+        localStorage.getItem("token");
+
+    if(title.length==0)
+    {
+        alert("请输入标题");
+
+        return;
+    }
+
+    if(content.length==0)
+    {
+        alert("请输入正文");
+
+        return;
+    }
+
+    const response =
+        await fetch("/posts",{
+
+        method:"POST",
+
+        headers:{
+
+            "Content-Type":"application/json",
+
+            "Authorization":
+                "Bearer "+token
+
+        },
+
+        body:JSON.stringify({
+
+            title:title,
+
+            content:content
+
+        })
+
+    });
+
+    const data =
+        await response.json();
+
+    if(data.code==0)
+    {
+        alert("发布成功");
+
+        location.href="/";
+    }
+    else
+    {
+        alert(data.msg);
+    }
+
+};
+
+</script>
+
+</body>
+
+</html>

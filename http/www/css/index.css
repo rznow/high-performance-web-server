@@ -134,6 +134,8 @@ body{
 
     display:flex;
 
+    align-items:center;
+
     gap:15px;
 
 }
@@ -157,6 +159,20 @@ body{
 .nav-user a:hover{
 
     background:#2f7de1;
+
+}
+
+.username{
+
+    display:flex;
+
+    align-items:center;
+
+    font-size:16px;
+
+    color:#333;
+
+    font-weight:500;
 
 }
 
