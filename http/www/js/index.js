@@ -154,3 +154,80 @@ async function gotoNewPost()
 document
 .getElementById("newPost")
 .addEventListener("click",gotoNewPost);
+
+
+帖子的生成
+console.log("MiniWebServer");
+
+// 页面加载完成后自动获取帖子
+window.onload = function () {
+
+    loadPosts();
+
+};
+
+
+// 获取帖子列表
+async function loadPosts() {
+
+    const postList = document.getElementById("postList");
+
+    postList.innerHTML = "";
+
+    try {
+
+        const response = await fetch("/posts");
+
+        const data = await response.json();
+
+        if (data.code !== 0) {
+
+            postList.innerHTML =
+                "<p>帖子加载失败</p>";
+
+            return;
+        }
+
+        data.posts.forEach(post => {
+
+            const card = document.createElement("div");
+
+            card.className = "post-card";
+
+            card.innerHTML = `
+                <h3>${post.title}</h3>
+
+                <p>${post.content}</p>
+
+                <div class="post-footer">
+
+                    <span>作者：${post.author}</span>
+
+                    <span>${post.time}</span>
+
+                </div>
+            `;
+
+            // 点击进入帖子详情
+            card.onclick = function () {
+
+                window.location.href =
+                    "/post.html?id=" + post.post_id;
+
+            };
+
+            postList.appendChild(card);
+
+        });
+
+    }
+    catch (e) {
+
+        console.error(e);
+
+        postList.innerHTML =
+            "<p>服务器连接失败</p>";
+
+    }
+
+}

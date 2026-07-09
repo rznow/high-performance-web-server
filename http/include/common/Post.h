@@ -2,6 +2,7 @@
 #define POST_H
 
 #include <string>
+#include <iostream>
 struct Post
 {
     int post_id;
@@ -9,5 +10,17 @@ struct Post
     std::string user_name;
     std::string title;
     std::string content;
+    std::string create_time;
+
+    void print()
+    {
+        std::cout<<"post_id:\t"<<post_id<<std::endl;
+        std::cout<<"user_id:\t"<<user_id<<std::endl;
+        std::cout<<"user_name:\t"<<user_name<<std::endl;
+        std::cout<<"title:\t\t"<<title<<std::endl;
+        std::cout<<"content:\t"<<content<<std::endl;
+        std::cout<<"create_time:\t"<<create_time<<std::endl;
+        std::cout<<std::endl;
+    }
 };
 #endif

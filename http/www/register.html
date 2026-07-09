@@ -4,139 +4,177 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户注册</title>
-
     <style>
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-
-        body{
-            height:100vh;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-
-            background:url("/images/back.png") no-repeat center center;
-            background-size:cover;
-
-            font-family:"Microsoft YaHei",sans-serif;
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url("/images/back.png") no-repeat center center;
+            background-size: cover;
+            font-family:
+                "Microsoft YaHei",
+                Arial,
+                sans-serif;
         }
-
-        .register-box{
-            width:400px;
-            padding:40px;
-
-            background:rgba(255,255,255,0.9);
-            border-radius:15px;
-
-            box-shadow:0 0 20px rgba(0,0,0,0.2);
+        .register-box {
+            width: 400px;
+            padding: 40px;
+            background:
+                rgba(255, 255, 255, 0.92);
+            border-radius: 15px;
+            box-shadow:
+                0 0 20px rgba(0, 0, 0, 0.25);
         }
-
-        .register-box h2{
-            text-align:center;
-            margin-bottom:30px;
-            color:#333;
+        .register-box h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
         }
-
-        .input-group{
-            margin-bottom:20px;
+        .input-group {
+            margin-bottom: 20px;
         }
-
-        .input-group input{
-            width:100%;
-            padding:12px;
-
-            border:1px solid #ccc;
-            border-radius:8px;
-
-            font-size:16px;
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border:
+                1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
         }
-
-        .input-group input:focus{
-            outline:none;
-            border-color:#4CAF50;
+        .input-group input:focus {
+            border-color: #409EFF;
         }
-
-        .register-btn{
-            width:100%;
-            padding:12px;
-
-            border:none;
-            border-radius:8px;
-
-            background:#4CAF50;
-            color:white;
-
-            font-size:16px;
-            cursor:pointer;
+        .register-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #409EFF;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: .2s;
         }
-
-        .register-btn:hover{
-            background:#45a049;
+        .register-btn:hover {
+            background: #337ecc;
         }
-
-        .login-link{
-            margin-top:20px;
-            text-align:center;
+        .msg {
+            margin-top: 15px;
+            text-align: center;
+            color: red;
+            min-height: 20px;
         }
-
-        .login-link a{
-            text-decoration:none;
-            color:#4CAF50;
+        .login-link {
+            margin-top: 20px;
+            text-align: center;
         }
-
-        .login-link a:hover{
-            text-decoration:underline;
+        .login-link a {
+            text-decoration: none;
+            color: #409EFF;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
-
 <body>
-
     <div class="register-box">
-
-        <h2>用户注册</h2>
-
-        <form action="/register" method="POST">
-
+        <h2>
+            用户注册
+        </h2>
+        <form id="registerForm">
             <div class="input-group">
-                <input
-                    type="text"
-                    name="username"
-                    placeholder="请输入用户名"
-                    required>
+                <input id="username" type="text" placeholder="请输入用户名" required>
             </div>
-
             <div class="input-group">
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="请输入密码"
-                    required>
+                <input id="password" type="password" placeholder="请输入密码" required>
             </div>
-
             <div class="input-group">
-                <input
-                    type="password"
-                    name="confirm_password"
-                    placeholder="请确认密码"
-                    required>
+                <input id="confirmPassword" type="password" placeholder="请确认密码" required>
             </div>
-
-            <button type="submit" class="register-btn">
+            <button class="register-btn" type="submit">
                 注册
             </button>
-
         </form>
-
+        <div class="msg" id="msg"></div>
         <div class="login-link">
             已有账号？
-            <a href="/login.html">立即登录</a>
+            <a href="/login.html">
+                立即登录
+            </a>
         </div>
-
     </div>
-
+    <script>
+        const form =
+            document.getElementById("registerForm");
+        const msg =
+            document.getElementById("msg");
+        form.addEventListener(
+            "submit",
+            async function (e) {
+                // 阻止默认form提交
+                e.preventDefault();
+                let username =
+                    document.getElementById("username").value.trim();
+                let password =
+                    document.getElementById("password").value;
+                let confirmPassword =
+                    document.getElementById("confirmPassword").value;
+                msg.innerText = "";
+                if (username.length === 0) {
+                    msg.innerText =
+                        "用户名不能为空";
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    msg.innerText =
+                        "两次密码输入不一致";
+                    return;
+                }
+                try {
+                    let response =
+                        await fetch("/register",
+                            {
+                                method: "POST",
+                                headers:
+                                {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+                                body:
+                                    JSON.stringify(
+                                        {
+                                            username: username,
+                                            password: password
+                                        })
+                            });
+                    let data =
+                        await response.json();
+                    if (data.code === 0) {
+                        alert(
+                            "注册成功！"
+                        );
+                        window.location.href =
+                            "/login.html";
+                    }
+                    else {
+                        msg.innerText =
+                            data.msg;
+                    }
+                }
+                catch (error) {
+                    console.log(error);
+                    msg.innerText =
+                        "服务器连接失败";
+                }
+            });
+    </script>
 </body>
 </html>

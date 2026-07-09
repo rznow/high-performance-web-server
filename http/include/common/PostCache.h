@@ -2,6 +2,7 @@
 #define LRUCACHE_H
 
 #include <unordered_map>
+#include <mutex>
 #include "Post.h"
 
 struct ListNode
@@ -20,9 +21,11 @@ class PostCache
         ListNode *dummyHead, *dummyEnd;
         int capcity;
         int count;
+        std::mutex mtx;
         PostCache();
         PostCache(int _capcity);
         ~PostCache();
+        void printPosts();
     public:
         PostCache(const PostCache&) = delete;
         PostCache& operator=(const PostCache&) = delete;
@@ -34,6 +37,7 @@ class PostCache
         ListNode* removeNode(int post_id);
         void addToHead(ListNode* node);
         void removeEnd();
+        
         
 };
 

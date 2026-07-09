@@ -1,6 +1,7 @@
 #include "mysql/MySQL.h"
 #include "common/UserInfo.h"
 #include <mysql/mysql.h>
+#include <common/Post.h>
 #include <iostream>
 
 MySQL::MySQL()
@@ -165,3 +166,15 @@ MYSQL* MySQL::get()
     return conn;
 }
 
+int MySQL::savePost(Post& p)
+{
+    std::string sql = "INSERT INTO posts(user_id, title, content) \
+                       VALUES('" + std::to_string(p.user_id) + "','" + p.title + "','" + p.content + "');";
+    
+    query(sql);
+
+    int post_id = mysql_insert_id(conn);
+    p.post_id = post_id;
+    std::cout<<"post_id:\t\t"<<post_id<<std::endl;
+    return post_id;
+}

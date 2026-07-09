@@ -1,6 +1,7 @@
 #include <mysql/mysql.h>
 #include <string>
 class UserInfo;
+class Post;
 class MySQL
 {
 private:
@@ -14,7 +15,7 @@ public:
         const std::string& host = "127.0.0.1",
         const std::string& user = "webserver",
         const std::string& password = "123456",
-        const std::string& db = "webserver",
+        const std::string& db = "miniforum",
         int port = 3306);
 
     bool query(const std::string& sql);
@@ -24,6 +25,8 @@ public:
     int loginSQL(const std::string& name, const std::string& password, UserInfo& user);
 
     int registerSQL(const std::string& name, const std::string& password);
+
+    int savePost(Post& p);
 
     MYSQL* get();
 };

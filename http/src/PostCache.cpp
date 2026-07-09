@@ -1,5 +1,4 @@
 #include "common/PostCache.h"
-#include <iostream>
 
 PostCache::~PostCache(){}
 
@@ -30,8 +29,10 @@ PostCache::PostCache(int _capcity)
 
 Post PostCache::get(int post_id)
 {
+    std::unique_lock<std::mutex> ul(mtx);
     if(cache.find(post_id)!=cache.end())
     {
+        std::unique_lock<std::mutex> ul(mtx);
         ListNode *node = removeNode(post_id);
         addToHead(node);
         return node->p;
@@ -44,6 +45,7 @@ Post PostCache::get(int post_id)
 
 void PostCache::put(const Post& p)
 {
+    std::unique_lock<std::mutex> ul(mtx);
     if(cache.find(p.post_id)!=cache.end())
     {
         cache[p.post_id]->p = p;
@@ -58,13 +60,13 @@ void PostCache::put(const Post& p)
 
         if(count > capcity)
         {
-            
             count--;
         }
     }
+    ul.unlock();
     std::cout<<"count:\t"<<count<<std::endl;
-
-
+    
+    printPosts();
     
 }
 
@@ -90,4 +92,14 @@ void PostCache::removeEnd()
     ListNode* del = removeNode(dummyEnd->pre->p.post_id);
     cache.erase(del->p.post_id);
     delete del;
+}
+
+void PostCache::printPosts()
+{
+    ListNode *cur = dummyHead->next;
+    while(cur != dummyEnd)
+    {
+        cur->p.print();
+        cur = cur->next;
+    }   
 }

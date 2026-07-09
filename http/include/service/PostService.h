@@ -19,6 +19,7 @@ class PostService
         PostService& operator=(const PostService&) = delete;
         static PostService& getInstance();
         void put(Post p);
+        std::vector<Post> getPosts();
 };
 
 
