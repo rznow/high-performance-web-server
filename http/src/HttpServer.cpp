@@ -76,7 +76,7 @@ HttpResponse HttpServer::handleGet(const HttpRequest& request)
     if(path == "/profile")
     {
         return profile(request);
-    }else if(path == "/posts")
+    }else if(path.starts_with("/posts"))
     {
         return posts(request);
     }
@@ -271,7 +271,7 @@ HttpResponse HttpServer::post(const HttpRequest& request)
     }
     Post p;
     p.user_id = user.user_id;
-    p.user_name = user.user_name;
+    p.author = user.user_name;
     std::string body = request.getBody();
 
     size_t pos = body.find(R"("title":)")+9;
@@ -361,10 +361,23 @@ HttpResponse HttpServer::profile(const HttpRequest& request)
 
 HttpResponse HttpServer::posts(const HttpRequest& request)
 {
+    std::string path = request.getPath();
+    size_t pos = 7;
+
+    size_t start = path.find('=')+1;
+    size_t end = path.find('&');
+    size_t page = std::stoi(path.substr(start, end-start));
+    pos = end + 1;
+    start = path.find('=', pos)+1;
+    size_t size = std::stoi(path.substr(start));
+
+    std::cout<<"page:\t"<<page<<std::endl;
+    std::cout<<"size:\t"<<size<<std::endl;
+
     HttpResponse resp;
     json j;
 
-    std::vector<Post> posts = PostService::getInstance().getPosts();
+    std::vector<Post> posts = PostService::getInstance().getPosts(page, size);
 
     j["code"] = 0;
     json post_array = json::array();
@@ -373,7 +386,7 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
         post_array.push_back({
             {"title", i.title},
             {"content", i.content},
-            {"author", i.user_name},
+            {"author", i.author},
             {"time", i.create_time}
         });
     }

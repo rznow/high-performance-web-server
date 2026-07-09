@@ -64,9 +64,9 @@ void PostCache::put(const Post& p)
         }
     }
     ul.unlock();
-    std::cout<<"count:\t"<<count<<std::endl;
+    // std::cout<<"count:\t"<<count<<std::endl;
     
-    printPosts();
+    // printPosts();
     
 }
 

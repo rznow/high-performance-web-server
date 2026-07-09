@@ -19,14 +19,18 @@ void PostService::put(Post p)
 {
     auto mysql = pool.getConnection();
 
-    std::cout<<"PostService"<<std::endl;
     mysql->savePost(p);
     
     PostCache::getInstance().put(p);
 
 }
 
-std::vector<Post> PostService::getPosts()
+std::vector<Post> PostService::getPosts(size_t page, size_t size)
 {
-    return {};
+    auto mysql = pool.getConnection();
+
+    std::vector<Post> posts;
+    mysql->getPosts(posts, size, (page-1)*size);
+
+    return posts;
 }

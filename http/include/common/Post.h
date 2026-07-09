@@ -7,7 +7,7 @@ struct Post
 {
     int post_id;
     int user_id;
-    std::string user_name;
+    std::string author;
     std::string title;
     std::string content;
     std::string create_time;
@@ -16,7 +16,7 @@ struct Post
     {
         std::cout<<"post_id:\t"<<post_id<<std::endl;
         std::cout<<"user_id:\t"<<user_id<<std::endl;
-        std::cout<<"user_name:\t"<<user_name<<std::endl;
+        std::cout<<"author:\t"<<author<<std::endl;
         std::cout<<"title:\t\t"<<title<<std::endl;
         std::cout<<"content:\t"<<content<<std::endl;
         std::cout<<"create_time:\t"<<create_time<<std::endl;

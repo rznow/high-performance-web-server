@@ -2,6 +2,7 @@
 #include "common/UserInfo.h"
 #include <mysql/mysql.h>
 #include <common/Post.h>
+#include <common/PostCache.h>
 #include <iostream>
 
 MySQL::MySQL()
@@ -48,7 +49,7 @@ bool MySQL::query(const std::string& sql)
         std::cout << "Error: " << mysql_error(conn) << std::endl;
         return false;
     }
-    std::cout << "SQL success: " << sql << std::endl;
+    std::cout << "SQL success: " << sql << std::endl << std::emdl;
     return true;
 }
 
@@ -175,6 +176,58 @@ int MySQL::savePost(Post& p)
 
     int post_id = mysql_insert_id(conn);
     p.post_id = post_id;
-    std::cout<<"post_id:\t\t"<<post_id<<std::endl;
+
+    //从mysql中获取表项(帖子)创建时间
+    std::string create_time_sql = "SELECT create_time FROM posts WHERE post_id=" + std::to_string(post_id);
+    query(create_time_sql);
+    MYSQL_RES* res = mysql_store_result(conn);
+    // size_t t = mysql_num_fields(res);
+    MYSQL_ROW row = mysql_fetch_row(res);
+    // std::cout<<"mysql_num_fields:"<<t<<std::endl;
+    p.create_time = row[0];
     return post_id;
+}
+
+void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
+{
+    std::string sql = R"(
+    SELECT
+        p.post_id,
+        p.user_id,
+        u.user_name,
+        p.title,
+        p.content,
+        p.create_time
+    FROM posts p
+    INNER JOIN user_info u
+    ON p.user_id = u.user_id
+    ORDER BY p.create_time DESC
+    LIMIT )" 
+    + std::to_string(size) +
+    " OFFSET " +
+    std::to_string(offset) +
+    ";";
+    
+
+    if(!query(sql)) return;
+    MYSQL_RES * res = mysql_store_result(conn);
+
+    if(res == nullptr) return;
+
+    MYSQL_ROW row;
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        Post p;
+        p.post_id = std::stoi(row[0]);
+        p.user_id = std::stoi(row[1]);
+        p.author = row[2];
+        p.title = row[3];
+        p.content = row[4];
+        p.create_time = row[5];
+
+        PostCache::getInstance().put(p);
+        posts.push_back(std::move(p));
+    }
+    
+    
 }

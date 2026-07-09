@@ -6,6 +6,7 @@ async function loadUser()
     const token =
         localStorage.getItem("token");
 
+    const nav = document.getElementById("nav-user");
     if(!token)
     {
         location.href="/login.html";
@@ -41,6 +42,7 @@ async function loadUser()
     document.getElementById("username").innerHTML =
         data.username;
 
+    
 }
 
 loadUser();
@@ -155,9 +157,82 @@ document
 .getElementById("newPost")
 .addEventListener("click",gotoNewPost);
 
+//载入帖子
+let page = 1;        // 当前页
 
-帖子的生成
-console.log("MiniWebServer");
+let size = 10;       // 每次加载数量
+
+let loading = false; // 防止重复请求
+
+let hasMore = true;  // 是否还有数据
+async function loadPosts()
+{
+    if(loading || !hasMore)
+        return;
+    loading = true;
+    try
+    {
+        const response =
+            await fetch(
+                `/posts?page=${page}&size=${size}`
+            );
+        const data =
+            await response.json();
+        if(data.code !== 0)
+        {
+            return;
+        }
+
+        const postList =
+            document.getElementById("postList");
+
+        data.posts.forEach(post=>{
+            const card =
+                document.createElement("div");
+            card.className =
+                "post-card";
+            card.innerHTML = `
+
+                <h3>${post.title}</h3>
+
+                <p>${post.content}</p>
+                
+                <div class="post-footer">
+
+                    <span>
+                    作者:${post.author}
+                    </span>
+
+                    <span>
+                    ${post.time}
+                    </span>
+
+                </div>
+            `;
+            card.onclick=function(){
+                window.location.href =
+                "/post.html?id="
+                +post.post_id;
+            };
+            postList.appendChild(card);
+        });
+        // 判断还有没有下一页
+
+        if(data.posts.length < size)
+        {
+            hasMore=false;
+        }
+        else
+        {
+            page++;
+        }
+    }
+    catch(e)
+    {
+        console.error(e);
+    }
+    loading=false;
+}
 
 // 页面加载完成后自动获取帖子
 window.onload = function () {
@@ -166,68 +241,27 @@ window.onload = function () {
 
 };
 
+window.addEventListener(
+    "scroll",
+    function(){
+    
+        const scrollTop =
+            document.documentElement.scrollTop;
 
-// 获取帖子列表
-async function loadPosts() {
+        const windowHeight =
+            window.innerHeight;
 
-    const postList = document.getElementById("postList");
-
-    postList.innerHTML = "";
-
-    try {
-
-        const response = await fetch("/posts");
-
-        const data = await response.json();
-
-        if (data.code !== 0) {
-
-            postList.innerHTML =
-                "<p>帖子加载失败</p>";
-
-            return;
+        const documentHeight =
+            document.documentElement.scrollHeight;
+        // 距离底部100px
+    
+        if(
+            scrollTop + windowHeight
+            >=
+            documentHeight - 100
+        )
+        {
+            loadPosts();
         }
-
-        data.posts.forEach(post => {
-
-            const card = document.createElement("div");
-
-            card.className = "post-card";
-
-            card.innerHTML = `
-                <h3>${post.title}</h3>
-
-                <p>${post.content}</p>
-
-                <div class="post-footer">
-
-                    <span>作者：${post.author}</span>
-
-                    <span>${post.time}</span>
-
-                </div>
-            `;
-
-            // 点击进入帖子详情
-            card.onclick = function () {
-
-                window.location.href =
-                    "/post.html?id=" + post.post_id;
-
-            };
-
-            postList.appendChild(card);
-
-        });
-
     }
-    catch (e) {
-
-        console.error(e);
-
-        postList.innerHTML =
-            "<p>服务器连接失败</p>";
-
-    }
-
-}
+);

@@ -1,5 +1,7 @@
 #include <mysql/mysql.h>
 #include <string>
+#include <vector>
+
 class UserInfo;
 class Post;
 class MySQL
@@ -29,4 +31,6 @@ public:
     int savePost(Post& p);
 
     MYSQL* get();
+
+    void getPosts(std::vector<Post>& posts,size_t size,size_t offset);
 };
