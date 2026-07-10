@@ -116,11 +116,6 @@ function logout()
     location.reload();
 }
 
-window.onload = function () {
-    checkLogin();
-};
-
-
 //发帖
 async function gotoNewPost()
 {
@@ -234,12 +229,24 @@ async function loadPosts()
     loading=false;
 }
 
-// 页面加载完成后自动获取帖子
-window.onload = function () {
+window.addEventListener(
+    "load",
+    function(){
 
-    loadPosts();
+        checkLogin();
 
-};
+    }
+);
+
+
+window.addEventListener(
+    "load",
+    function(){
+
+        loadPosts();
+
+    }
+);
 
 window.addEventListener(
     "scroll",

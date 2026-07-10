@@ -1,3 +1,13 @@
+/**
+ * @file HttpServer.cpp
+ * @brief 处理Http请求(HttpRequest),生成Http响应
+ *
+ * 实现请求解析、响应生成等功能。
+ *
+ * @author rznow
+ * @date 2026-06-10
+ */
+
 #include "http/HttpServer.h"
 #include "http/HttpResponse.h"
 #include "http/HttpRequest.h"
@@ -79,6 +89,12 @@ HttpResponse HttpServer::handleGet(const HttpRequest& request)
     }else if(path.starts_with("/posts"))
     {
         return posts(request);
+    }else if(path.starts_with("/post.html"))
+    {
+        return index(request);
+    }else if(path.starts_with("/post"))
+    {
+        return post(request);
     }
 
     return index(request);
@@ -88,7 +104,7 @@ HttpResponse HttpServer::handlePost(const HttpRequest& request)
     std::string path = request.getPath();
     if(path == "/login")   return login(request);
     else if(path == "/register") return registerUser(request);
-    else if(path == "/post") return post(request);
+    else if(path == "/post") return postCreate(request);
 
     HttpResponse resp;
     resp.setStatus(404, "Not Found");
@@ -96,6 +112,14 @@ HttpResponse HttpServer::handlePost(const HttpRequest& request)
     resp.setBody(R"({"code":404,"msg":"route not found"})");
     return resp;
 }
+
+
+/*
+    
+
+
+
+*/
 HttpResponse HttpServer::login(const HttpRequest& request)
 {
     std::unordered_map<std::string, std::string> kv;
@@ -245,7 +269,7 @@ HttpResponse HttpServer::registerUser(const HttpRequest& request)
 
 }
 
-HttpResponse HttpServer::post(const HttpRequest& request)
+HttpResponse HttpServer::postCreate(const HttpRequest& request)
 {
     HttpResponse resp;
     json j;
@@ -299,8 +323,12 @@ HttpResponse HttpServer::post(const HttpRequest& request)
 HttpResponse HttpServer::index(const HttpRequest& request)
 {
     std::string path = request.getPath();
+    size_t pos = path.find('?');
+    path = path.substr(0, pos);
     if(path == "/") path = "/index.html";
     path = "www" + path;
+
+    // std::cout<<"Path:\t"<<path<<std::endl;
     std::string body = readFile(path);
 
     //服务器回应
@@ -384,6 +412,7 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
     for(auto &i: posts)
     {
         post_array.push_back({
+            {"post_id", i.post_id},
             {"title", i.title},
             {"content", i.content},
             {"author", i.author},
@@ -398,5 +427,41 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
     resp.setBody(j.dump());
 
 
+    return resp;
+}
+
+HttpResponse HttpServer::post(const HttpRequest& request)
+{
+    std::string path = request.getPath();
+
+    size_t pos = path.find('=')+1;
+    int id = std::stoi(path.substr(pos));
+
+    HttpResponse resp;
+    json j;
+    Post p;
+    
+    
+    if(!PostCache::getInstance().get(id, p)&&!PostService::getInstance().get(id, p))
+    {
+
+        j["code"] = 1001;
+        j["msg"] = "post not found";
+
+    }else
+    {
+        j["code"] = 0;
+        j["post"]["title"] = p.title;
+        j["post"]["author"] = p.author;
+        j["post"]["time"] = p.create_time;
+        j["post"]["content"] = p.content;
+    }
+    p.print();
+    
+    resp.setStatus(200, "OK");
+    resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Content-Length", std::to_string(j.dump().size()));
+    resp.setBody(j.dump());
+    std::cout<<j.dump()<<std::endl;
     return resp;
 }

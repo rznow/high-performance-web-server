@@ -27,20 +27,24 @@ PostCache::PostCache(int _capcity)
     count = 0;
 }
 
-Post PostCache::get(int post_id)
+bool PostCache::get(int post_id, Post& post)
 {
+    // for(auto &[key, value]: cache)
+    // {
+    //     value->p.print();
+    // }
+    // std::cout<<"Post_id:\t"<<post_id<<std::endl;
+    // cache[post_id]->p.print();
     std::unique_lock<std::mutex> ul(mtx);
     if(cache.find(post_id)!=cache.end())
     {
-        std::unique_lock<std::mutex> ul(mtx);
         ListNode *node = removeNode(post_id);
         addToHead(node);
-        return node->p;
-    }else
-    {
-        Post p{-1};
-        return p;
+        post = node->p;
+        return true;
     }
+    return false;
+
 }
 
 void PostCache::put(const Post& p)
@@ -60,6 +64,7 @@ void PostCache::put(const Post& p)
 
         if(count > capcity)
         {
+            removeEnd();
             count--;
         }
     }

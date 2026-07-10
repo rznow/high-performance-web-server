@@ -25,12 +25,23 @@ void PostService::put(Post p)
 
 }
 
+bool PostService::get(int post_id, Post& p)
+{
+    auto mysql = pool.getConnection();
+
+    bool res = mysql->getPost(post_id, p);
+    
+    PostCache::getInstance().put(p);
+
+    return res;
+}
+
 std::vector<Post> PostService::getPosts(size_t page, size_t size)
 {
     auto mysql = pool.getConnection();
 
     std::vector<Post> posts;
     mysql->getPosts(posts, size, (page-1)*size);
-
+    for(auto &p: posts) PostCache::getInstance().put(p);
     return posts;
 }

@@ -49,7 +49,7 @@ bool MySQL::query(const std::string& sql)
         std::cout << "Error: " << mysql_error(conn) << std::endl;
         return false;
     }
-    std::cout << "SQL success: " << sql << std::endl << std::emdl;
+    std::cout << "SQL success: " << sql << std::endl << std::endl;
     return true;
 }
 
@@ -201,7 +201,7 @@ void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
     FROM posts p
     INNER JOIN user_info u
     ON p.user_id = u.user_id
-    ORDER BY p.create_time DESC
+    ORDER BY p.create_time ASC
     LIMIT )" 
     + std::to_string(size) +
     " OFFSET " +
@@ -225,9 +225,44 @@ void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
         p.content = row[4];
         p.create_time = row[5];
 
-        PostCache::getInstance().put(p);
         posts.push_back(std::move(p));
     }
     
     
+}
+
+bool MySQL::getPost(int post_id, Post& p)
+{
+    std::string sql = R"(
+    SELECT
+        p.post_id,
+        p.user_id,
+        u.user_name,
+        p.title,
+        p.content,
+        p.create_time
+    FROM posts p
+    INNER JOIN user_info u
+    ON p.user_id = u.user_id
+    where p.post_id = )" 
+    + std::to_string(post_id) +
+    ";";
+
+    if(!query(sql)) return false;
+    MYSQL_RES * res = mysql_store_result(conn);
+
+    if(res == nullptr) return false;
+
+    MYSQL_ROW row;
+    row = mysql_fetch_row(res);
+    
+    p.post_id = std::stoi(row[0]);
+    p.user_id = std::stoi(row[1]);
+    p.author = row[2];
+    p.title = row[3];
+    p.content = row[4];
+    p.create_time = row[5];
+
+
+    return true;
 }

@@ -15,12 +15,13 @@ private:
     //POST
     HttpResponse login(const HttpRequest& request);
     HttpResponse registerUser(const HttpRequest& request);
-    HttpResponse post(const HttpRequest& request);
+    HttpResponse postCreate(const HttpRequest& request);
 
     //GET
     HttpResponse index(const HttpRequest& request);
     HttpResponse profile(const HttpRequest& request);
     HttpResponse posts(const HttpRequest& request);
+    HttpResponse post(const HttpRequest& request);
     
 };
 

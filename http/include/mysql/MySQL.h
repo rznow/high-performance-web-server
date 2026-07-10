@@ -33,4 +33,6 @@ public:
     MYSQL* get();
 
     void getPosts(std::vector<Post>& posts,size_t size,size_t offset);
+
+    bool getPost(int post_id, Post& p);
 };
