@@ -82,46 +82,37 @@ body{
 }
 
 
-
-.nav-right{
+.nav-user{
 
     display:flex;
+
+    align-items:center;
 
     gap:15px;
 
 }
 
-
-
-.nav-right a{
+.nav-user a{
 
     text-decoration:none;
 
-
     color:white;
-
 
     background:#409EFF;
 
-
-    padding:8px 18px;
-
+    padding:10px 18px;
 
     border-radius:6px;
-
 
     transition:.2s;
 
 }
 
-
-
-.nav-right a:hover{
+.nav-user a:hover{
 
     background:#2f7de1;
 
 }
-
 
 
 /* =========================
@@ -289,7 +280,33 @@ body{
 
 }
 
+#likeBtn{
 
+    background:#409EFF;
+
+    color:white;
+
+}
+
+#likeBtn:hover{
+
+    background:#2f7de1;
+
+}
+
+#deleteBtn{
+
+    background:#e74c3c;
+
+    color:white;
+
+}
+
+#deleteBtn:hover{
+
+    background:#c0392b;
+
+}
 
 /* 评论列表 */
 
@@ -459,3 +476,69 @@ body{
 
 
 }
+
+/* =========================
+        帖子信息栏
+========================= */
+
+.post-info{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin:20px 0;
+
+    color:#666;
+
+}
+
+.post-meta{
+
+    display:flex;
+
+    gap:20px;
+
+}
+
+.post-stat{
+
+    font-weight:bold;
+
+    color:#409EFF;
+
+}
+
+
+/* =========================
+        操作栏
+========================= */
+
+.post-action{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:15px;
+
+    margin-top:30px;
+
+}
+
+.post-action button{
+
+    padding:10px 18px;
+
+    border:none;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+

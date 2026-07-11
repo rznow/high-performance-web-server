@@ -84,31 +84,43 @@ void Connection::handleRead(Reactor* reactor)
         HttpRequest request;
         request.parseRequest(inputbuffer);
         auto self = shared_from_this();
-        if(request.getMethod() == "GET")
-        {
-            HttpServer httpServer;
-            HttpResponse resp = httpServer.handleRequest(request);        
-            // //注册发送事件(需要在主业务逻辑中)
-            reactor->enResponse([self, resp = std::move(resp), reactor]{
-                self->outputbuffer.append(resp.toString());
+        // if(request.getMethod() == "GET")
+        // {
+        //     HttpServer httpServer;
+        //     HttpResponse resp = httpServer.handleRequest(request);        
+        //     // //注册发送事件(需要在主业务逻辑中)
+        //     reactor->enResponse([self, resp = std::move(resp), reactor]{
+        //         self->outputbuffer.append(resp.toString());
 
-                reactor->enableWrite(self->fd);
-            }); 
-        }else if(request.getMethod() == "POST")
-        {
-            pool->enqueue([request, self, reactor] 
-                {
-                    HttpServer httpServer;
-                    HttpResponse resp = httpServer.handleRequest(request);
-                    // //注册发送事件(需要在主业务逻辑中)
-                    reactor->enResponse([self, resp = std::move(resp), reactor]{
-                        self->outputbuffer.append(resp.toString());
+        //         reactor->enableWrite(self->fd);
+        //     }); 
+        // }else if(request.getMethod() == "POST")
+        // {
+        //     pool->enqueue([request, self, reactor] 
+        //         {
+        //             HttpServer httpServer;
+        //             HttpResponse resp = httpServer.handleRequest(request);
+        //             // //注册发送事件(需要在主业务逻辑中)
+        //             reactor->enResponse([self, resp = std::move(resp), reactor]{
+        //                 self->outputbuffer.append(resp.toString());
 
-                        reactor->enableWrite(self->fd);
-                    }); 
-                }
-            );
-        }
+        //                 reactor->enableWrite(self->fd);
+        //             }); 
+        //         }
+        //     );
+        // }
+        pool->enqueue([request, self, reactor] 
+            {
+                HttpServer httpServer;
+                HttpResponse resp = httpServer.handleRequest(request);
+                // //注册发送事件(需要在主业务逻辑中)
+                reactor->enResponse([self, resp = std::move(resp), reactor]{
+                    self->outputbuffer.append(resp.toString());
+
+                    reactor->enableWrite(self->fd);
+                }); 
+            }
+        );
         
     }
 }

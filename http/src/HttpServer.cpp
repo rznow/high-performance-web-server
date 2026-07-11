@@ -70,6 +70,9 @@ HttpResponse HttpServer::handleRequest(const HttpRequest& request)
     else if(request.getMethod() == "POST")
     {
         return handlePost(request);
+    }else if(request.getMethod() == "DELETE")
+    {
+        return handleDel(request);
     }
     HttpResponse resp;
     resp.setStatus(405, "Method Not Allowed");
@@ -366,7 +369,7 @@ HttpResponse HttpServer::profile(const HttpRequest& request)
         j["code"] = 1003;
         j["msg"] = "token invalid";
 
-
+        resp.setStatus(200, "OK");
         resp.setBody(j.dump());
         resp.setHeader("Content-Type", "application/json");
         resp.setHeader("Content-Length", std::to_string(j.dump().size()));
@@ -413,6 +416,7 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
     {
         post_array.push_back({
             {"post_id", i.post_id},
+            {"user_id", i.user_id},
             {"title", i.title},
             {"content", i.content},
             {"author", i.author},
@@ -451,6 +455,8 @@ HttpResponse HttpServer::post(const HttpRequest& request)
     }else
     {
         j["code"] = 0;
+        j["post"]["post_id"] = p.post_id;
+        j["post"]["user_id"] = p.user_id;
         j["post"]["title"] = p.title;
         j["post"]["author"] = p.author;
         j["post"]["time"] = p.create_time;
@@ -463,5 +469,52 @@ HttpResponse HttpServer::post(const HttpRequest& request)
     resp.setHeader("Content-Length", std::to_string(j.dump().size()));
     resp.setBody(j.dump());
     std::cout<<j.dump()<<std::endl;
+    return resp;
+}
+
+HttpResponse HttpServer::handleDel(const HttpRequest& request)
+{
+    //服务器回应
+    HttpResponse resp;
+    json j;
+    std::string auth = request.getHeader("Authorization");
+    if(auth.starts_with("Bearer "))
+    {
+        auth = auth.substr(7);
+    }
+
+    UserInfo user;
+    if(!JWT::verifyToken(auth, user))
+    {
+        j["code"] = 1003;
+        j["msg"] = "token invalid";
+
+        resp.setStatus(200, "OK");
+        resp.setBody(j.dump());
+        resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Content-Length", std::to_string(j.dump().size()));
+        return resp;
+
+    }
+
+    int id = std::stoi(request.getPath().substr(7));
+
+    if(PostService::getInstance().delPost(id))
+    {
+        j["code"] = 0;
+        j["user_id"] = user.user_id;
+        j["msg"] = "delete success";
+    }else
+    {
+        j["code"] = 1001;
+        j["user_id"] = user.user_id;
+        j["msg"] = "delete fail";
+    }
+
+    resp.setStatus(200, "OK");
+    resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Content-Length", std::to_string(j.dump().size()));
+    resp.setBody(j.dump());
+    std::cout<<j.dump()<<std::endl<<std::endl;
     return resp;
 }

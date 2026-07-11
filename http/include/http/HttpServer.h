@@ -22,6 +22,9 @@ private:
     HttpResponse profile(const HttpRequest& request);
     HttpResponse posts(const HttpRequest& request);
     HttpResponse post(const HttpRequest& request);
+
+    //DELETE
+    HttpResponse handleDel(const HttpRequest& request);
     
 };
 

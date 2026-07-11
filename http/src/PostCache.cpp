@@ -75,9 +75,9 @@ void PostCache::put(const Post& p)
     
 }
 
-ListNode* PostCache::removeNode(int key)
+ListNode* PostCache::removeNode(int post_id)
 {
-    ListNode *node = cache[key];
+    ListNode *node = cache[post_id];
     node->pre->next = node->next;
     node->next->pre = node->pre;
 
@@ -107,4 +107,15 @@ void PostCache::printPosts()
         cur->p.print();
         cur = cur->next;
     }   
+}
+
+void PostCache::erase(size_t post_id)
+{
+    std::unique_lock<std::mutex> ul(mtx);
+    if(cache.find(post_id)!=cache.end())
+    {
+        ListNode *node = removeNode(post_id);
+        cache.erase(post_id);
+        delete node;
+    }
 }

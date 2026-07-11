@@ -37,7 +37,7 @@ class PostCache
         ListNode* removeNode(int post_id);
         void addToHead(ListNode* node);
         void removeEnd();
-        
+        void erase(size_t post_id);
         
 };
 

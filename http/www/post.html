@@ -31,22 +31,10 @@
     </div>
 
 
-    <div class="nav-right">
+    <div class="nav-user", id="nav-user">
 
-        <a href="/index.html">
-            首页
-        </a>
-
-
-        <a href="/login.html">
-            登录
-        </a>
-
-
-        <a href="/register.html">
-            注册
-        </a>
-
+        
+    <!-- JS 动态生成 -->
 
     </div>
 
@@ -79,21 +67,26 @@
 
         <div class="post-info">
 
-
-            <span id="author">
-
-                作者:
-
-            </span>
-
-
-            <span id="time">
-
-                时间:
-
-            </span>
-
-
+            <div class="post-meta">
+        
+                <span id="author">
+                    作者：
+                </span>
+        
+                <span id="time">
+                    时间：
+                </span>
+        
+            </div>
+        
+            <div class="post-stat">
+        
+                <span id="likeCount">
+                    👍 0
+                </span>
+        
+            </div>
+        
         </div>
 
 
@@ -110,6 +103,23 @@
             正在加载帖子内容...
 
 
+        </div>
+
+        <div class="post-action">
+
+            <button id="likeBtn">
+        
+                👍 点赞
+        
+            </button>
+        
+            <button id="deleteBtn"
+                    style="display:none;">
+        
+                🗑 删除
+        
+            </button>
+        
         </div>
 
 

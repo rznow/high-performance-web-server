@@ -266,3 +266,17 @@ bool MySQL::getPost(int post_id, Post& p)
 
     return true;
 }
+
+bool MySQL::delPost(int post_id)
+{
+    std::string sql = R"(
+    DELETE
+    FROM posts
+    where post_id = )" 
+    + std::to_string(post_id) +
+    ";";
+    std::cout<<sql<<std::endl;
+    if(!query(sql)) return false;
+
+    return true;
+}

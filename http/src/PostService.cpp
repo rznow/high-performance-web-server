@@ -45,3 +45,14 @@ std::vector<Post> PostService::getPosts(size_t page, size_t size)
     for(auto &p: posts) PostCache::getInstance().put(p);
     return posts;
 }
+
+bool PostService::delPost(size_t post_id)
+{
+    auto mysql = pool.getConnection();
+
+    bool res = mysql->delPost(post_id);
+    
+    PostCache::getInstance().erase(post_id);
+
+    return res;
+}

@@ -21,6 +21,7 @@ class PostService
         void put(Post p);
         bool get(int post_id, Post& p);
         std::vector<Post> getPosts(size_t page, size_t size);  
+        bool delPost(size_t post_id);
 };
 
 

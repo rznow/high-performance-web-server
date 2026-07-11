@@ -8,7 +8,75 @@ window.onload=function(){
 
 };
 
+//检验token
+async function checkLogin()
+{
+    const token = localStorage.getItem("token");
 
+    const nav = document.getElementById("nav-user");
+
+    // 没登录
+    if(!token)
+    {
+        nav.innerHTML = `
+        <a href="/index.html">首页</a>
+        <a href="/login.html">登录</a>
+        <a href="/register.html">注册</a>
+        `;
+        return;
+    }
+
+    try
+    {
+        const response = await fetch("/profile",{
+
+            headers:{
+                Authorization:"Bearer " + token
+            }
+
+        });
+
+        const data = await response.json();
+
+        if(data.code != 0)
+        {
+            localStorage.removeItem("token");
+
+            nav.innerHTML = `
+                <a href="/login.html">登录</a>
+                <a href="/register.html">注册</a>
+            `;
+
+            return;
+        }
+
+        nav.innerHTML = `
+            <span class="username">
+                欢迎，${data.user_name}
+            </span>
+
+            <a href="#" id="logout">
+                退出
+            </a>
+        `;
+
+        document.getElementById("logout")
+            .onclick = logout;
+    }
+    catch(err)
+    {
+        console.log(err);
+    }
+}
+
+window.addEventListener(
+    "load",
+    function(){
+
+        checkLogin();
+
+    }
+);
 
 
 // 获取帖子ID
@@ -26,14 +94,30 @@ function getPostId()
 
 }
 
+let id=getPostId();
 
+//获取当前用户id
+function getCurrentUserId()
+{
+    const token =
+        localStorage.getItem("token");
+
+    if(!token)
+        return null;
+
+    const payload =
+        JSON.parse(
+            atob(
+                token.split('.')[1]
+            )
+        );
+
+    return Number(payload.user_id);
+}
 
 
 async function loadPost()
 {
-
-
-    let id=getPostId();
 
 
     if(!id)
@@ -109,9 +193,13 @@ async function loadPost()
             "content"
         ).innerHTML =
             post.content;
-
-
-
+        
+        if(post.user_id==getCurrentUserId())
+        {
+            document
+                .getElementById("deleteBtn")
+                .style.display="inline-block";
+        }
     }
     catch(e)
     {
@@ -125,6 +213,72 @@ async function loadPost()
         "服务器连接失败";
 
     }
+}
 
+document
+.getElementById("likeBtn")
+.onclick=async()=>{
+
+    let token=
+        localStorage.getItem("token");
+
+    let res=
+        await fetch(
+            "/posts/"+id+"/like",
+            {
+                method:"POST",
+
+                headers:{
+                    Authorization:
+                    "Bearer "+token
+                }
+            }
+        );
+
+    let json=
+        await res.json();
+
+    if(json.code==0)
+    {
+        document
+            .getElementById("likeCount")
+            .innerText=
+            "👍 "+json.like_count;
+    }
+
+}
+
+document
+.getElementById("deleteBtn")
+.onclick=async()=>{
+
+    if(!confirm("确定删除该帖子？"))
+        return;
+
+    let token=
+        localStorage.getItem("token");
+
+    let res=
+        await fetch(
+            "/posts/"+id,
+            {
+                method:"DELETE",
+
+                headers:{
+                    Authorization:
+                    "Bearer "+token
+                }
+            }
+        );
+
+    let json=
+        await res.json();
+
+    if(json.code==0)
+    {
+        alert("删除成功");
+
+        location.href="/index.html";
+    }
 
 }
