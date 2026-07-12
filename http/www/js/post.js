@@ -47,6 +47,8 @@ async function checkLogin()
                 <a href="/register.html">注册</a>
             `;
 
+            location.href="/login.html";
+
             return;
         }
 
@@ -67,6 +69,14 @@ async function checkLogin()
     {
         console.log(err);
     }
+}
+
+//退出登录
+function logout()
+{
+    localStorage.removeItem("token");
+
+    location.replace("/login.html");
 }
 
 window.addEventListener(
@@ -95,7 +105,6 @@ function getPostId()
 }
 
 let id=getPostId();
-let liked=false;
 
 //获取当前用户id
 function getCurrentUserId()
@@ -152,7 +161,7 @@ async function loadPost()
 
             );
 
-
+        
 
         let data =
             await response.json();
@@ -205,21 +214,19 @@ async function loadPost()
         ).innerHTML =
             post.content;
         
-        if(post.user_id==getCurrentUserId())
+        if(post.user_id == getCurrentUserId())
         {
-            document
-                .getElementById("deleteBtn")
-                .style.display="inline-block";
+            document.getElementById("editBtn").style.display = "inline-block";
+            document.getElementById("deleteBtn").style.display = "inline-block";
         }
-
+        
         document.getElementById("likeCount")
         .innerText="👍 "+post.like_count;
 
         const likeBtn =
             document.getElementById("likeBtn");
 
-        liked = post.liked
-        if(liked)
+        if(post.liked)
         {
             likeBtn.innerText="❤️ 已点赞";
         }
@@ -273,15 +280,10 @@ document
             "👍 "+json.like_count;
         
     }
-    liked = !liked
-    if(liked)
-    {
-        likeBtn.innerText="❤️ 已点赞";
-    }
-    else
-    {
-        likeBtn.innerText="🤍 点赞";
-    }
+    document.getElementById("likeBtn").innerText =
+    json.liked ?
+    "❤️ 已点赞" :
+    "🤍 点赞";
 }
 
 document
@@ -317,4 +319,100 @@ document
         location.href="/index.html";
     }
 
+}
+
+document
+.getElementById("editBtn")
+.onclick=function(){
+
+    document.getElementById("titleEdit").value =
+        document.getElementById("title").innerText;
+
+    document.getElementById("contentEdit").value =
+        document.getElementById("content").innerText;
+
+    document.getElementById("title").style.display="none";
+    document.getElementById("content").style.display="none";
+
+    document.getElementById("titleEdit").style.display="block";
+    document.getElementById("contentEdit").style.display="block";
+
+    document.getElementById("editAction").style.display="block";
+
+    document.getElementById("editBtn").style.display="none";
+}
+
+document
+.getElementById("saveBtn")
+.onclick=async()=>{
+
+    const token=
+        localStorage.getItem("token");
+
+    const title=
+        document.getElementById("titleEdit").value;
+
+    const content=
+        document.getElementById("contentEdit").value;
+
+    let res=
+        await fetch(
+            "/posts/"+id,
+            {
+
+                method:"PUT",
+
+                headers:{
+
+                    Authorization:
+                    "Bearer "+token,
+
+                    "Content-Type":
+                    "application/json"
+
+                },
+
+                body:JSON.stringify({
+
+                    title:title,
+
+                    content:content
+
+                })
+
+            }
+        );
+
+    let json=
+        await res.json();
+
+    if(json.code==0)
+    {
+        loadPost();
+
+        document.getElementById("title").style.display="block";
+        document.getElementById("content").style.display="block";
+
+        document.getElementById("titleEdit").style.display="none";
+        document.getElementById("contentEdit").style.display="none";
+
+        document.getElementById("editAction").style.display="none";
+
+        document.getElementById("editBtn").style.display="inline-block";
+    }
+}
+
+document
+.getElementById("cancelBtn")
+.onclick=function(){
+
+    document.getElementById("title").style.display="block";
+    document.getElementById("content").style.display="block";
+
+    document.getElementById("titleEdit").style.display="none";
+    document.getElementById("contentEdit").style.display="none";
+
+    document.getElementById("editAction").style.display="none";
+
+    document.getElementById("editBtn").style.display="inline-block";
 }

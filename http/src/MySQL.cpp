@@ -2,7 +2,7 @@
 #include "common/UserInfo.h"
 #include <mysql/mysql.h>
 #include <common/Post.h>
-#include <common/PostCache.h>
+// #include <common/PostCache.h>
 #include <iostream>
 
 MySQL::MySQL()
@@ -267,7 +267,7 @@ bool MySQL::getPost(int post_id, Post& p)
     
     p = Post(row);
    
-
+    p.print();
 
     return true;
 }
@@ -287,7 +287,7 @@ bool MySQL::delPost(int post_id)
     return true;
 }
 
-int MySQL::like(int post_id, int user_id)
+int MySQL::like(int post_id, int user_id, bool& liked)
 {
     std::string sql = R"(
     SELECT * FROM
@@ -322,6 +322,7 @@ int MySQL::like(int post_id, int user_id)
             std::to_string(post_id) + 
             ";";
         if(!query(sql)) return -1;
+        liked = true;
     }else
     {
         sql = R"(
@@ -340,6 +341,7 @@ int MySQL::like(int post_id, int user_id)
             std::to_string(post_id) + 
             ";";
         if(!query(sql)) return -1;
+        liked = false;
     }
 
     sql = R"(
@@ -367,11 +369,47 @@ bool MySQL::liked(int post_id, int user_id)
     + std::to_string(user_id) +
     ";";
 
-    if(!query(sql)) return -1;
+    if(!query(sql)) return false;
     MYSQL_RES* res = mysql_store_result(conn);
-    if(res == nullptr) return -1;
+    if(res == nullptr) return false;
     MYSQL_ROW row = mysql_fetch_row(res);
 
     if(row == NULL) return false;
+    return true;
+}
+
+bool MySQL::checkPost(int post_id, int user_id)
+{
+    std::string sql = R"(
+    SELECT * FROM
+    posts
+    where post_id = )" 
+    + std::to_string(post_id) +
+    " and user_id = "
+    + std::to_string(user_id) +
+    ";";
+
+    if(!query(sql)) return false;
+    MYSQL_RES* res = mysql_store_result(conn);
+    if(res == nullptr) return false;
+    MYSQL_ROW row = mysql_fetch_row(res);
+
+    if(row == NULL) return false;
+    return true;
+}
+
+bool MySQL::modPost(int post_id, std::string title, std::string content)
+{
+    std::string sql = R"(
+    UPDATE posts
+    SET title = ')" + 
+    title + "',"
+    " content = '" + 
+    content + "'"
+    "where post_id = " +
+    std::to_string(post_id) +
+    ";";
+
+    if(!query(sql)) return false;
     return true;
 }

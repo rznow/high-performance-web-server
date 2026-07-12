@@ -34,6 +34,7 @@ class PostCache
         static PostCache& getInstance();
         bool get(int post_id, Post& post);
         void put(const Post& p);
+        void update(int post_id, bool liked);
         ListNode* removeNode(int post_id);
         void addToHead(ListNode* node);
         void removeEnd();

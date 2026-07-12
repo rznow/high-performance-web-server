@@ -36,17 +36,21 @@ bool PostService::get(int post_id, Post& p)
     return res;
 }
 
-int PostService::like(int post_id, int user_id)
+int PostService::like(int post_id, int user_id, bool& liked)
 {
     auto mysql = pool.getConnection();
 
-    return mysql->like(post_id, user_id);
+    int res = mysql->like(post_id, user_id, liked);
+
+    PostCache::getInstance().update(post_id, liked);
+
+    return res;
 }
 
 bool PostService::liked(int post_id, int user_id)
 {
     auto mysql = pool.getConnection();
-
+    
     return mysql->liked(post_id, user_id);
 }
 
@@ -69,4 +73,19 @@ bool PostService::delPost(size_t post_id)
     PostCache::getInstance().erase(post_id);
 
     return res;
+}
+
+int PostService::modPost(size_t post_id, size_t user_id, std::string title, std::string content)
+{
+    auto mysql = pool.getConnection();
+
+    if(mysql->checkPost(post_id, user_id))
+    {
+        if(mysql->modPost(post_id, title, content))
+        {
+            return 0;
+        }
+        return 2; //修改失败
+    }
+    return 1;  //帖子并非当前用户所有
 }

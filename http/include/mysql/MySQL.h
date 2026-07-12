@@ -38,7 +38,11 @@ public:
 
     bool delPost(int post_id);
 
-    int like(int post_id, int user_id);
+    int like(int post_id, int user_id, bool& liked);
 
     bool liked(int post_id, int user_id);
+
+    bool checkPost(int post_id, int user_id);
+
+    bool modPost(int post_id, std::string title, std::string content);
 };

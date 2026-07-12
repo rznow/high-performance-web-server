@@ -75,6 +75,16 @@ void PostCache::put(const Post& p)
     
 }
 
+void PostCache::update(int post_id, bool liked)
+{
+    std::unique_lock<std::mutex> ul(mtx);
+    if(cache.find(post_id) != cache.end())
+    {
+        if(liked) cache[post_id]->p.like_count++;
+        else cache[post_id]->p.like_count--;
+    }
+}
+
 ListNode* PostCache::removeNode(int post_id)
 {
     ListNode *node = cache[post_id];

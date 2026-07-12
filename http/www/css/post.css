@@ -114,6 +114,13 @@ body{
 
 }
 
+.username{
+
+    font-weight:bold;
+
+    color:#409EFF;
+
+}
 
 /* =========================
         主体
@@ -168,28 +175,6 @@ body{
 
 
     color:#222;
-
-}
-
-
-
-.post-info{
-
-
-    display:flex;
-
-
-    gap:30px;
-
-
-    color:#888;
-
-
-    font-size:14px;
-
-
-    margin-bottom:20px;
-
 
 }
 
@@ -423,7 +408,11 @@ body{
 
 }
 
+.comment-input textarea{
 
+    transition:.2s;
+
+}
 
 /* =========================
         手机适配
@@ -477,6 +466,34 @@ body{
 
 }
 
+@media(max-width:600px){
+
+    .post-info{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:10px;
+
+    }
+
+    .post-action{
+
+        flex-wrap:wrap;
+
+        justify-content:flex-start;
+
+    }
+
+    .post-action button{
+
+        flex:1;
+
+    }
+
+}
+
 /* =========================
         帖子信息栏
 ========================= */
@@ -493,6 +510,8 @@ body{
 
     color:#666;
 
+    font-size:14px;
+
 }
 
 .post-meta{
@@ -504,6 +523,12 @@ body{
 }
 
 .post-stat{
+
+    display:flex;
+
+    gap:20px;
+
+    align-items:center;
 
     font-weight:bold;
 
@@ -542,3 +567,226 @@ body{
 
 }
 
+/* =========================
+        编辑标题
+========================= */
+
+.title-edit{
+
+    width:100%;
+
+    font-size:30px;
+
+    font-weight:bold;
+
+    padding:12px;
+
+    margin-bottom:20px;
+
+    border:1px solid #ddd;
+
+    border-radius:8px;
+
+    outline:none;
+
+}
+
+.title-edit:focus{
+
+    border-color:#409EFF;
+
+}
+
+/* =========================
+        编辑正文
+========================= */
+
+.content-edit{
+
+    width:100%;
+
+    min-height:320px;
+
+    resize:vertical;
+
+    padding:15px;
+
+    font-size:17px;
+
+    line-height:1.8;
+
+    border:1px solid #ddd;
+
+    border-radius:8px;
+
+    outline:none;
+
+    margin-top:20px;
+
+}
+
+.content-edit:focus{
+
+    border-color:#409EFF;
+
+}
+
+/* =========================
+        编辑模式按钮
+========================= */
+
+#saveBtn{
+
+    background:#2ecc71;
+
+    color:white;
+
+}
+
+#saveBtn:hover{
+
+    background:#27ae60;
+
+}
+
+#cancelBtn{
+
+    background:#95a5a6;
+
+    color:white;
+
+}
+
+#cancelBtn:hover{
+
+    background:#7f8c8d;
+
+}
+/* =========================
+           logo
+========================= */
+.logo a{
+
+    color:#409EFF;
+
+    text-decoration:none;
+
+}
+
+.logo a:hover{
+
+    color:#2f7de1;
+
+}
+
+/* =========================
+        按钮统一
+========================= */
+
+.post-action button{
+
+    min-width:90px;
+
+    font-size:15px;
+
+    font-weight:bold;
+
+    user-select:none;
+
+}
+
+.comment-input button{
+
+    min-width:120px;
+
+    font-weight:bold;
+
+}
+
+/* =========================
+        卡片动画
+========================= */
+
+.post-box,
+.comment-box{
+
+    transition:
+        box-shadow .2s,
+        transform .2s;
+
+}
+
+.post-box:hover,
+.comment-box:hover{
+
+    box-shadow:
+        0 8px 24px rgba(0,0,0,.12);
+
+}
+
+/* =========================
+        Logo
+========================= */
+
+.logo{
+
+    user-select:none;
+
+}
+
+.logo a{
+
+    color:#409EFF;
+
+    text-decoration:none;
+
+}
+
+.logo a:hover{
+
+    color:#2f7de1;
+
+}
+
+/* =========================
+        输入框动画
+========================= */
+
+textarea,
+input{
+
+    transition:
+        border-color .2s,
+        box-shadow .2s;
+
+}
+
+textarea:focus,
+input:focus{
+
+    box-shadow:
+        0 0 5px rgba(64,158,255,.3);
+
+}
+
+/* =========================
+        评论
+========================= */
+
+.comment{
+
+    line-height:1.8;
+
+    font-size:15px;
+
+}
+
+/* =========================
+        操作按钮动画
+========================= */
+
+.post-action button:hover{
+
+    transform:translateY(-2px);
+
+}

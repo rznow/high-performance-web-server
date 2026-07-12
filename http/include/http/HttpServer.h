@@ -11,6 +11,8 @@ public:
 private:
     HttpResponse handleGet(const HttpRequest& request);
     HttpResponse handlePost(const HttpRequest& request);
+    HttpResponse handleDel(const HttpRequest& request);
+    HttpResponse handlePut(const HttpRequest& request);
 
     //POST
     HttpResponse login(const HttpRequest& request);
@@ -24,9 +26,9 @@ private:
     HttpResponse posts(const HttpRequest& request);
     HttpResponse post(const HttpRequest& request);
     
+    //DEL
 
-    //DELETE
-    HttpResponse handleDel(const HttpRequest& request);
+    //PUT
     
 };
 

@@ -34,8 +34,6 @@ async function loadUser()
     {
         localStorage.removeItem("token");
 
-        location.href="/login.html";
-
         return;
     }
 
@@ -113,7 +111,7 @@ function logout()
 {
     localStorage.removeItem("token");
 
-    location.reload();
+    location.replace("/login.html");
 }
 
 //发帖

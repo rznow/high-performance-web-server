@@ -10,52 +10,50 @@
 
     <title>帖子详情 - MiniForum</title>
 
-
     <link rel="stylesheet" href="/css/post.css">
 
 </head>
 
-
 <body>
 
 
-<!-- 顶部导航 -->
+<!-- ==================== 导航栏 ==================== -->
 
 <header class="navbar">
 
-
     <div class="logo">
 
-        MiniForum
+        <a href="/index.html">
+
+            MiniForum
+
+        </a>
 
     </div>
 
+    <div
+        class="nav-user"
+        id="nav-user">
 
-    <div class="nav-user", id="nav-user">
-
-        
-    <!-- JS 动态生成 -->
+        <!-- JS 动态生成 -->
 
     </div>
-
 
 </header>
 
 
 
-
-<!-- 内容区域 -->
-
+<!-- ==================== 主体 ==================== -->
 
 <div class="container">
 
 
-
-    <!-- 帖子主体 -->
-
+    <!-- 帖子 -->
 
     <div class="post-box">
 
+
+        <!-- 标题 -->
 
         <h1 id="title">
 
@@ -64,77 +62,136 @@
         </h1>
 
 
+        <input
+            id="titleEdit"
+            class="title-edit"
+            type="text"
+            style="display:none;">
+
+
+        <!-- 作者信息 -->
 
         <div class="post-info">
 
             <div class="post-meta">
-        
+
                 <span id="author">
+
                     作者：
+
                 </span>
-        
+
                 <span id="time">
+
                     时间：
+
                 </span>
-        
+
             </div>
-        
+
             <div class="post-stat">
-        
-                <span id="likeCount">
-                    👍 0
+
+                <span id="viewCount">
+
+                    👀 0
+
                 </span>
-        
+
+                <span id="commentCount">
+
+                    💬 0
+
+                </span>
+
+                <span id="likeCount">
+
+                    👍 0
+
+                </span>
+
             </div>
-        
+
         </div>
-
-
 
 
         <hr>
 
 
+        <!-- 正文 -->
 
-        <div id="content"
-             class="post-content">
-
+        <div
+            id="content"
+            class="post-content">
 
             正在加载帖子内容...
 
-
         </div>
+
+
+        <textarea
+            id="contentEdit"
+            class="content-edit"
+            style="display:none;"></textarea>
+
+
+        <!-- 浏览模式 -->
 
         <div class="post-action">
 
             <button id="likeBtn">
-        
-                👍 点赞
-        
+
+                🤍 点赞
+
             </button>
-        
-            <button id="deleteBtn"
-                    style="display:none;">
-        
+
+            <button
+                id="editBtn"
+                style="display:none;">
+
+                ✏️ 编辑
+
+            </button>
+
+            <button
+                id="deleteBtn"
+                style="display:none;">
+
                 🗑 删除
-        
+
             </button>
-        
+
         </div>
 
 
+        <!-- 编辑模式 -->
+
+        <div
+            id="editAction"
+            class="post-action"
+            style="display:none;">
+
+            <button id="saveBtn">
+
+                💾 保存
+
+            </button>
+
+            <button id="cancelBtn">
+
+                ❌ 取消
+
+            </button>
+
+        </div>
 
     </div>
 
 
 
 
-
-    <!-- 评论区域 -->
-
+    <!-- 评论 -->
 
     <div class="comment-box">
-
 
         <h2>
 
@@ -143,36 +200,22 @@
         </h2>
 
 
-
         <div id="commentList">
-
-
-            <!-- 后续加载评论 -->
-
 
             <div class="comment">
 
-
                 暂无评论
 
-
             </div>
-
 
         </div>
 
 
-
-
         <div class="comment-input">
-
 
             <textarea
                 id="comment"
-                placeholder="发表你的评论...">
-            </textarea>
-
-
+                placeholder="发表你的评论..."></textarea>
 
             <button id="sendComment">
 
@@ -180,25 +223,16 @@
 
             </button>
 
-
         </div>
 
-
-
     </div>
-
-
 
 
 </div>
 
 
-
-
 <script src="/js/post.js"></script>
 
-
 </body>
-
 
 </html>
