@@ -10,7 +10,7 @@ struct ListNode
     Post p;
     ListNode *pre = nullptr,*next = nullptr;
 
-    ListNode():p(-1),pre(nullptr),next(nullptr){}
+    ListNode():p(),pre(nullptr),next(nullptr){}
     ListNode(Post _p):p(_p),pre(nullptr),next(nullptr){}
 };
 

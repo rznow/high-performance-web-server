@@ -32,9 +32,13 @@ public:
 
     MYSQL* get();
 
-    void getPosts(std::vector<Post>& posts,size_t size,size_t offset);
+    void getPosts(std::vector<Post>& posts, size_t size,size_t offset);
 
     bool getPost(int post_id, Post& p);
 
     bool delPost(int post_id);
+
+    int like(int post_id, int user_id);
+
+    bool liked(int post_id, int user_id);
 };

@@ -6,6 +6,9 @@ USE miniforum;
 
 
 -- 用户表
+DROP TABLE IF EXISTS posts;
+DROP TABLE IF EXISTS user_info;
+
 CREATE TABLE IF NOT EXISTS user_info 
 (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -14,28 +17,41 @@ CREATE TABLE IF NOT EXISTS user_info
 
     password VARCHAR(128) NOT NULL,
 
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    deleted TINYINT(1) NOT NULL DEFAULT 0
 );
 
 
 
 -- 帖子表
-CREATE TABLE IF NOT EXISTS posts
+
+CREATE TABLE posts
 (
-    post_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id         INT PRIMARY KEY AUTO_INCREMENT,
 
-    user_id INT NOT NULL,
+    user_id         INT NOT NULL,
 
-    title VARCHAR(128) NOT NULL,
+    title           VARCHAR(128) NOT NULL,
 
-    content TEXT NOT NULL,
+    content         TEXT NOT NULL,
 
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    like_count      INT NOT NULL DEFAULT 0,
 
+    comment_count   INT NOT NULL DEFAULT 0,
 
-    FOREIGN KEY(user_id)
-    REFERENCES user_info(user_id)
+    view_count      INT NOT NULL DEFAULT 0,
 
+    create_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    update_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    ON UPDATE CURRENT_TIMESTAMP,
+
+    deleted         TINYINT(1) NOT NULL DEFAULT 0,
+
+    FOREIGN KEY (user_id)
+        REFERENCES user_info(user_id)
+        ON DELETE CASCADE
 );
 
 -- 公告表

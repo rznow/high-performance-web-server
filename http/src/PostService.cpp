@@ -36,6 +36,20 @@ bool PostService::get(int post_id, Post& p)
     return res;
 }
 
+int PostService::like(int post_id, int user_id)
+{
+    auto mysql = pool.getConnection();
+
+    return mysql->like(post_id, user_id);
+}
+
+bool PostService::liked(int post_id, int user_id)
+{
+    auto mysql = pool.getConnection();
+
+    return mysql->liked(post_id, user_id);
+}
+
 std::vector<Post> PostService::getPosts(size_t page, size_t size)
 {
     auto mysql = pool.getConnection();

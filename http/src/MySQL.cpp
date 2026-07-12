@@ -169,8 +169,17 @@ MYSQL* MySQL::get()
 
 int MySQL::savePost(Post& p)
 {
-    std::string sql = "INSERT INTO posts(user_id, title, content) \
-                       VALUES('" + std::to_string(p.user_id) + "','" + p.title + "','" + p.content + "');";
+    std::string sql = R"(
+    INSERT INTO 
+    posts(
+        user_id, 
+        title, 
+        content)
+    VALUES( )" 
+    + std::to_string(p.user_id) + " , '" 
+    + p.title + "' , '" 
+    + p.content 
+    + "' );";
     
     query(sql);
 
@@ -197,11 +206,15 @@ void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
         u.user_name,
         p.title,
         p.content,
+        p.like_count,
+        p.comment_count,
+        p.view_count,
         p.create_time
     FROM posts p
     INNER JOIN user_info u
     ON p.user_id = u.user_id
-    ORDER BY p.create_time ASC
+    WHERE p.deleted = 0
+    ORDER BY p.create_time DESC
     LIMIT )" 
     + std::to_string(size) +
     " OFFSET " +
@@ -217,17 +230,9 @@ void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
     MYSQL_ROW row;
     while((row = mysql_fetch_row(res)) != nullptr)
     {
-        Post p;
-        p.post_id = std::stoi(row[0]);
-        p.user_id = std::stoi(row[1]);
-        p.author = row[2];
-        p.title = row[3];
-        p.content = row[4];
-        p.create_time = row[5];
-
+        Post p(row);
         posts.push_back(std::move(p));
     }
-    
     
 }
 
@@ -240,12 +245,16 @@ bool MySQL::getPost(int post_id, Post& p)
         u.user_name,
         p.title,
         p.content,
+        p.like_count,
+        p.comment_count,
+        p.view_count,
         p.create_time
     FROM posts p
     INNER JOIN user_info u
     ON p.user_id = u.user_id
     where p.post_id = )" 
     + std::to_string(post_id) +
+    " and p.deleted <> 1"+
     ";";
 
     if(!query(sql)) return false;
@@ -256,12 +265,8 @@ bool MySQL::getPost(int post_id, Post& p)
     MYSQL_ROW row;
     row = mysql_fetch_row(res);
     
-    p.post_id = std::stoi(row[0]);
-    p.user_id = std::stoi(row[1]);
-    p.author = row[2];
-    p.title = row[3];
-    p.content = row[4];
-    p.create_time = row[5];
+    p = Post(row);
+   
 
 
     return true;
@@ -270,13 +275,103 @@ bool MySQL::getPost(int post_id, Post& p)
 bool MySQL::delPost(int post_id)
 {
     std::string sql = R"(
-    DELETE
-    FROM posts
+    UPDATE
+    posts
+    SET deleted = 1
     where post_id = )" 
     + std::to_string(post_id) +
     ";";
     std::cout<<sql<<std::endl;
     if(!query(sql)) return false;
 
+    return true;
+}
+
+int MySQL::like(int post_id, int user_id)
+{
+    std::string sql = R"(
+    SELECT * FROM
+    post_like
+    where post_id = )" 
+    + std::to_string(post_id) +
+    " and user_id = "
+    + std::to_string(user_id) +
+    ";";
+
+    if(!query(sql)) return -1;
+    MYSQL_RES* res = mysql_store_result(conn);
+    if(res == nullptr) return -1;
+    MYSQL_ROW row = mysql_fetch_row(res);
+
+    if(row == NULL) //没有点赞
+    {
+        sql = R"(
+            INSERT INTO post_like
+            (user_id, post_id)
+            VALUES( )" + 
+            std::to_string(user_id) +
+            " , " + 
+            std::to_string(post_id) + 
+            ");";
+        if(!query(sql)) return -1;
+        sql = R"(
+            UPDATE posts
+            SET like_count =
+            like_count + 1
+            WHERE post_id = )" + 
+            std::to_string(post_id) + 
+            ";";
+        if(!query(sql)) return -1;
+    }else
+    {
+        sql = R"(
+            DELETE FROM post_like
+            WHERE user_id = )" +
+            std::to_string(user_id) +
+            " and post_id = " + 
+            std::to_string(post_id) + 
+            ";";
+        if(!query(sql)) return -1;
+        sql = R"(
+            UPDATE posts
+            SET like_count =
+            like_count - 1
+            WHERE post_id = )" + 
+            std::to_string(post_id) + 
+            ";";
+        if(!query(sql)) return -1;
+    }
+
+    sql = R"(
+        SELECT like_count 
+        FROM posts
+        WHERE post_id = )" + 
+        std::to_string(post_id) + 
+        ";";
+    if(!query(sql)) return -1;
+
+    res = mysql_store_result(conn);
+    row = mysql_fetch_row(res);
+
+    return std::stoi(row[0]);
+}
+
+bool MySQL::liked(int post_id, int user_id)
+{
+    std::string sql = R"(
+    SELECT * FROM
+    post_like
+    where post_id = )" 
+    + std::to_string(post_id) +
+    " and user_id = "
+    + std::to_string(user_id) +
+    ";";
+
+    if(!query(sql)) return -1;
+    MYSQL_RES* res = mysql_store_result(conn);
+    if(res == nullptr) return -1;
+    MYSQL_ROW row = mysql_fetch_row(res);
+
+    if(row == NULL) return false;
     return true;
 }

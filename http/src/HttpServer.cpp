@@ -107,8 +107,12 @@ HttpResponse HttpServer::handlePost(const HttpRequest& request)
     std::string path = request.getPath();
     if(path == "/login")   return login(request);
     else if(path == "/register") return registerUser(request);
-    else if(path == "/post") return postCreate(request);
-
+    else if(path.starts_with("/post")) 
+    {
+        if(path.ends_with("/like")) return post_like(request);
+        return postCreate(request);
+    }
+    
     HttpResponse resp;
     resp.setStatus(404, "Not Found");
     resp.setHeader("Content-Type", "application/json");
@@ -272,6 +276,55 @@ HttpResponse HttpServer::registerUser(const HttpRequest& request)
 
 }
 
+HttpResponse HttpServer::post_like(const HttpRequest& request)
+{
+    std::string path = request.getPath();
+
+    size_t pos = path.find("post/")+5;
+    size_t end = path.find("/like");
+    int post_id = std::stoi(path.substr(pos, end-pos));
+
+    std::string auth = request.getHeader("Authorization");
+
+    if(auth.starts_with("Bearer "))
+    {
+        auth = auth.substr(7);
+    }
+    HttpResponse resp;
+    UserInfo user;
+    json j;
+    if(!JWT::verifyToken(auth, user))
+    {
+        j["code"] = 1003;
+        j["msg"] = "token invalid";
+
+
+        resp.setBody(j.dump());
+        resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Content-Length", std::to_string(j.dump().size()));
+        return resp;
+    }
+    
+    int like_count = PostService::getInstance().like(post_id, user.user_id);
+    if(like_count != -1)
+    {
+        j["code"] = 0;
+        j["like_count"] = like_count;
+    }else
+    {
+        j["code"] = 1001;
+        j["msg"] = "点赞失败";
+    }
+    
+    
+    resp.setStatus(200, "OK");
+    resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Content-Length", std::to_string(j.dump().size()));
+    resp.setBody(j.dump());
+    std::cout<<j.dump()<<std::endl;
+    return resp;
+}
+
 HttpResponse HttpServer::postCreate(const HttpRequest& request)
 {
     HttpResponse resp;
@@ -415,11 +468,16 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
     for(auto &i: posts)
     {
         post_array.push_back({
-            {"post_id", i.post_id},
-            {"user_id", i.user_id},
-            {"title", i.title},
-            {"content", i.content},
-            {"author", i.author},
+            {"post_id",         i.post_id},
+            {"user_id",         i.user_id},
+            {"author",          i.author},
+            {"title",           i.title},
+            {"content",         i.content},
+            {"like_count",      i.like_count},
+            {"comment_count",   i.comment_count},
+            {"view_count",      i.view_count},
+            
+            
             {"time", i.create_time}
         });
     }
@@ -445,7 +503,14 @@ HttpResponse HttpServer::post(const HttpRequest& request)
     json j;
     Post p;
     
-    
+    std::string auth = request.getHeader("Authorization");
+
+    if(auth.starts_with("Bearer "))
+    {
+        auth = auth.substr(7);
+    }
+    UserInfo user;
+    JWT::verifyToken(auth, user);
     if(!PostCache::getInstance().get(id, p)&&!PostService::getInstance().get(id, p))
     {
 
@@ -455,12 +520,16 @@ HttpResponse HttpServer::post(const HttpRequest& request)
     }else
     {
         j["code"] = 0;
-        j["post"]["post_id"] = p.post_id;
-        j["post"]["user_id"] = p.user_id;
-        j["post"]["title"] = p.title;
-        j["post"]["author"] = p.author;
-        j["post"]["time"] = p.create_time;
-        j["post"]["content"] = p.content;
+        j["post"]["post_id"]        = p.post_id;
+        j["post"]["user_id"]        = p.user_id;
+        j["post"]["author"]         = p.author;
+        j["post"]["title"]          = p.title;
+        j["post"]["content"]        = p.content;
+        j["post"]["like_count"]     = p.like_count;
+        j["post"]["comment_count"]  = p.comment_count;
+        j["post"]["view_count"]     = p.view_count;
+        j["post"]["time"]           = p.create_time;
+        j["post"]["liked"]          = PostService::getInstance().liked(id, user.user_id);
     }
     p.print();
     

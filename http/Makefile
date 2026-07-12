@@ -33,8 +33,6 @@ $(TARGET): $(OBJ)
 
 build/%.o: src/%.cpp
 
-	# mkdir -p build
-
 	$(CXX) $(CXXFLAGS) \
 	-c $< \
 	-o $@

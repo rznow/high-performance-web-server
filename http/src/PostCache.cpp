@@ -94,6 +94,10 @@ void PostCache::addToHead(ListNode* node)
 
 void PostCache::removeEnd()
 {
+    if(dummyEnd->pre == dummyHead)
+    {
+        return;
+    }
     ListNode* del = removeNode(dummyEnd->pre->p.post_id);
     cache.erase(del->p.post_id);
     delete del;

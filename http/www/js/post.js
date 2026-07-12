@@ -95,6 +95,7 @@ function getPostId()
 }
 
 let id=getPostId();
+let liked=false;
 
 //获取当前用户id
 function getCurrentUserId()
@@ -132,19 +133,29 @@ async function loadPost()
 
 
     try{
+        const token =
+        localStorage.getItem("token");
 
 
         let response =
-            await fetch(
-                "/post?id="+id
+            await fetch("/post?id="+id,{
+                
+            method:"GET",
+
+            headers:{
+
+                Authorization:
+                    "Bearer " + token
+
+            }
+                }
+
             );
 
 
 
         let data =
             await response.json();
-
-
 
 
         if(data.code!==0)
@@ -200,6 +211,22 @@ async function loadPost()
                 .getElementById("deleteBtn")
                 .style.display="inline-block";
         }
+
+        document.getElementById("likeCount")
+        .innerText="👍 "+post.like_count;
+
+        const likeBtn =
+            document.getElementById("likeBtn");
+
+        liked = post.liked
+        if(liked)
+        {
+            likeBtn.innerText="❤️ 已点赞";
+        }
+        else
+        {
+            likeBtn.innerText="🤍 点赞";
+        }
     }
     catch(e)
     {
@@ -224,7 +251,7 @@ document
 
     let res=
         await fetch(
-            "/posts/"+id+"/like",
+            "/post/"+id+"/like",
             {
                 method:"POST",
 
@@ -244,8 +271,17 @@ document
             .getElementById("likeCount")
             .innerText=
             "👍 "+json.like_count;
+        
     }
-
+    liked = !liked
+    if(liked)
+    {
+        likeBtn.innerText="❤️ 已点赞";
+    }
+    else
+    {
+        likeBtn.innerText="🤍 点赞";
+    }
 }
 
 document
@@ -276,7 +312,7 @@ document
 
     if(json.code==0)
     {
-        alert("删除成功");
+        // alert("删除成功");
 
         location.href="/index.html";
     }
