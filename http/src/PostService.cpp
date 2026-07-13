@@ -75,7 +75,14 @@ bool PostService::delPost(size_t post_id)
     return res;
 }
 
-int PostService::modPost(size_t post_id, size_t user_id, std::string title, std::string content)
+void PostService::modViewCount(size_t post_id)
+{
+    auto mysql = pool.getConnection();
+
+    mysql->view(post_id);
+}
+
+int PostService::modPost(size_t post_id, size_t user_id, std::string& title, std::string& content)
 {
     auto mysql = pool.getConnection();
 
@@ -83,6 +90,7 @@ int PostService::modPost(size_t post_id, size_t user_id, std::string title, std:
     {
         if(mysql->modPost(post_id, title, content))
         {
+            PostCache::getInstance().update(post_id, content);
             return 0;
         }
         return 2; //修改失败

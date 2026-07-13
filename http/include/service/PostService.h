@@ -24,7 +24,8 @@ class PostService
         bool liked(int post_id, int user_id);
         std::vector<Post> getPosts(size_t page, size_t size);  
         bool delPost(size_t post_id);
-        int modPost(size_t post_id, size_t user_id, std::string title, std::string content);
+        void modViewCount(size_t post_id);
+        int modPost(size_t post_id, size_t user_id, std::string& title, std::string& content);
 };
 
 

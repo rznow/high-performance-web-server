@@ -27,7 +27,7 @@ PostCache::PostCache(int _capcity)
     count = 0;
 }
 
-bool PostCache::get(int post_id, Post& post)
+bool PostCache::get(int post_id, int user_id, Post& post)
 {
     // for(auto &[key, value]: cache)
     // {
@@ -40,6 +40,8 @@ bool PostCache::get(int post_id, Post& post)
     {
         ListNode *node = removeNode(post_id);
         addToHead(node);
+        if(node->p.user_id != user_id)
+            node->p.view_count++;
         post = node->p;
         return true;
     }
@@ -82,6 +84,15 @@ void PostCache::update(int post_id, bool liked)
     {
         if(liked) cache[post_id]->p.like_count++;
         else cache[post_id]->p.like_count--;
+    }
+}
+
+void PostCache::update(int post_id, std::string& content)
+{
+    std::unique_lock<std::mutex> ul(mtx);
+    if(cache.find(post_id) != cache.end())
+    {
+        cache[post_id]->p.content = content;
     }
 }
 

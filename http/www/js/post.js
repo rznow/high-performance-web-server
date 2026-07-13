@@ -222,6 +222,8 @@ async function loadPost()
         
         document.getElementById("likeCount")
         .innerText="👍 "+post.like_count;
+        document.getElementById("viewCount")
+        .innerText="👀 "+post.view_count;
 
         const likeBtn =
             document.getElementById("likeBtn");
@@ -234,6 +236,8 @@ async function loadPost()
         {
             likeBtn.innerText="🤍 点赞";
         }
+
+        
     }
     catch(e)
     {
@@ -278,7 +282,6 @@ document
             .getElementById("likeCount")
             .innerText=
             "👍 "+json.like_count;
-        
     }
     document.getElementById("likeBtn").innerText =
     json.liked ?

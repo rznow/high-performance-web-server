@@ -378,6 +378,22 @@ bool MySQL::liked(int post_id, int user_id)
     return true;
 }
 
+int MySQL::view(int post_id)
+{
+    std::string sql = R"(
+    UPDATE posts
+    SET view_count =
+    view_count + 1
+    WHERE post_id = )" + 
+    std::to_string(post_id) + 
+    ";";
+    if(!query(sql)) return 0;
+    MYSQL_RES* res = mysql_store_result(conn);
+    if(res == nullptr) return 0;
+    MYSQL_ROW row = mysql_fetch_row(res);
+    return row != NULL?std::stoi(row[0]):0;
+}
+
 bool MySQL::checkPost(int post_id, int user_id)
 {
     std::string sql = R"(

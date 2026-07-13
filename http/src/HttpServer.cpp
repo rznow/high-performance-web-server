@@ -608,14 +608,13 @@ HttpResponse HttpServer::post(const HttpRequest& request)
     }
     UserInfo user;
     JWT::verifyToken(auth, user);
-    if(!PostCache::getInstance().get(id, p)&&!PostService::getInstance().get(id, p))
+    if(PostCache::getInstance().get(id, user.user_id, p)||PostService::getInstance().get(id, p))
     {
-
-        j["code"] = 1001;
-        j["msg"] = "post not found";
-
-    }else
-    {
+        if(p.user_id != user.user_id)
+        {
+            PostService::getInstance().modViewCount(id);
+        }
+            
         j["code"] = 0;
         j["post"]["post_id"]        = p.post_id;
         j["post"]["user_id"]        = p.user_id;
@@ -627,6 +626,11 @@ HttpResponse HttpServer::post(const HttpRequest& request)
         j["post"]["view_count"]     = p.view_count;
         j["post"]["time"]           = p.create_time;
         j["post"]["liked"]          = PostService::getInstance().liked(id, user.user_id);
+    }else
+    {
+        
+        j["code"] = 1001;
+        j["msg"] = "post not found";
     }
     p.print();
     std::string body = j.dump();
