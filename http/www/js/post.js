@@ -1,77 +1,163 @@
 console.log("post page");
 
 
+let id = getPostId();
 
-window.onload=function(){
+
+// ========================
+// 页面加载
+// ========================
+
+window.addEventListener("load",()=>{
+
+    checkLogin();
 
     loadPost();
 
-};
+});
 
-//检验token
+
+
+// ========================
+// 获取帖子ID
+// ========================
+
+function getPostId()
+{
+    let params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    return params.get("id");
+}
+
+
+
+// ========================
+// 获取当前用户ID
+// ========================
+
+function getCurrentUserId()
+{
+    let token =
+        localStorage.getItem("token");
+
+    if(!token)
+        return null;
+
+
+    let payload =
+        JSON.parse(
+            atob(
+                token.split(".")[1]
+            )
+        );
+
+
+    return Number(payload.user_id);
+}
+
+
+
+// ========================
+// 登录检测
+// ========================
+
 async function checkLogin()
 {
-    const token = localStorage.getItem("token");
 
-    const nav = document.getElementById("nav-user");
+    const nav =
+        document.getElementById("nav-user");
 
-    // 没登录
+
+    const token =
+        localStorage.getItem("token");
+
+
     if(!token)
     {
-        nav.innerHTML = `
+
+        nav.innerHTML=
+        `
         <a href="/index.html">首页</a>
         <a href="/login.html">登录</a>
         <a href="/register.html">注册</a>
         `;
+
         return;
+
     }
+
+
 
     try
     {
-        const response = await fetch("/profile",{
 
-            headers:{
-                Authorization:"Bearer " + token
-            }
+        let res =
+            await fetch(
+                "/profile",
+                {
+                    headers:
+                    {
+                        Authorization:
+                        "Bearer "+token
+                    }
+                }
+            );
 
-        });
 
-        const data = await response.json();
+        let data =
+            await res.json();
 
-        if(data.code != 0)
+
+
+        if(data.code!==0)
         {
-            localStorage.removeItem("token");
 
-            nav.innerHTML = `
-                <a href="/login.html">登录</a>
-                <a href="/register.html">注册</a>
-            `;
+            localStorage.removeItem("token");
 
             location.href="/login.html";
 
             return;
+
         }
 
-        nav.innerHTML = `
-            <span class="username">
-                欢迎，${data.user_name}
-            </span>
 
-            <a href="#" id="logout">
-                退出
-            </a>
+
+        nav.innerHTML=
+        `
+        <span class="username">
+            欢迎 ${data.user_name}
+        </span>
+
+        <a href="#" id="logout">
+            退出
+        </a>
         `;
 
-        document.getElementById("logout")
-            .onclick = logout;
+
+        document
+        .getElementById("logout")
+        .onclick=logout;
+
+
     }
-    catch(err)
+    catch(e)
     {
-        console.log(err);
+
+        console.log(e);
+
     }
+
 }
 
-//退出登录
+
+
+// ========================
+// 退出
+// ========================
+
 function logout()
 {
     localStorage.removeItem("token");
@@ -79,251 +165,240 @@ function logout()
     location.replace("/login.html");
 }
 
-window.addEventListener(
-    "load",
-    function(){
-
-        checkLogin();
-
-    }
-);
 
 
-// 获取帖子ID
-
-function getPostId()
-{
-
-    let params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-
-    return params.get("id");
-
-}
-
-let id=getPostId();
-
-//获取当前用户id
-function getCurrentUserId()
-{
-    const token =
-        localStorage.getItem("token");
-
-    if(!token)
-        return null;
-
-    const payload =
-        JSON.parse(
-            atob(
-                token.split('.')[1]
-            )
-        );
-
-    return Number(payload.user_id);
-}
-
+// ========================
+// 加载帖子
+// ========================
 
 async function loadPost()
 {
 
-
     if(!id)
     {
-
         alert("帖子不存在");
-
         return;
-
     }
 
 
+    try
+    {
 
-    try{
-        const token =
-        localStorage.getItem("token");
+        let token =
+            localStorage.getItem("token");
 
 
-        let response =
-            await fetch("/post?id="+id,{
-                
-            method:"GET",
-
-            headers:{
-
-                Authorization:
-                    "Bearer " + token
-
-            }
+        let res =
+            await fetch(
+                "/post?id="+id,
+                {
+                    headers:
+                    {
+                        Authorization:
+                        "Bearer "+token
+                    }
                 }
-
             );
 
-        
 
         let data =
-            await response.json();
+            await res.json();
+
 
 
         if(data.code!==0)
         {
-
-            document.getElementById(
-                "title"
-            ).innerHTML =
-                "帖子不存在";
-
+            document
+            .getElementById("title")
+            .innerHTML="帖子不存在";
 
             return;
-
         }
 
 
 
+        let post =
+            data.post;
 
-        let post=data.post;
 
 
-
-        document.getElementById(
-            "title"
-        ).innerHTML =
+        document
+        .getElementById("title")
+        .innerText =
             post.title;
 
 
 
-        document.getElementById(
-            "author"
-        ).innerHTML =
-            "作者:"
-            +post.author;
+        document
+        .getElementById("author")
+        .innerText =
+            "作者:"+post.author;
 
 
 
-        document.getElementById(
-            "time"
-        ).innerHTML =
+        document
+        .getElementById("time")
+        .innerText =
             post.time;
 
 
 
-        document.getElementById(
-            "content"
-        ).innerHTML =
+        document
+        .getElementById("content")
+        .innerText =
             post.content;
-        
-        if(post.user_id == getCurrentUserId())
-        {
-            document.getElementById("editBtn").style.display = "inline-block";
-            document.getElementById("deleteBtn").style.display = "inline-block";
-        }
-        
-        document.getElementById("likeCount")
-        .innerText="👍 "+post.like_count;
-        document.getElementById("viewCount")
-        .innerText="👀 "+post.view_count;
 
-        const likeBtn =
-            document.getElementById("likeBtn");
 
-        if(post.liked)
+
+        document
+        .getElementById("likeCount")
+        .innerText =
+            "👍 "+post.like_count;
+
+
+
+        document
+        .getElementById("viewCount")
+        .innerText =
+            "👀 "+post.view_count;
+
+
+
+
+        let uid =
+            getCurrentUserId();
+
+
+
+        if(post.user_id===uid)
         {
-            likeBtn.innerText="❤️ 已点赞";
-        }
-        else
-        {
-            likeBtn.innerText="🤍 点赞";
+
+            document
+            .getElementById("editBtn")
+            .style.display="inline-block";
+
+
+            document
+            .getElementById("deleteBtn")
+            .style.display="inline-block";
+
         }
 
-        
+
+
+        updateLikeButton(post.liked);
+
+        loadComments(true);
+
+
     }
     catch(e)
     {
 
         console.error(e);
 
-
-        document.getElementById(
-            "content"
-        ).innerHTML =
-        "服务器连接失败";
-
     }
+
 }
+
+const commentList =
+    document.getElementById("commentList");
+
+commentList.addEventListener("scroll", () => {
+
+    if (
+        commentList.scrollTop +
+        commentList.clientHeight >=
+        commentList.scrollHeight - 100
+    ) {
+        loadComments();
+    }
+
+});
+
+// ========================
+// 更新点赞按钮
+// ========================
+
+function updateLikeButton(liked)
+{
+
+    let btn =
+        document.getElementById("likeBtn");
+
+
+    btn.innerText =
+        liked?
+        "❤️ 已点赞":
+        "🤍 点赞";
+
+}
+
+
+
+// ========================
+// 点赞
+// ========================
 
 document
 .getElementById("likeBtn")
-.onclick=async()=>{
+.onclick=async function()
+{
 
-    let token=
+    let token =
         localStorage.getItem("token");
 
-    let res=
+
+    if(!token)
+    {
+        alert("请先登录");
+        return;
+    }
+
+
+
+    let res =
         await fetch(
             "/post/"+id+"/like",
             {
+
                 method:"POST",
 
-                headers:{
+                headers:
+                {
                     Authorization:
                     "Bearer "+token
                 }
+
             }
         );
 
-    let json=
+
+
+    let json =
         await res.json();
 
-    if(json.code==0)
+
+
+    if(json.code===0)
     {
+
         document
-            .getElementById("likeCount")
-            .innerText=
+        .getElementById("likeCount")
+        .innerText=
             "👍 "+json.like_count;
-    }
-    document.getElementById("likeBtn").innerText =
-    json.liked ?
-    "❤️ 已点赞" :
-    "🤍 点赞";
-}
 
-document
-.getElementById("deleteBtn")
-.onclick=async()=>{
 
-    if(!confirm("确定删除该帖子？"))
-        return;
 
-    let token=
-        localStorage.getItem("token");
+        updateLikeButton(json.liked);
 
-    let res=
-        await fetch(
-            "/posts/"+id,
-            {
-                method:"DELETE",
-
-                headers:{
-                    Authorization:
-                    "Bearer "+token
-                }
-            }
-        );
-
-    let json=
-        await res.json();
-
-    if(json.code==0)
-    {
-        // alert("删除成功");
-
-        location.href="/index.html";
     }
 
-}
+};
 
+// ========================
+// 编辑帖子
+// ========================
 document
 .getElementById("editBtn")
 .onclick=function(){
@@ -419,3 +494,225 @@ document
 
     document.getElementById("editBtn").style.display="inline-block";
 }
+
+
+// ========================
+// 删除帖子
+// ========================
+
+document
+.getElementById("deleteBtn")
+.onclick=async function()
+{
+
+    if(!confirm("确定删除？"))
+        return;
+
+
+
+    let token =
+        localStorage.getItem("token");
+
+
+
+    let res =
+        await fetch(
+            "/posts/"+id,
+            {
+
+                method:"DELETE",
+
+                headers:
+                {
+                    Authorization:
+                    "Bearer "+token
+                }
+
+            }
+        );
+
+
+
+    let json =
+        await res.json();
+
+
+    if(json.code===0)
+    {
+        location.href="/index.html";
+    }
+
+};
+
+
+
+// ========================
+// 加载评论
+// ========================
+
+let commentPage = 1;
+
+const commentSize = 10;
+
+let loadingComment = false;
+
+let hasMoreComment = true;
+
+async function loadComments(reset = false)
+{
+
+    if(reset)
+    {
+        commentPage = 1;
+
+        hasMoreComment = true;
+
+        document
+        .getElementById("commentList")
+        .innerHTML = "";
+    }
+
+    if(loadingComment || !hasMoreComment)
+        return;
+
+    loadingComment = true;
+
+    try
+    {
+
+        let response =
+            await fetch(
+                `/posts/${id}/comments?page=${commentPage}&size=${commentSize}`
+            );
+
+        let data =
+            await response.json();
+
+        if(data.code != 0)
+        {
+            loadingComment = false;
+            return;
+        }
+
+        const list =
+            document.getElementById("commentList");
+
+        data.comments.forEach(c=>{
+
+            let div =
+                document.createElement("div");
+
+            div.className = "comment";
+
+            div.innerHTML = `
+                <div class="comment-user">
+                    ${c.author}
+                </div>
+
+                <div class="comment-content">
+                    ${c.content}
+                </div>
+
+                <div class="comment-time">
+                    ${formatTime(c.time)}
+                </div>
+            `;
+
+            list.appendChild(div);
+
+        });
+
+        if(data.comments.length < commentSize)
+        {
+            hasMoreComment = false;
+        }
+        else
+        {
+            commentPage++;
+        }
+
+    }
+    finally
+    {
+        loadingComment = false;
+    }
+
+}
+
+function formatTime(timeStr)
+{
+    const date = new Date(timeStr.replace(" ", "T"));
+    const now = new Date();
+
+    const pad = (n) => String(n).padStart(2, "0");
+
+    // 不同年份
+    if (date.getFullYear() !== now.getFullYear())
+    {
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    }
+
+    // 同一天
+    if (
+        date.getMonth() === now.getMonth() &&
+        date.getDate() === now.getDate()
+    )
+    {
+        return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    // 同一年不同日期
+    return `${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+// ========================
+// 发送评论
+// ========================
+
+document
+.getElementById("sendComment")
+.onclick = async function()
+{
+    let token =
+        localStorage.getItem("token");
+
+    if(!token)
+    {
+        alert("请先登录");
+        return;
+    }
+
+    let content =
+        document.getElementById("comment").value.trim();
+
+    if(content === "")
+    {
+        alert("评论不能为空");
+        return;
+    }
+
+    let res =
+    await fetch("/post/" + id + "/comments", {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            content: content
+        })
+    });
+
+    let json =
+        await res.json();
+
+    if(json.code === 0)
+    {
+        document.getElementById("comment").value = "";
+
+    }
+    else
+    {
+        alert(json.msg);
+    }
+};

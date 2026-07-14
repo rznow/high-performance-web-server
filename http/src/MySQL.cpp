@@ -2,6 +2,7 @@
 #include "common/UserInfo.h"
 #include <mysql/mysql.h>
 #include <common/Post.h>
+#include <common/Comment.h>
 // #include <common/PostCache.h>
 #include <iostream>
 
@@ -197,6 +198,23 @@ int MySQL::savePost(Post& p)
     return post_id;
 }
 
+void MySQL::saveComment(Comment& c)
+{
+    std::string sql = R"(
+    INSERT INTO 
+    comments(
+        post_id, 
+        user_id, 
+        content)
+    VALUES( )" 
+    + std::to_string(c.post_id) + " , '" 
+    + std::to_string(c.user_id) + "' , '" 
+    + c.content 
+    + "' );";
+    
+    query(sql);
+}
+
 void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
 {
     std::string sql = R"(
@@ -234,6 +252,53 @@ void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
         posts.push_back(std::move(p));
     }
     
+}
+
+void MySQL::getComments(std::vector<Comment>& comments, size_t post_id, size_t size, size_t offset)
+{
+    std::string sql = R"(
+    SELECT
+        c.comment_id,
+        c.post_id,
+        c.user_id,
+
+        c.parent_id,
+        c.reply_user_id,
+
+        u.user_name,
+        u2.user_name AS reply_name,
+        c.content,
+        c.create_time
+    FROM comments c
+    JOIN user_info u
+    ON c.user_id=u.user_id
+
+    LEFT JOIN user_info u2
+    ON c.reply_user_id=u2.user_id
+
+    WHERE c.post_id=)" + std::to_string(post_id) +
+    R"(
+    ORDER BY
+    parent_id,
+    create_time
+    LIMIT )" 
+    + std::to_string(size) +
+    " OFFSET " +
+    std::to_string(offset) +
+    ";";
+    
+
+    if(!query(sql)) return;
+    MYSQL_RES * res = mysql_store_result(conn);
+
+    if(res == nullptr) return;
+
+    MYSQL_ROW row;
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        Comment c(row);
+        comments.push_back(std::move(c));
+    }
 }
 
 bool MySQL::getPost(int post_id, Post& p)
@@ -303,7 +368,7 @@ int MySQL::like(int post_id, int user_id, bool& liked)
     if(res == nullptr) return -1;
     MYSQL_ROW row = mysql_fetch_row(res);
 
-    if(row == NULL) //没有点赞
+    if(row == nullptr) //没有点赞
     {
         sql = R"(
             INSERT INTO post_like
@@ -374,7 +439,7 @@ bool MySQL::liked(int post_id, int user_id)
     if(res == nullptr) return false;
     MYSQL_ROW row = mysql_fetch_row(res);
 
-    if(row == NULL) return false;
+    if(row == nullptr) return false;
     return true;
 }
 
@@ -391,7 +456,7 @@ int MySQL::view(int post_id)
     MYSQL_RES* res = mysql_store_result(conn);
     if(res == nullptr) return 0;
     MYSQL_ROW row = mysql_fetch_row(res);
-    return row != NULL?std::stoi(row[0]):0;
+    return row != nullptr?std::stoi(row[0]):0;
 }
 
 bool MySQL::checkPost(int post_id, int user_id)
@@ -410,7 +475,7 @@ bool MySQL::checkPost(int post_id, int user_id)
     if(res == nullptr) return false;
     MYSQL_ROW row = mysql_fetch_row(res);
 
-    if(row == NULL) return false;
+    if(row == nullptr) return false;
     return true;
 }
 

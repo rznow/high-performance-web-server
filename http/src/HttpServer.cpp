@@ -16,6 +16,7 @@
 #include "JWT.h"
 #include "common/UserInfo.h"
 #include "common/Post.h"
+#include "common/Comment.h"
 #include "service/PostService.h"
 #include <nlohmann/json.hpp>
 #include <fstream>
@@ -94,7 +95,9 @@ HttpResponse HttpServer::handleGet(const HttpRequest& request)
         return profile(request);
     }else if(path.starts_with("/posts"))
     {
-        return posts(request);
+        if(path.starts_with("/posts?"))
+            return posts(request);
+        return comments(request);
     }else if(path.starts_with("/post.html"))
     {
         return index(request);
@@ -113,6 +116,7 @@ HttpResponse HttpServer::handlePost(const HttpRequest& request)
     else if(path.starts_with("/post")) 
     {
         if(path.ends_with("/like")) return post_like(request);
+        else if(path.ends_with("/comments")) return commentCreate(request);
         return postCreate(request);
     }
     
@@ -471,6 +475,57 @@ HttpResponse HttpServer::postCreate(const HttpRequest& request)
 
 }
 
+HttpResponse HttpServer::commentCreate(const HttpRequest& request)
+{
+    HttpResponse resp;
+    json j;
+    std::string auth = request.getHeader("Authorization");
+
+    if(auth.starts_with("Bearer "))
+    {
+        auth = auth.substr(7);
+    }
+
+    UserInfo user;
+    if(!JWT::verifyToken(auth, user))
+    {
+        j["code"] = 1003;
+        j["msg"] = "token invalid";
+        std::string body = j.dump();
+        resp.setBody(body);
+        resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Content-Length", std::to_string(body.size()));
+        return resp;
+    }
+
+    Comment c;
+
+    std::string path = request.getPath();
+    size_t start = path.find("/post/")+6;
+    size_t end = path.find("/comments");
+
+    c.post_id = std::stoi(path.substr(start, end));
+    c.user_id = user.user_id;
+    c.author  = user.user_name;
+    std::string body = request.getBody();
+
+    size_t pos = body.find(R"("content":)")+11;
+    c.content = body.substr(pos, body.size()-pos-2);
+    c.print();
+    PostService::getInstance().put(c);
+
+    j["code"] = 0;
+    j["msg"] = "postComment success";
+    body = j.dump();
+    resp.setStatus(200, "OK");
+    resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Content-Length", std::to_string(body.size()));
+    resp.setBody(body);
+    // std::cout<<j.dump()<<std::endl<<std::endl;
+    return resp;
+
+}
+
 HttpResponse HttpServer::index(const HttpRequest& request)
 {
     std::string path = request.getPath();
@@ -542,6 +597,7 @@ HttpResponse HttpServer::profile(const HttpRequest& request)
 
 HttpResponse HttpServer::posts(const HttpRequest& request)
 {
+    ///posts?page=1&size=10
     std::string path = request.getPath();
     size_t pos = 7;
 
@@ -579,6 +635,63 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
         });
     }
     j["posts"] = post_array;
+    std::string body = j.dump();
+    resp.setStatus(200, "OK");
+    resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Content-Length", std::to_string(body.size()));
+    resp.setBody(body);
+
+
+    return resp;
+}
+
+HttpResponse HttpServer::comments(const HttpRequest& request)
+{
+    ///posts/5/comments?page=1&size=10
+    std::string path = request.getPath();
+    size_t pos = 0;
+    size_t start = path.find("posts/")+6;
+    size_t end = path.find("/comments");
+    size_t post_id = std::stoi(path.substr(start, end-start));
+
+    start = path.find("page=")+5;
+    end = path.find('&');
+    size_t page = std::stoi(path.substr(start, end-start));
+    pos = end + 1;
+    start = path.find("size=", pos)+5;
+    size_t size = std::stoi(path.substr(start));
+
+    std::cout<<"post_id:\t"<<post_id<<std::endl;
+    std::cout<<"page:\t\t"<<page<<std::endl;
+    std::cout<<"size:\t\t"<<size<<std::endl;
+
+    HttpResponse resp;
+    json j;
+
+    std::vector<Comment> comments = PostService::getInstance().getComments(post_id, page, size);
+
+    j["code"] = 0;
+    json comment_array = json::array();
+    for(auto &i: comments)
+    {
+        i.print();
+        comment_array.push_back({
+            {"comment_id",      i.comment_id},
+            {"post_id",         i.post_id},
+            {"user_id",         i.user_id},
+
+            {"parent_id",       i.parent_id},
+            {"reply_user_id",   i.reply_user_id},
+
+
+            {"author",          i.author},
+            {"reply_author",    i.reply_author},
+            {"content",         i.content},
+            {"time",            i.create_time}
+
+        });
+    }
+    j["comments"] = comment_array;
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");

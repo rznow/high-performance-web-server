@@ -1,5 +1,7 @@
 #include "service/PostService.h"
 #include "mysql/MySQL.h"
+#include "common/Post.h"
+#include "common/Comment.h"
 #include <iostream>
 
 // 
@@ -23,6 +25,13 @@ void PostService::put(Post p)
     
     PostCache::getInstance().put(p);
 
+}
+
+void PostService::put(Comment c)
+{
+    auto mysql = pool.getConnection();
+
+    mysql->saveComment(c);
 }
 
 bool PostService::get(int post_id, Post& p)
@@ -62,6 +71,15 @@ std::vector<Post> PostService::getPosts(size_t page, size_t size)
     mysql->getPosts(posts, size, (page-1)*size);
     for(auto &p: posts) PostCache::getInstance().put(p);
     return posts;
+}
+
+std::vector<Comment> PostService::getComments(size_t post_id, size_t page, size_t size)
+{
+    auto mysql = pool.getConnection();
+
+    std::vector<Comment> comments;
+    mysql->getComments(comments, post_id, size, (page-1)*size);
+    return comments;
 }
 
 bool PostService::delPost(size_t post_id)

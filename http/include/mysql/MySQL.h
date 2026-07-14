@@ -4,6 +4,7 @@
 
 class UserInfo;
 class Post;
+class Comment;
 class MySQL
 {
 private:
@@ -30,9 +31,13 @@ public:
 
     int savePost(Post& p);
 
+    void saveComment(Comment& c);
+
     MYSQL* get();
 
     void getPosts(std::vector<Post>& posts, size_t size,size_t offset);
+
+    void getComments(std::vector<Comment>& comments, size_t post_id, size_t size, size_t offset);
 
     bool getPost(int post_id, Post& p);
 
