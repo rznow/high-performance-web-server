@@ -1,6 +1,6 @@
 #ifndef COMMENT_H
 #define COMMENT_H
-
+#include <vector>
 inline std::string safeStr(char* s)
 {
     return s ? s : "";
@@ -25,6 +25,8 @@ struct Comment
     std::string content;
 
     std::string create_time;
+
+    std::vector<Comment*> children;
 
     Comment() = default;
     Comment(MYSQL_ROW row)

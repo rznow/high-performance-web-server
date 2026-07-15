@@ -213,6 +213,15 @@ void MySQL::saveComment(Comment& c)
     + "' );";
     
     query(sql);
+
+    sql = R"(
+    UPDATE posts
+    SET comment_count = comment_count+1
+    where post_id = )" + 
+    std::to_string(c.post_id) + 
+    ";";
+
+    query(sql);
 }
 
 void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
@@ -296,8 +305,7 @@ void MySQL::getComments(std::vector<Comment>& comments, size_t post_id, size_t s
     MYSQL_ROW row;
     while((row = mysql_fetch_row(res)) != nullptr)
     {
-        Comment c(row);
-        comments.push_back(std::move(c));
+        comments.emplace_back(row);
     }
 }
 

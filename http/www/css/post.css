@@ -778,23 +778,167 @@ input:focus{
 }
 
 /* =========================
-        评论
-========================= */
-
-.comment{
-
-    line-height:1.8;
-
-    font-size:15px;
-
-}
-
-/* =========================
         操作按钮动画
 ========================= */
 
 .post-action button:hover{
 
     transform:translateY(-2px);
+
+}
+
+/* =========================
+        评论样式
+========================= */
+
+.comment{
+
+    padding:16px 0;
+
+    border-bottom:1px solid #eee;
+
+}
+
+.comment-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:8px;
+
+}
+
+.comment-user{
+
+    color:#409EFF;
+
+    font-weight:bold;
+
+    font-size:15px;
+
+}
+
+.comment-time{
+
+    color:#999;
+
+    font-size:13px;
+
+}
+
+.comment-content{
+
+    text-align:left;
+
+    margin:8px 0;
+
+    color:#333;
+
+    line-height:1.8;
+
+    white-space:pre-wrap;
+
+    word-break:break-word;
+    
+}
+
+.comment-action{
+
+    margin-top:8px;
+
+}
+
+.reply-btn{
+
+    border:none;
+
+    background:none;
+
+    color:#409EFF;
+
+    cursor:pointer;
+
+    padding:0;
+
+    font-size:13px;
+
+}
+
+.reply-btn:hover{
+
+    text-decoration:underline;
+
+}
+
+/* =========================
+        二级评论
+========================= */
+
+.children{
+
+    margin-top:12px;
+
+    margin-left:32px;
+
+    padding-left:16px;
+
+    border-left:2px solid #e5e5e5;
+
+}
+
+.reply{
+
+    padding:10px 0;
+
+}
+
+.reply-user{
+
+    color:#409EFF;
+
+    font-weight:bold;
+
+}
+
+.reply-input{
+
+    margin-top:10px;
+
+}
+
+.reply-input textarea{
+
+    width:100%;
+
+    min-height:70px;
+
+    padding:10px;
+
+    border:1px solid #ddd;
+
+    border-radius:6px;
+
+    resize:vertical;
+
+}
+
+.reply-input button{
+
+    margin-top:8px;
+
+    padding:6px 18px;
+
+    border:none;
+
+    border-radius:5px;
+
+    background:#409EFF;
+
+    color:white;
+
+    cursor:pointer;
 
 }

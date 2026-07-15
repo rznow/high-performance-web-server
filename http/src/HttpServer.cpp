@@ -63,6 +63,32 @@ std::string getContentType(std::string path)
     return "text/plain";
 }
 
+json buildComment(Comment* c)
+{
+    json obj;
+
+    obj["comment_id"] = c->comment_id;
+    obj["post_id"] = c->post_id;
+    obj["user_id"] = c->user_id;
+
+    obj["parent_id"] = c->parent_id;
+    obj["reply_user_id"] = c->reply_user_id;
+
+    obj["author"] = c->author;
+    obj["reply_author"] = c->reply_author;
+
+    obj["content"] = c->content;
+    obj["time"] = c->create_time;
+
+    obj["children"] = json::array();
+
+    for(auto child : c->children)
+    {
+        obj["children"].push_back(buildComment(child));
+    }
+
+    return obj;
+}
 
 HttpResponse HttpServer::handleRequest(const HttpRequest& request)
 {
@@ -670,26 +696,48 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
 
     std::vector<Comment> comments = PostService::getInstance().getComments(post_id, page, size);
 
+    std::unordered_map<int, Comment*> mp;
+
+    for(auto &c : comments)
+    {
+        mp[c.comment_id]=&c;
+    }
+
+    std::vector<Comment*> roots;
+
+    for(auto &c : comments)
+    {
+        if(c.parent_id==0)
+        {
+            roots.push_back(&c);
+        }
+        else
+        {
+            mp[c.parent_id]->children.push_back(&c);
+        }
+    }
+
+
     j["code"] = 0;
     json comment_array = json::array();
-    for(auto &i: comments)
+    for(auto &i: roots)
     {
-        i.print();
-        comment_array.push_back({
-            {"comment_id",      i.comment_id},
-            {"post_id",         i.post_id},
-            {"user_id",         i.user_id},
+        comment_array.push_back(buildComment(i));
+        // comment_array.push_back({
+        //     {"comment_id",      i.comment_id},
+        //     {"post_id",         i.post_id},
+        //     {"user_id",         i.user_id},
 
-            {"parent_id",       i.parent_id},
-            {"reply_user_id",   i.reply_user_id},
+        //     {"parent_id",       i.parent_id},
+        //     {"reply_user_id",   i.reply_user_id},
 
 
-            {"author",          i.author},
-            {"reply_author",    i.reply_author},
-            {"content",         i.content},
-            {"time",            i.create_time}
+        //     {"author",          i.author},
+        //     {"reply_author",    i.reply_author},
+        //     {"content",         i.content},
+        //     {"time",            i.create_time}
 
-        });
+        // });
     }
     j["comments"] = comment_array;
     std::string body = j.dump();

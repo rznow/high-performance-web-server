@@ -1,5 +1,6 @@
 #include "common/PostCache.h"
 
+
 PostCache::~PostCache(){}
 
 PostCache& PostCache::getInstance()
@@ -87,13 +88,29 @@ void PostCache::update(int post_id, bool liked)
     }
 }
 
-void PostCache::update(int post_id, std::string& content)
+void PostCache::update(int post_id, std::string& title, std::string& content)
 {
     std::unique_lock<std::mutex> ul(mtx);
     if(cache.find(post_id) != cache.end())
     {
+        cache[post_id]->p.title = title;
         cache[post_id]->p.content = content;
     }
+}
+
+void PostCache::update(const Comment& c)
+{
+    std::unique_lock<std::mutex> ul(mtx);
+    size_t post_id = c.post_id;
+    if(cache.find(post_id)!=cache.end())
+    {
+        cache[post_id]->p.comment_count++;
+
+    }
+    // std::cout<<"count:\t"<<count<<std::endl;
+    
+    // printPosts();
+    
 }
 
 ListNode* PostCache::removeNode(int post_id)

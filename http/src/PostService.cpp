@@ -32,6 +32,8 @@ void PostService::put(Comment c)
     auto mysql = pool.getConnection();
 
     mysql->saveComment(c);
+
+    PostCache::getInstance().update(c);
 }
 
 bool PostService::get(int post_id, Post& p)
@@ -108,7 +110,7 @@ int PostService::modPost(size_t post_id, size_t user_id, std::string& title, std
     {
         if(mysql->modPost(post_id, title, content))
         {
-            PostCache::getInstance().update(post_id, content);
+            PostCache::getInstance().update(post_id, title, content);
             return 0;
         }
         return 2; //修改失败

@@ -258,6 +258,12 @@ async function loadPost()
 
 
         document
+        .getElementById("commentCount")
+        .innerText =
+            "💬 "+post.comment_count;
+
+
+        document
         .getElementById("viewCount")
         .innerText =
             "👀 "+post.view_count;
@@ -560,16 +566,11 @@ let hasMoreComment = true;
 
 async function loadComments(reset = false)
 {
-
     if(reset)
     {
         commentPage = 1;
-
         hasMoreComment = true;
-
-        document
-        .getElementById("commentList")
-        .innerHTML = "";
+        document.getElementById("commentList").innerHTML = "";
     }
 
     if(loadingComment || !hasMoreComment)
@@ -579,14 +580,12 @@ async function loadComments(reset = false)
 
     try
     {
-
         let response =
             await fetch(
                 `/posts/${id}/comments?page=${commentPage}&size=${commentSize}`
             );
 
-        let data =
-            await response.json();
+        let data = await response.json();
 
         if(data.code != 0)
         {
@@ -599,45 +598,157 @@ async function loadComments(reset = false)
 
         data.comments.forEach(c=>{
 
-            let div =
+            const div =
                 document.createElement("div");
 
             div.className = "comment";
 
             div.innerHTML = `
-                <div class="comment-user">
-                    ${c.author}
+                <div class="comment-header">
+                    <span class="comment-user">${c.author}</span>
+
+                    <span class="comment-time">
+                        ${formatTime(c.time)}
+                    </span>
                 </div>
 
                 <div class="comment-content">
                     ${c.content}
                 </div>
 
-                <div class="comment-time">
-                    ${formatTime(c.time)}
+                <div class="comment-action">
+                    <button
+                        class="reply-btn"
+                        onclick="replyComment(
+                            ${c.comment_id},
+                            ${c.user_id},
+                            '${c.author}'
+                        )">
+                        回复
+                    </button>
                 </div>
+
+                <div class="children"></div>
             `;
+
+            //-------------------------------------------------
+            // 二级评论
+            //-------------------------------------------------
+
+            const childBox =
+                div.querySelector(".children");
+
+            if(c.children && c.children.length)
+            {
+                c.children.forEach(reply=>{
+
+                    const child =
+                        document.createElement("div");
+
+                    child.className="reply";
+
+                    child.innerHTML=`
+                        <div class="comment-header">
+
+                            <span class="comment-user">
+                                ${reply.author}
+                            </span>
+
+                            <span class="comment-time">
+                                ${formatTime(reply.time)}
+                            </span>
+
+                        </div>
+
+                        <div class="comment-content">
+
+                            回复
+                            <span class="reply-user">
+                                @${reply.reply_author}
+                            </span>
+
+                            :${reply.content}
+
+                        </div>
+
+                        <div class="comment-action">
+
+                            <button
+                                class="reply-btn"
+                                onclick="replyComment(
+                                    ${reply.parent_id},
+                                    ${reply.user_id},
+                                    '${reply.author}'
+                                )">
+
+                                回复
+
+                            </button>
+
+                        </div>
+                    `;
+
+                    childBox.appendChild(child);
+
+                });
+            }
 
             list.appendChild(div);
 
         });
 
         if(data.comments.length < commentSize)
-        {
             hasMoreComment = false;
-        }
         else
-        {
             commentPage++;
-        }
 
     }
     finally
     {
         loadingComment = false;
     }
-
 }
+
+let currentParent=0;
+let currentReplyUser=-1;
+
+function replyComment(parent,user,name)
+{
+    currentParent=parent;
+
+    currentReplyUser=user;
+
+    textarea.placeholder=
+        "回复 "+name;
+}
+
+// sendBtn.onclick=async()=>{
+
+//     await fetch(
+//         "/posts/"+postId+"/comments",
+//         {
+
+//             method:"POST",
+
+//             headers:{
+//                 "Content-Type":"application/json",
+//                 Authorization:"Bearer "+token
+//             },
+
+//             body:JSON.stringify({
+
+//                 content:textarea.value,
+
+//                 parent_id:currentParent,
+
+//                 reply_user_id:currentReplyUser
+
+//             })
+
+//         }
+//     );
+
+// }
 
 function formatTime(timeStr)
 {

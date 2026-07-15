@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <mutex>
 #include "Post.h"
+#include "Comment.h"
 
 struct ListNode
 {
@@ -35,7 +36,8 @@ class PostCache
         bool get(int post_id, int user_id, Post& post);
         void put(const Post& p);
         void update(int post_id, bool liked);
-        void update(int post_id, std::string& content);
+        void update(int post_id, std::string& title, std::string& content);
+        void update(const Comment& c);
         ListNode* removeNode(int post_id);
         void addToHead(ListNode* node);
         void removeEnd();
