@@ -215,14 +215,24 @@
 
             <textarea
                 id="comment"
-                placeholder="发表你的评论..."></textarea>
-
+                placeholder="发表你的评论..."
+            ></textarea>
+        
+            <div id="replyBar" style="display:none;">
+                <span>
+                    正在回复
+                    <span id="replyName"></span>
+                </span>
+            
+                <button id="cancelReply">
+                    取消
+                </button>
+            </div>
+        
             <button id="sendComment">
-
                 发表评论
-
             </button>
-
+        
         </div>
 
     </div>

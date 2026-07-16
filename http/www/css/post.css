@@ -891,8 +891,10 @@ input:focus{
 
 .reply{
 
-    padding:10px 0;
+    display:block;
 
+    padding:10px 0;
+    
 }
 
 .reply-user{
@@ -903,7 +905,7 @@ input:focus{
 
 }
 
-.reply-input{
+/* .reply-input{
 
     margin-top:10px;
 
@@ -940,5 +942,68 @@ input:focus{
     color:white;
 
     cursor:pointer;
+
+} */
+/* =========================
+        回复提示栏
+========================= */
+
+#replyBar{
+    width:100%;
+
+    display:flex;
+    align-items:center;
+
+    padding:8px 12px;
+    margin-bottom:12px;
+
+    background:#f5f9ff;
+    border:1px solid #d6e8ff;
+    border-radius:8px;
+}
+
+#replyBar span{
+    color: #409EFF;
+    font-weight: bold;
+}
+
+#cancelReply{
+    margin-left: auto; 
+
+    padding: 4px 12px;
+    border: none;
+    border-radius: 6px;
+
+    background: #ff5b5b;
+    color: white;
+
+    cursor: pointer;
+}
+
+#cancelReply:hover{
+    background: #e84545;
+}
+
+/* =========================
+        动画
+========================= */
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(-6px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
 
 }

@@ -607,14 +607,10 @@ async function loadComments(reset = false)
                 <div class="comment-header">
                     <span class="comment-user">${c.author}</span>
 
-                    <span class="comment-time">
-                        ${formatTime(c.time)}
-                    </span>
+                    <span class="comment-time">${formatTime(c.time)}</span>
                 </div>
 
-                <div class="comment-content">
-                    ${c.content}
-                </div>
+                <div class="comment-content">${c.content}</div>
 
                 <div class="comment-action">
                     <button
@@ -647,46 +643,27 @@ async function loadComments(reset = false)
 
                     child.className="reply";
 
-                    child.innerHTML=`
+                    child.innerHTML = `
                         <div class="comment-header">
-
-                            <span class="comment-user">
-                                ${reply.author}
-                            </span>
-
-                            <span class="comment-time">
-                                ${formatTime(reply.time)}
-                            </span>
-
+                            <span class="comment-user">${reply.author}</span>
+                            <span class="comment-time">${formatTime(reply.time)}</span>
                         </div>
 
-                        <div class="comment-content">
-
-                            回复
-                            <span class="reply-user">
-                                @${reply.reply_author}
-                            </span>
-
-                            :${reply.content}
-
-                        </div>
+                        <div class="comment-content">回复 <span class="reply-user">@${reply.reply_author}</span>：
+${reply.content}</div>
 
                         <div class="comment-action">
-
                             <button
                                 class="reply-btn"
                                 onclick="replyComment(
-                                    ${reply.parent_id},
+                                    ${reply.comment_id},
                                     ${reply.user_id},
                                     '${reply.author}'
                                 )">
-
                                 回复
-
                             </button>
-
                         </div>
-                    `;
+                        `;
 
                     childBox.appendChild(child);
 
@@ -712,43 +689,33 @@ async function loadComments(reset = false)
 let currentParent=0;
 let currentReplyUser=-1;
 
-function replyComment(parent,user,name)
+function replyComment(parentId, userId, author)
 {
-    currentParent=parent;
+    currentParent = parentId;
+    currentReplyUser = userId;
 
-    currentReplyUser=user;
+    const textarea =
+        document.getElementById("comment");
 
-    textarea.placeholder=
-        "回复 "+name;
+    textarea.placeholder =
+        "回复 @" + author;
+
+    document.getElementById("replyBar").style.display = "flex";
+    document.getElementById("replyName").innerText = "@" + author;
+
+    textarea.focus();
 }
 
-// sendBtn.onclick=async()=>{
+document.getElementById("cancelReply").onclick = function(){
 
-//     await fetch(
-//         "/posts/"+postId+"/comments",
-//         {
+    currentParent = 0;
+    currentReplyUser = -1;
 
-//             method:"POST",
+    document.getElementById("comment").placeholder =
+        "发表你的评论...";
 
-//             headers:{
-//                 "Content-Type":"application/json",
-//                 Authorization:"Bearer "+token
-//             },
-
-//             body:JSON.stringify({
-
-//                 content:textarea.value,
-
-//                 parent_id:currentParent,
-
-//                 reply_user_id:currentReplyUser
-
-//             })
-
-//         }
-//     );
-
-// }
+    document.getElementById("replyBar").style.display = "none";
+};
 
 function formatTime(timeStr)
 {
@@ -810,7 +777,11 @@ document
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            content: content
+            content: content,
+
+            parent_id:currentParent,
+
+            reply_user_id:currentReplyUser
         })
     });
 

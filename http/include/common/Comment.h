@@ -32,17 +32,17 @@ struct Comment
     Comment(MYSQL_ROW row)
     {
         int idx = 0;
-        comment_id = safeInt(row[idx++]);
-        post_id = safeInt(row[idx++]);
-        user_id = safeInt(row[idx++]);
+        comment_id      = safeInt(row[idx++]);
+        post_id         = safeInt(row[idx++]);          //帖子的id
+        user_id         = safeInt(row[idx++]);          //评论用户id
 
-        parent_id = safeInt(row[idx++], 0);
-        reply_user_id = safeInt(row[idx++], -1);
+        parent_id       = safeInt(row[idx++], 0);     //父评论id
+        reply_user_id   = safeInt(row[idx++], 0); //父评论用户id
 
-        author = safeStr(row[idx++]);
-        reply_author = safeStr(row[idx++]);
-        content = safeStr(row[idx++]);
-        create_time = safeStr(row[idx++]);
+        author          = safeStr(row[idx++]);           //当前评论作者
+        reply_author    = safeStr(row[idx++]);     //父评论作者
+        content         = safeStr(row[idx++]);          //文本内容
+        create_time     = safeStr(row[idx++]);
     };
 
     void print() const

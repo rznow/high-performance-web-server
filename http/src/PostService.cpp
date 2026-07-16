@@ -75,12 +75,21 @@ std::vector<Post> PostService::getPosts(size_t page, size_t size)
     return posts;
 }
 
-std::vector<Comment> PostService::getComments(size_t post_id, size_t page, size_t size)
+std::vector<Comment> PostService::getRootComments(size_t post_id, size_t page, size_t size)
 {
     auto mysql = pool.getConnection();
 
     std::vector<Comment> comments;
-    mysql->getComments(comments, post_id, size, (page-1)*size);
+    mysql->getRootComments(comments, post_id, size, (page-1)*size);
+    return comments;
+}
+
+std::vector<Comment> PostService::getComments(size_t post_id)
+{
+    auto mysql = pool.getConnection();
+
+    std::vector<Comment> comments;
+    mysql->getComments(comments, post_id);
     return comments;
 }
 

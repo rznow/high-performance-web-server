@@ -37,7 +37,9 @@ public:
 
     void getPosts(std::vector<Post>& posts, size_t size,size_t offset);
 
-    void getComments(std::vector<Comment>& comments, size_t post_id, size_t size, size_t offset);
+    void getRootComments(std::vector<Comment>& comments, size_t post_id, size_t size, size_t offset);
+
+    void getComments(std::vector<Comment>& comments, size_t post_id);
 
     bool getPost(int post_id, Post& p);
 

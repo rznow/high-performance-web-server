@@ -201,25 +201,37 @@ int MySQL::savePost(Post& p)
 void MySQL::saveComment(Comment& c)
 {
     std::string sql = R"(
-    INSERT INTO 
-    comments(
-        post_id, 
-        user_id, 
-        content)
-    VALUES( )" 
-    + std::to_string(c.post_id) + " , '" 
-    + std::to_string(c.user_id) + "' , '" 
-    + c.content 
-    + "' );";
-    
+    INSERT INTO comments(
+        post_id,
+        user_id,
+        parent_id,
+        reply_user_id,
+        content
+    )
+    VALUES(
+    )"
+    + std::to_string(c.post_id)
+    + ","
+    + std::to_string(c.user_id)
+    + ","
+    + std::to_string(c.parent_id)
+    + ","
+    + std::to_string(c.reply_user_id)
+    + ",'"
+    + c.content
+    + "');";
+
+
     query(sql);
 
-    sql = R"(
-    UPDATE posts
-    SET comment_count = comment_count+1
-    where post_id = )" + 
-    std::to_string(c.post_id) + 
-    ";";
+
+    sql =
+    "UPDATE posts "
+    "SET comment_count = comment_count + 1 "
+    "WHERE post_id = "
+    + std::to_string(c.post_id)
+    + ";";
+
 
     query(sql);
 }
@@ -263,7 +275,54 @@ void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
     
 }
 
-void MySQL::getComments(std::vector<Comment>& comments, size_t post_id, size_t size, size_t offset)
+void MySQL::getRootComments(std::vector<Comment>& comments, size_t post_id, size_t size, size_t offset)
+{
+    std::string sql = R"(
+    SELECT
+        c.comment_id,
+        c.post_id,
+        c.user_id,
+
+        c.parent_id,
+        c.reply_user_id,
+
+        u.user_name,
+        u2.user_name AS reply_name,
+        c.content,
+        c.create_time
+    FROM comments c
+    JOIN user_info u
+    ON c.user_id=u.user_id
+
+    LEFT JOIN user_info u2
+    ON c.reply_user_id=u2.user_id
+
+    WHERE c.post_id=)" + std::to_string(post_id) +
+    R"(
+    AND parent_id = 0
+    ORDER BY
+    parent_id,
+    create_time
+    LIMIT )" 
+    + std::to_string(size) +
+    " OFFSET " +
+    std::to_string(offset) +
+    ";";
+    
+
+    if(!query(sql)) return;
+    MYSQL_RES * res = mysql_store_result(conn);
+
+    if(res == nullptr) return;
+
+    MYSQL_ROW row;
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        comments.emplace_back(row);
+    }
+}
+
+void MySQL::getComments(std::vector<Comment>& comments, size_t post_id)
 {
     std::string sql = R"(
     SELECT
@@ -289,12 +348,7 @@ void MySQL::getComments(std::vector<Comment>& comments, size_t post_id, size_t s
     R"(
     ORDER BY
     parent_id,
-    create_time
-    LIMIT )" 
-    + std::to_string(size) +
-    " OFFSET " +
-    std::to_string(offset) +
-    ";";
+    create_time;)";
     
 
     if(!query(sql)) return;

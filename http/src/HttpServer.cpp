@@ -526,6 +526,7 @@ HttpResponse HttpServer::commentCreate(const HttpRequest& request)
 
     Comment c;
 
+    
     std::string path = request.getPath();
     size_t start = path.find("/post/")+6;
     size_t end = path.find("/comments");
@@ -533,16 +534,20 @@ HttpResponse HttpServer::commentCreate(const HttpRequest& request)
     c.post_id = std::stoi(path.substr(start, end));
     c.user_id = user.user_id;
     c.author  = user.user_name;
-    std::string body = request.getBody();
 
-    size_t pos = body.find(R"("content":)")+11;
-    c.content = body.substr(pos, body.size()-pos-2);
-    c.print();
+    json data = json::parse(request.getBody());
+
+    c.content       = data.value("content","");
+
+    c.parent_id     = data.value("parent_id",0);
+
+    c.reply_user_id = data.value("reply_user_id",0);
+    // c.print();
     PostService::getInstance().put(c);
 
     j["code"] = 0;
     j["msg"] = "postComment success";
-    body = j.dump();
+    std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
     resp.setHeader("Content-Length", std::to_string(body.size()));
@@ -694,27 +699,29 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
     HttpResponse resp;
     json j;
 
-    std::vector<Comment> comments = PostService::getInstance().getComments(post_id, page, size);
+    std::vector<Comment> rootComments = PostService::getInstance().getRootComments(post_id, page, size);
+    std::vector<Comment> comments = PostService::getInstance().getComments(post_id);
 
     std::unordered_map<int, Comment*> mp;
 
-    for(auto &c : comments)
-    {
-        mp[c.comment_id]=&c;
-    }
-
     std::vector<Comment*> roots;
 
+    for(auto &c: rootComments)
+    {
+        roots.push_back(&c);
+        mp[c.comment_id] = &c;
+    }
+
     for(auto &c : comments)
     {
-        if(c.parent_id==0)
+        auto it = mp.find(c.parent_id);
+        std::cout<<c.comment_id<<"\t"<<c.parent_id<<std::endl;
+        if(it != mp.end())
         {
-            roots.push_back(&c);
+            mp[c.comment_id] = &c;
+            it->second->children.push_back(&c);
         }
-        else
-        {
-            mp[c.parent_id]->children.push_back(&c);
-        }
+            
     }
 
 
@@ -739,6 +746,7 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
 
         // });
     }
+    // std::cout<<comment_array.dump()<<std::endl;
     j["comments"] = comment_array;
     std::string body = j.dump();
     resp.setStatus(200, "OK");
@@ -793,7 +801,7 @@ HttpResponse HttpServer::post(const HttpRequest& request)
         j["code"] = 1001;
         j["msg"] = "post not found";
     }
-    p.print();
+    // p.print();
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
