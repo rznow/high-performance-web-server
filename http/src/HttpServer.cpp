@@ -547,6 +547,7 @@ HttpResponse HttpServer::commentCreate(const HttpRequest& request)
 
     j["code"] = 0;
     j["msg"] = "postComment success";
+    j["comment"] = buildComment(&c);
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
@@ -639,8 +640,8 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
     start = path.find('=', pos)+1;
     size_t size = std::stoi(path.substr(start));
 
-    std::cout<<"page:\t"<<page<<std::endl;
-    std::cout<<"size:\t"<<size<<std::endl;
+    // std::cout<<"page:\t"<<page<<std::endl;
+    // std::cout<<"size:\t"<<size<<std::endl;
 
     HttpResponse resp;
     json j;
@@ -692,9 +693,9 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
     start = path.find("size=", pos)+5;
     size_t size = std::stoi(path.substr(start));
 
-    std::cout<<"post_id:\t"<<post_id<<std::endl;
-    std::cout<<"page:\t\t"<<page<<std::endl;
-    std::cout<<"size:\t\t"<<size<<std::endl;
+    // std::cout<<"post_id:\t"<<post_id<<std::endl;
+    // std::cout<<"page:\t\t"<<page<<std::endl;
+    // std::cout<<"size:\t\t"<<size<<std::endl;
 
     HttpResponse resp;
     json j;
@@ -715,7 +716,6 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
     for(auto &c : comments)
     {
         auto it = mp.find(c.parent_id);
-        std::cout<<c.comment_id<<"\t"<<c.parent_id<<std::endl;
         if(it != mp.end())
         {
             mp[c.comment_id] = &c;

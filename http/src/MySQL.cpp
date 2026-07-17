@@ -216,15 +216,13 @@ void MySQL::saveComment(Comment& c)
     + ","
     + std::to_string(c.parent_id)
     + ","
-    + std::to_string(c.reply_user_id)
+    + (c.reply_user_id==-1?"NULL":std::to_string(c.reply_user_id))
     + ",'"
     + c.content
     + "');";
 
-
     query(sql);
-
-
+    int comment_id = mysql_insert_id(conn);
     sql =
     "UPDATE posts "
     "SET comment_count = comment_count + 1 "
@@ -234,6 +232,37 @@ void MySQL::saveComment(Comment& c)
 
 
     query(sql);
+
+    sql = R"(
+    SELECT
+        c.comment_id,
+        c.post_id,
+        c.user_id,
+
+        c.parent_id,
+        c.reply_user_id,
+
+        u.user_name,
+        u2.user_name AS reply_name,
+        c.content,
+        c.create_time
+    FROM comments c
+    JOIN user_info u
+    ON c.user_id=u.user_id
+
+    LEFT JOIN user_info u2
+    ON c.reply_user_id=u2.user_id
+
+    WHERE c.comment_id=)" + std::to_string(comment_id) +
+    " ; ";
+
+    query(sql);
+    MYSQL_RES* res = mysql_store_result(conn);
+    if(!res) return;
+    MYSQL_ROW row = mysql_fetch_row(res);
+    if(!row) return;
+    c = Comment(row);
+    c.print();
 }
 
 void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)

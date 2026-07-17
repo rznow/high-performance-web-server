@@ -20,7 +20,7 @@ class PostService
         PostService& operator=(const PostService&) = delete;
         static PostService& getInstance();
         void put(Post p);
-        void put(Comment c);
+        void put(Comment& c);
         bool get(int post_id, Post& p);
         int like(int post_id, int user_id, bool& liked);
         bool liked(int post_id, int user_id);

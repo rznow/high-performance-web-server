@@ -27,7 +27,7 @@ void PostService::put(Post p)
 
 }
 
-void PostService::put(Comment c)
+void PostService::put(Comment& c)
 {
     auto mysql = pool.getConnection();
 
