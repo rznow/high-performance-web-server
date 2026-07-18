@@ -254,38 +254,43 @@ HttpResponse HttpServer::handlePut(const HttpRequest& request)
 
 HttpResponse HttpServer::login(const HttpRequest& request)
 {
-    std::unordered_map<std::string, std::string> kv;
+    // std::unordered_map<std::string, std::string> kv;
 
-    std::string body = request.getBody();
+    // std::string body = request.getBody();
 
-    size_t start = 0;
-    while(start < body.size())
-    {
-        size_t eq = body.find('=', start);
-        size_t amp = body.find('&', start);
+    // size_t start = 0;
+    // while(start < body.size())
+    // {
+    //     size_t eq = body.find('=', start);
+    //     size_t amp = body.find('&', start);
 
-        if(eq == std::string::npos)
-            break;
+    //     if(eq == std::string::npos)
+    //         break;
 
-        std::string key = body.substr(start, eq - start);
+    //     std::string key = body.substr(start, eq - start);
 
-        std::string value;
-        if(amp == std::string::npos)
-        {
-            value = body.substr(eq + 1);
-            kv[key] = value;
-            break;
-        }
-        else
-        {
-            value = body.substr(eq + 1, amp - eq - 1);
-            kv[key] = value;
-            start = amp + 1;
-        }
-    }
+    //     std::string value;
+    //     if(amp == std::string::npos)
+    //     {
+    //         value = body.substr(eq + 1);
+    //         kv[key] = value;
+    //         break;
+    //     }
+    //     else
+    //     {
+    //         value = body.substr(eq + 1, amp - eq - 1);
+    //         kv[key] = value;
+    //         start = amp + 1;
+    //     }
+    // }
 
-    std::string name = kv["username"];
-    std::string password = kv["password"];
+    // std::string name = kv["username"];
+    // std::string password = kv["password"];
+    json data = json::parse(request.getBody());
+    std::string name = data["username"];
+    std::string password = data["password"];
+
+
     std::cout<<" username: "<<name<<std::endl;
     std::cout<<" password: "<<password<<std::endl;
 
@@ -309,19 +314,22 @@ HttpResponse HttpServer::login(const HttpRequest& request)
         j["code"] = 0;
         j["msg"] = "login success";
         j["token"] = token;
-
-        body = j.dump();
     }
     else if(result == 0)
     {
         resp.setStatus(401, "Unauthorized");
-        body = R"({"code":1002,"msg":"wrong password"})";
+        j["code"] = 1002;
+        j["msg"] = "wrong password";
+        // body = R"({"code":1002,"msg":"wrong password"})";
     }
     else
     {
         resp.setStatus(404, "Unauthorized");
-        body = R"({"code":1001,"msg":"user not exist"})";
+        j["code"] = 1001;
+        j["msg"] = "user not exist";
+        // body = R"({"code":1001,"msg":"user not exist"})";
     }
+    std::string body = j.dump();
     resp.setBody(body);
     resp.setHeader("Content-Type", "application/json");
     resp.setHeader("Content-Length", std::to_string(body.size()));
@@ -330,41 +338,45 @@ HttpResponse HttpServer::login(const HttpRequest& request)
 
 HttpResponse HttpServer::registerUser(const HttpRequest& request)
 {
-    std::unordered_map<std::string, std::string> kv;
+    // std::unordered_map<std::string, std::string> kv;
 
-    std::string body = request.getBody();
+    // std::string body = request.getBody();
 
-    size_t start = 2;
-    while(start < body.size())
-    {
-        size_t eq = body.find(R"(":")", start);
-        size_t amp = body.find(R"(",")", start);
+    // size_t start = 2;
+    // while(start < body.size())
+    // {
+    //     size_t eq = body.find(R"(":")", start);
+    //     size_t amp = body.find(R"(",")", start);
 
-        if(eq == std::string::npos)
-            break;
+    //     if(eq == std::string::npos)
+    //         break;
 
-        std::string key = body.substr(start, eq - start);
+    //     std::string key = body.substr(start, eq - start);
 
-        std::string value;
-        if(amp == std::string::npos)
-        {
-            value = body.substr(eq + 3, body.size()-2-eq-3);
-            kv[key] = value;
-            break;
-        }
-        else
-        {
-            value = body.substr(eq + 3, amp - eq - 3);
-            kv[key] = value;
-            start = amp + 3;
-        }
-    }
+    //     std::string value;
+    //     if(amp == std::string::npos)
+    //     {
+    //         value = body.substr(eq + 3, body.size()-2-eq-3);
+    //         kv[key] = value;
+    //         break;
+    //     }
+    //     else
+    //     {
+    //         value = body.substr(eq + 3, amp - eq - 3);
+    //         kv[key] = value;
+    //         start = amp + 3;
+    //     }
+    // }
 
-    std::string name = kv["username"];
-    std::string password = kv["password"];
+    // std::string name = kv["username"];
+    // std::string password = kv["password"];
     // std::string confirm_password = kv["confirm_password"];
-    std::cout<<" username: "<<name<<std::endl;
-    std::cout<<" password: "<<password<<std::endl;
+    json data = json::parse(request.getBody());
+    std::string name = data["username"];
+    std::string password = data["password"];
+    std::string confirm_password = data["confirm_password"];
+    // std::cout<<" username: "<<name<<std::endl;
+    // std::cout<<" password: "<<password<<std::endl;
     // std::cout<<" confirm_password: "<<confirm_password<<std::endl;
 
     int result;
@@ -375,17 +387,22 @@ HttpResponse HttpServer::registerUser(const HttpRequest& request)
     auto mysql = MySQLPool::getInstance().getConnection();
     result = mysql->registerSQL(name, password);
     // std::cout<<" result: "<<result<<std::endl;
-
+    json j;
     if(result == 1)
     {
         resp.setStatus(200, "OK");
-        body = R"({"code":0,"msg":"register success"})";
+        // body = R"({"code":0,"msg":"register success"})";
+        j["code"] = 0;
+        j["msg"] = "register success";
     }
     else if(result == 0)
     {
         resp.setStatus(401, "Unauthorized");
-        body = R"({"code":1003,"msg":"用户已存在"})";
+        // body = R"({"code":1003,"msg":"用户已存在"})";
+        j["code"] = 1003;
+        j["msg"] = "用户已存在";
     }
+    std::string body = j.dump();
     resp.setBody(body);
     resp.setHeader("Content-Type", "application/json");
     resp.setHeader("Content-Length", std::to_string(body.size()));
@@ -476,14 +493,10 @@ HttpResponse HttpServer::postCreate(const HttpRequest& request)
     Post p;
     p.user_id = user.user_id;
     p.author = user.user_name;
-    std::string body = request.getBody();
 
-    size_t pos = body.find(R"("title":)")+9;
-    size_t end = body.find(R"("content":)");
-
-    p.title = body.substr(pos, end-pos-2);
-    pos = end + 11;
-    p.content = body.substr(pos, body.size()-pos-2);
+    json data = json::parse(request.getBody());
+    p.title = data["title"];
+    p.content = data["content"];
 
     PostService::getInstance().put(p);
 
@@ -491,7 +504,7 @@ HttpResponse HttpServer::postCreate(const HttpRequest& request)
     j["msg"] = "post success";
     j["user_id"] = user.user_id;
     j["user_name"] = user.user_name;
-    body = j.dump();
+    std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
     resp.setHeader("Content-Length", std::to_string(body.size()));
