@@ -77,10 +77,12 @@ document.getElementById("loginForm").addEventListener("submit", async function (
                 "Content-Type": "application/x-www-form-urlencoded"
             },
 
-            body:
-                "username=" + encodeURIComponent(username) +
-                "&password=" + encodeURIComponent(password)
+            body:JSON.stringify({
+                username: encodeURIComponent(username),
 
+                password: encodeURIComponent(password)
+            })
+            
         });
 
         const data = await response.json();
