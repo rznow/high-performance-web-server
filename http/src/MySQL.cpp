@@ -3,8 +3,8 @@
 #include <mysql/mysql.h>
 #include <common/Post.h>
 #include <common/Comment.h>
-// #include <common/PostCache.h>
 #include <iostream>
+#include <mysql/Statement.h>
 
 MySQL::MySQL()
 {
@@ -89,38 +89,33 @@ bool MySQL::reconnect()
 */
 int MySQL::loginSQL(const std::string& name, const std::string& password, UserInfo& user)
 {
-    std::string sql = "SELECT user_id,password FROM user_info WHERE user_name = '" + name +"';";
+    Statement stmt(conn,
+        "SELECT user_id,password "
+        "FROM user_info "
+        "WHERE user_name=?");
 
-    if(!query(sql)) return -1;
+    stmt.bindString(0,name);
 
-    MYSQL_RES *res = mysql_store_result(conn);
-
-    if(!res)
-    {
+    if(!stmt.execute())
         return -1;
-    }
 
-    // 处理查询结果
-    MYSQL_ROW row = mysql_fetch_row(res);
-    // int num_fields = mysql_num_fields(res); //1
-    
-    if(row == nullptr)
-    {
-        mysql_free_result(res);
-        return -1; // 用户不存在
-    }
+    stmt.storeResult();
 
-    if(row[1] != password) 
-    {
-        std::cout<<" wrong password !"<<std::endl;
+    int id;
+    char dbPassword[128];
+
+    stmt.bindResultInt(0,id);
+    stmt.bindResultString(1,dbPassword,sizeof(dbPassword));
+
+    if(!stmt.fetch())
+        return -1;
+
+    if(password != dbPassword)
         return 0;
-    }
 
-    user.user_id = std::stoi(row[0]);
-    user.user_name = name;
-
-    std::cout<<" successful login !"<<std::endl;
-    mysql_free_result(res);
+    user.user_id=id;
+    user.user_name=name;
+    
     return 1;
 }
 /*

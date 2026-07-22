@@ -57,7 +57,6 @@ bool JWT::verifyToken(const std::string& token,UserInfo& user)
         user.user_name =
             decoded.get_payload_claim("user_name")
                    .as_string();
-
         return true;
     }
     catch(...)
