@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <mysql/mysql.h>
+#include "mysql/StatementRow.h"
 struct Post
 {
     int post_id;
@@ -19,7 +20,21 @@ struct Post
     Post():post_id(-1){};
     Post(const Post&p) = default;
     Post& operator=(const Post&p) = default;
-    Post(MYSQL_ROW row)
+    Post(StatementRow& row)
+    {
+        int idx = 0;
+        post_id       = row.getInt(idx++);
+        user_id       = row.getInt(idx++);      
+        author        = row.getString(idx++);
+        title         = row.getString(idx++);
+        content       = row.getString(idx++);
+        like_count    = row.getInt(idx++);
+        comment_count = row.getInt(idx++);
+        view_count    = row.getInt(idx++);
+        create_time   = row.getString(idx++);
+    };
+
+    Post(MYSQL_ROW& row)
     {
         int idx = 0;
         post_id       = std::stoi(row[idx++]);

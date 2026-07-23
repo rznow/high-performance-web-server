@@ -101,14 +101,17 @@ int MySQL::loginSQL(const std::string& name, const std::string& password, UserIn
 
     stmt.storeResult();
 
-    int id;
-    char dbPassword[128];
+    
 
-    stmt.bindResultInt(0,id);
-    stmt.bindResultString(1,dbPassword,sizeof(dbPassword));
+    // stmt.bindResultInt(0,id);
+    // stmt.bindResultString(1,dbPassword,sizeof(dbPassword));
 
     if(!stmt.fetch())
         return -1;
+    
+    StatementRow& row = stmt.row();
+    int id = row.getInt(0);
+    std::string dbPassword = row.getString(1);
 
     if(password != dbPassword)
         return 0;
@@ -125,30 +128,48 @@ int MySQL::loginSQL(const std::string& name, const std::string& password, UserIn
 */
 int MySQL::registerSQL(const std::string& name, const std::string& password)
 {
-    std::string check_sql =
-        "SELECT user_id FROM user_info WHERE user_name='" + name + "';";
-    
-    if(!query(check_sql))   return -1;
+    Statement stmt(conn, R"(
+        SELECT user_id
+        FROM user_info 
+        WHERE user_name=?;
+    )");
 
-    MYSQL_RES* res = mysql_store_result(conn);
-    
-    if(!res) return -1;
+    stmt.bindString(0, name);
 
-    MYSQL_ROW row = mysql_fetch_row(res);
+    if(!stmt.execute())
+        return -1;
 
+    stmt.storeResult();
+
+    // stmt.bindResultInt(0, id);
+
+    stmt.fetch();
+
+    int id=stmt.row().getInt(0);
     // 用户已存在
-    if(row != nullptr)
+    if(id)
     {
-        mysql_free_result(res);
         std::cout << "user already exists!" << std::endl;
         return 0;
     }
 
-    mysql_free_result(res);
+    Statement register_stmt(conn, R"(
+        INSERT INTO 
+        user_info
+        (
+        user_name, 
+        password
+        ) 
+        VALUES(
+        ?,
+        ?
+        );
+    )");
 
-    std::string insert_sql = "INSERT INTO user_info(user_name, password) VALUES('" + name + "','" + password + "');";
-    std::cout<<insert_sql<<std::endl;
-    if(!query(insert_sql))
+    register_stmt.bindString(0, name);
+    register_stmt.bindString(1, password);
+
+    if(!register_stmt.execute())
     {
         std::cout << "register failed!" << std::endl;
         return -1;
@@ -165,66 +186,95 @@ MYSQL* MySQL::get()
 
 int MySQL::savePost(Post& p)
 {
-    std::string sql = R"(
-    INSERT INTO 
-    posts(
+    Statement stmt(conn, R"(
+        INSERT INTO 
+        posts
+        (
         user_id, 
         title, 
-        content)
-    VALUES( )" 
-    + std::to_string(p.user_id) + " , '" 
-    + p.title + "' , '" 
-    + p.content 
-    + "' );";
-    
-    query(sql);
+        content
+        )
+        VALUES( 
+        ?,
+        ?,
+        ?
+        );
+    )");
 
-    int post_id = mysql_insert_id(conn);
-    p.post_id = post_id;
+    stmt.bindInt(0, p.user_id);
+    stmt.bindString(1, p.title);
+    stmt.bindString(2, p.content);
+    
+    if(!stmt.execute())
+    {
+        std::cout << "save post failed\n";
+        return -1;
+    }
+    
+    p.post_id = stmt.insertId();
 
     //从mysql中获取表项(帖子)创建时间
-    std::string create_time_sql = "SELECT create_time FROM posts WHERE post_id=" + std::to_string(post_id);
+    std::string create_time_sql = "SELECT create_time FROM posts WHERE post_id=" + std::to_string(p.post_id);
     query(create_time_sql);
     MYSQL_RES* res = mysql_store_result(conn);
+    if(!res) return -1;
     // size_t t = mysql_num_fields(res);
     MYSQL_ROW row = mysql_fetch_row(res);
+    if(row == nullptr)
+    {
+        mysql_free_result(res);
+        return -1;
+    }
     // std::cout<<"mysql_num_fields:"<<t<<std::endl;
     p.create_time = row[0];
-    return post_id;
+    
+    mysql_free_result(res);
+    return p.post_id;
 }
 
 void MySQL::saveComment(Comment& c)
 {
-    std::string sql = R"(
-    INSERT INTO comments(
+    Statement stmt(conn, R"(
+        INSERT INTO 
+        comments
+        (
         post_id,
         user_id,
         parent_id,
         reply_user_id,
         content
-    )
-    VALUES(
-    )"
-    + std::to_string(c.post_id)
-    + ","
-    + std::to_string(c.user_id)
-    + ","
-    + std::to_string(c.parent_id)
-    + ","
-    + (c.reply_user_id==-1?"NULL":std::to_string(c.reply_user_id))
-    + ",'"
-    + c.content
-    + "');";
+        )
+        VALUES
+        (
+        ?,
+        ?,
+        ?,
+        ?,
+        ?
+        );
+    )");
 
-    query(sql);
-    int comment_id = mysql_insert_id(conn);
-    sql =
+    stmt.bindInt(0, c.post_id);
+    stmt.bindInt(1, c.user_id);
+    stmt.bindInt(2, c.parent_id);
+    if(c.reply_user_id==-1) stmt.bindNull(3);
+    else stmt.bindInt(3, c.reply_user_id);
+    stmt.bindString(4, c.content);
+
+    if(!stmt.execute())
+    {
+        std::cout << "save Comment failed\n";
+        return;
+    }
+        
+
+    int comment_id = stmt.insertId();
+    std::string sql =
     "UPDATE posts "
     "SET comment_count = comment_count + 1 "
     "WHERE post_id = "
     + std::to_string(c.post_id)
     + ";";
-
 
     query(sql);
 
@@ -301,7 +351,7 @@ void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
 
 void MySQL::getRootComments(std::vector<Comment>& comments, size_t post_id, size_t size, size_t offset)
 {
-    std::string sql = R"(
+    Statement stmt(conn, R"(
     SELECT
         c.comment_id,
         c.post_id,
@@ -321,28 +371,31 @@ void MySQL::getRootComments(std::vector<Comment>& comments, size_t post_id, size
     LEFT JOIN user_info u2
     ON c.reply_user_id=u2.user_id
 
-    WHERE c.post_id=)" + std::to_string(post_id) +
-    R"(
+    WHERE c.post_id=?
     AND parent_id = 0
     ORDER BY
     parent_id,
     create_time
-    LIMIT )" 
-    + std::to_string(size) +
-    " OFFSET " +
-    std::to_string(offset) +
-    ";";
-    
+    LIMIT ?
+    OFFSET ?;
+    )"
+    );
 
-    if(!query(sql)) return;
-    MYSQL_RES * res = mysql_store_result(conn);
+    stmt.bindInt(0, post_id);
+    stmt.bindInt(1, size);
+    stmt.bindInt(2, offset);
 
-    if(res == nullptr) return;
-
-    MYSQL_ROW row;
-    while((row = mysql_fetch_row(res)) != nullptr)
+    if(!stmt.execute())
     {
-        comments.emplace_back(row);
+        std::cout<<"get rootComments failrd!"<<std::endl;
+        return;
+    }
+
+    stmt.storeResult();
+
+    while(stmt.fetch())
+    {
+        comments.push_back(stmt.row());
     }
 }
 
@@ -432,7 +485,6 @@ bool MySQL::delPost(int post_id)
     where post_id = )" 
     + std::to_string(post_id) +
     ";";
-    std::cout<<sql<<std::endl;
     if(!query(sql)) return false;
 
     return true;

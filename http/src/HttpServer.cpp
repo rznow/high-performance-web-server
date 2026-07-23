@@ -372,21 +372,17 @@ HttpResponse HttpServer::registerUser(const HttpRequest& request)
     // std::string password = kv["password"];
     // std::string confirm_password = kv["confirm_password"];
     json data = json::parse(request.getBody());
-    std::string name = data["username"];
-    std::string password = data["password"];
-    std::string confirm_password = data["confirm_password"];
+    std::string name = data.value("username", "");
+    std::string password = data.value("password", "");
     // std::cout<<" username: "<<name<<std::endl;
     // std::cout<<" password: "<<password<<std::endl;
-    // std::cout<<" confirm_password: "<<confirm_password<<std::endl;
 
     int result;
     HttpResponse resp;
-    // if(password == confirm_password)
-    // {
-    //数据库
+
     auto mysql = MySQLPool::getInstance().getConnection();
     result = mysql->registerSQL(name, password);
-    // std::cout<<" result: "<<result<<std::endl;
+
     json j;
     if(result == 1)
     {
@@ -407,14 +403,6 @@ HttpResponse HttpServer::registerUser(const HttpRequest& request)
     resp.setHeader("Content-Type", "application/json");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     return resp;
-    // }
-    
-    // resp.setStatus(401, "Unauthorized");
-    // body = R"({"code":1003,"msg":"wrong confirm_password"})";
-    // resp.setBody(body);
-    // resp.setHeader("Content-Type", "application/json");
-    // resp.setHeader("Content-Length", std::to_string(body.size()));
-    // return resp;
 
 }
 
