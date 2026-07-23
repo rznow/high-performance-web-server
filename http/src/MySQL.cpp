@@ -143,13 +143,10 @@ int MySQL::registerSQL(const std::string& name, const std::string& password)
 
     // stmt.bindResultInt(0, id);
 
-    stmt.fetch();
-
-    int id=stmt.row().getInt(0);
-    // 用户已存在
-    if(id)
+    if(stmt.fetch())        //用户已注册
     {
-        std::cout << "user already exists!" << std::endl;
+        int id=stmt.row().getInt(0);
+        std::cout << "user "<<id<<" already exists!" << std::endl;
         return 0;
     }
 
@@ -363,7 +360,7 @@ void MySQL::getRootComments(std::vector<Comment>& comments, size_t post_id, size
         u.user_name,
         u2.user_name AS reply_name,
         c.content,
-        c.create_time
+        DATE_FORMAT(c.create_time,'%Y-%m-%d %H:%i:%s') AS create_time
     FROM comments c
     JOIN user_info u
     ON c.user_id=u.user_id
@@ -599,36 +596,60 @@ int MySQL::view(int post_id)
 
 bool MySQL::checkPost(int post_id, int user_id)
 {
-    std::string sql = R"(
-    SELECT * FROM
-    posts
-    where post_id = )" 
-    + std::to_string(post_id) +
-    " and user_id = "
-    + std::to_string(user_id) +
-    ";";
+    Statement stmt(conn, R"(
+        SELECT post_id FROM
+        posts
+        where post_id   = ?
+        and user_id     = ?;
+    )");
 
-    if(!query(sql)) return false;
-    MYSQL_RES* res = mysql_store_result(conn);
-    if(res == nullptr) return false;
-    MYSQL_ROW row = mysql_fetch_row(res);
+    stmt.bindInt(0, post_id);
+    stmt.bindInt(1, user_id);
 
-    if(row == nullptr) return false;
-    return true;
+    if(!stmt.execute())
+    {
+        return false;
+    }
+
+    stmt.storeResult();
+
+    if(stmt.fetch())    //是当前用户的帖子
+    {
+        return true;
+    }
+    return false;
+    // std::string sql = R"(
+    // SELECT * FROM
+    // posts
+    // where post_id = )" 
+    // + std::to_string(post_id) +
+    // " and user_id = "
+    // + std::to_string(user_id) +
+    // ";";
+
+    // if(!query(sql)) return false;
+    // MYSQL_RES* res = mysql_store_result(conn);
+    // if(res == nullptr) return false;
+    // MYSQL_ROW row = mysql_fetch_row(res);
+
+    // if(row == nullptr) return false;
+    // return true;
 }
 
 bool MySQL::modPost(int post_id, std::string title, std::string content)
 {
-    std::string sql = R"(
-    UPDATE posts
-    SET title = ')" + 
-    title + "',"
-    " content = '" + 
-    content + "'"
-    "where post_id = " +
-    std::to_string(post_id) +
-    ";";
+    Statement stmt(conn, R"(
+        UPDATE posts
+        SET 
+        title       = ?,
+        content     = ?
+        where 
+        post_id     = ?;
+    )");
+    stmt.bindString(0, title);
+    stmt.bindString(1, content);
+    stmt.bindInt(2, post_id);
 
-    if(!query(sql)) return false;
+    if(!stmt.execute()) return false;
     return true;
 }

@@ -730,6 +730,7 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
     json comment_array = json::array();
     for(auto &i: roots)
     {
+        // i->print();
         comment_array.push_back(buildComment(i));
         // comment_array.push_back({
         //     {"comment_id",      i.comment_id},

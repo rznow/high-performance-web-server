@@ -145,15 +145,15 @@ bool Statement::storeResult()
 
     mysql_free_result(meta);
 
-    // if(mysql_stmt_bind_result(stmt,resultBinds.data()))
-    // {
-    //     std::cout<<mysql_stmt_error(stmt)<<std::endl;
-    //     return false;
-    // }
+    if(mysql_stmt_bind_result(stmt,resultBinds.data()))
+    {
+        std::cout<<mysql_stmt_error(stmt)<<std::endl;
+        return false;
+    }
 
-    // currentRow.buffers = &resultBuffers;
-    // currentRow.lengths = &lengths;
-    // currentRow.nulls   = &isNull;
+    currentRow.buffers = &resultBuffers;
+    currentRow.lengths = &lengths;
+    currentRow.nulls   = &isNull;
     // currentRow.binds = &resultBinds;
 
     return true;
@@ -226,10 +226,6 @@ bool Statement::fetch()
 
         return false;
     }
-
-    currentRow.buffers = &resultBuffers;
-    currentRow.lengths = &lengths;
-    currentRow.nulls   = &isNull;
 
     return true;
 }
