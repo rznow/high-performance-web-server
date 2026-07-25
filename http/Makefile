@@ -9,7 +9,8 @@ CXXFLAGS = -std=c++20 \
 
 LDFLAGS = -lmysqlclient \
           -lssl \
-          -lcrypto
+          -lcrypto \
+		  -lhiredis
 
 
 TARGET = build/main
