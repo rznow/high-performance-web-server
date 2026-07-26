@@ -3,7 +3,7 @@
 
 struct UserInfo
 {
-    int user_id;
+    int user_id = 0;
 
     std::string user_name;
 };

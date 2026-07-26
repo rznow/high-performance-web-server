@@ -9,7 +9,7 @@ async function loadUser()
     const nav = document.getElementById("nav-user");
     if(!token)
     {
-        location.href="/login.html";
+        // location.href="/login.html";
         return;
     }
 

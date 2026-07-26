@@ -28,7 +28,7 @@ class PostService
         std::vector<Comment> getRootComments(size_t post_id, size_t page, size_t size);
         std::vector<Comment> getComments(size_t post_id);  
         bool delPost(size_t post_id);
-        void modViewCount(size_t post_id);
+        void modifyView(size_t post_id);
         int modPost(size_t post_id, size_t user_id, std::string& title, std::string& content);
 };
 

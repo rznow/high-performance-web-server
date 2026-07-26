@@ -55,13 +55,12 @@ std::shared_ptr<MySQL> MySQLPool::getConnection()
 
         cv.wait(ul, [&]{ return !pool.empty(); });
 
-        mysql = pool.front();
-
         if(pool.size() < capcity)
         {
             createConns();
         }
 
+        mysql = pool.front();
         pool.pop();
     }
 
@@ -75,6 +74,7 @@ std::shared_ptr<MySQL> MySQLPool::getConnection()
             releaseConnection(p);
         }   
     );
+
 }
 
 void MySQLPool::releaseConnection(MySQL* mysql)

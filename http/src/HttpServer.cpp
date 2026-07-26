@@ -18,6 +18,7 @@
 #include "common/Post.h"
 #include "common/Comment.h"
 #include "service/PostService.h"
+#include "service/RedisService.h"
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
@@ -653,6 +654,7 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
     json post_array = json::array();
     for(auto &i: posts)
     {
+        RedisService::getInstance().setPost(i.post_id, i);
         post_array.push_back({
             {"post_id",         i.post_id},
             {"user_id",         i.user_id},
@@ -779,13 +781,8 @@ HttpResponse HttpServer::post(const HttpRequest& request)
     }
     UserInfo user;
     JWT::verifyToken(auth, user);
-    if(PostCache::getInstance().get(id, user.user_id, p)||PostService::getInstance().get(id, p))
+    if(PostService::getInstance().get(id, p))
     {
-        if(p.user_id != user.user_id)
-        {
-            PostService::getInstance().modViewCount(id);
-        }
-            
         j["code"] = 0;
         j["post"]["post_id"]        = p.post_id;
         j["post"]["user_id"]        = p.user_id;
@@ -793,8 +790,13 @@ HttpResponse HttpServer::post(const HttpRequest& request)
         j["post"]["title"]          = p.title;
         j["post"]["content"]        = p.content;
         j["post"]["like_count"]     = p.like_count;
-        j["post"]["comment_count"]  = p.comment_count;
+        if(user.user_id!=0&&p.user_id != user.user_id)
+        {
+            PostService::getInstance().modifyView(id);
+            j["post"]["view_count"] = p.view_count+1;
+        }else 
         j["post"]["view_count"]     = p.view_count;
+        j["post"]["comment_count"]  = p.comment_count;
         j["post"]["time"]           = p.create_time;
         j["post"]["liked"]          = PostService::getInstance().liked(id, user.user_id);
     }else

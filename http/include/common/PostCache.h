@@ -33,8 +33,9 @@ class PostCache
 
 
         static PostCache& getInstance();
-        bool get(int post_id, int user_id, Post& post);
+        bool get(int post_id, Post& post);
         void put(const Post& p);
+        void update(int post_id);
         void update(int post_id, bool liked);
         void update(int post_id, std::string& title, std::string& content);
         void update(const Comment& c);

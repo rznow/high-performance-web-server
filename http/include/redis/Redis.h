@@ -2,6 +2,7 @@
 
 #include <hiredis/hiredis.h>
 #include <string>
+#include <unordered_map>
 
 /* This is the reply object returned by redisCommand() 
 typedef struct redisReply {
@@ -20,13 +21,13 @@ class Redis
 {
     private:
         redisContext *c;
+    public:
+        Redis();
+        ~Redis();
 
         bool connect(
             const std::string& host = "192.168.1.8",
             int port = 6379);
-    public:
-        Redis();
-        ~Redis();
 
         bool set(const std::string& key, const std::string& value);
         RedisValue get(const std::string& key);
@@ -35,4 +36,28 @@ class Redis
 
         RedisValue incr(const std::string& key);
 
+        bool hmset(
+            const std::string& key, 
+            const std::unordered_map<std::string,std::string>& fields);
+
+        bool hgetAll(
+            const std::string& key, 
+            std::unordered_map<std::string,std::string>& fields);
+
+        bool hincr(
+            const std::string& key, 
+            const std::string& field,
+            const std::string& INCR);
+
+        bool sadd(
+            const std::string& key,
+            const std::string& member);
+
+        bool srem(
+            const std::string& key,
+            const std::string& member);
+
+        bool sismember(
+            const std::string& key,
+            const std::string& member);
 };
