@@ -25,11 +25,18 @@ class PostService
         int like(int post_id, int user_id, bool& liked);
         bool liked(int post_id, int user_id);
         std::vector<Post> getPosts(size_t page, size_t size); 
-        std::vector<Comment> getRootComments(size_t post_id, size_t page, size_t size);
+        std::vector<Comment> getRootComments(
+            size_t post_id, 
+            size_t page, 
+            size_t size);
         std::vector<Comment> getComments(size_t post_id);  
         bool delPost(size_t post_id);
         void modifyView(size_t post_id);
-        int modPost(size_t post_id, size_t user_id, std::string& title, std::string& content);
+        int modPost(size_t post_id, 
+            size_t user_id, 
+            std::string& title, 
+            std::string& content);
+        bool checkPost(size_t post_id, size_t user_id);
 };
 
 

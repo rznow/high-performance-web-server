@@ -3,6 +3,7 @@
 #include <hiredis/hiredis.h>
 #include <string>
 #include <unordered_map>
+#include "redis/RedisValue.h"
 
 /* This is the reply object returned by redisCommand() 
 typedef struct redisReply {
@@ -15,8 +16,6 @@ typedef struct redisReply {
 } redisReply;
 */
 
-
-class RedisValue;
 class Redis
 {
     private:
@@ -36,6 +35,20 @@ class Redis
 
         RedisValue incr(const std::string& key);
 
+        bool lrange(
+            const std::string& key, 
+            std::vector<std::string>& values,
+            int start = 0,
+            int end = -1);
+
+        bool lpush(
+            const std::string& key, 
+            const std::vector<std::string>& values);
+
+        bool rpush(
+            const std::string& key, 
+            const std::vector<std::string>& values);
+
         bool hmset(
             const std::string& key, 
             const std::unordered_map<std::string,std::string>& fields);
@@ -43,6 +56,10 @@ class Redis
         bool hgetAll(
             const std::string& key, 
             std::unordered_map<std::string,std::string>& fields);
+
+        RedisValue hget(
+            const std::string& key, 
+            const std::string& field);
 
         bool hincr(
             const std::string& key, 

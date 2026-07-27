@@ -37,7 +37,7 @@ void PostService::put(Comment& c)
 
     mysql->saveComment(c);
 
-    // RedisService::getInstance().setPost(p.post_id, p);
+    RedisService::getInstance().setComment(c.comment_id, c);
 
     PostCache::getInstance().update(c);
 }
@@ -72,61 +72,115 @@ bool PostService::get(int post_id, Post& p)
 }
 
 //MySQL → Redis → PostCache
-int PostService::like(int post_id, int user_id, bool& liked)
+int PostService::like(int post_id, int user_id, bool& liked)    //点赞和取消点赞
 {
     auto mysql = pool.getConnection();
 
     int res = mysql->like(post_id, user_id, liked);
 
-    if(liked) RedisService::getInstance().incrLike(post_id);
-    else RedisService::getInstance().decrLike(post_id);
+    if(liked) 
+    {
+        RedisService::getInstance().addLikeUser(post_id, user_id);
+        RedisService::getInstance().incrLike(post_id);
+    }
+    else 
+    {
+        RedisService::getInstance().removeLikeUser(post_id, user_id);
+        RedisService::getInstance().decrLike(post_id);
+    }
 
     PostCache::getInstance().update(post_id, liked);
 
     return res;
 }
 
-bool PostService::liked(int post_id, int user_id)
+//Redis -> MySQL
+bool PostService::liked(int post_id, int user_id)               //是否点赞
 {
     auto mysql = pool.getConnection();
     
-    return mysql->liked(post_id, user_id);
+    if(RedisService::getInstance().hasLiked(post_id, user_id))
+    {
+        return true;
+    }
+
+    if(mysql->liked(post_id, user_id))
+    {
+        RedisService::getInstance().addLikeUser(post_id, user_id);
+        return true;
+    }
+
+    return false;
 }
 
+//Redis -> Mysql
 std::vector<Post> PostService::getPosts(size_t page, size_t size)
 {
+    std::vector<Post> posts;
+
+    if(RedisService::getInstance().getPosts(page, size, posts))
+        return posts;
+
     auto mysql = pool.getConnection();
 
-    std::vector<Post> posts;
-    mysql->getPosts(posts, size, (page-1)*size);
-    for(auto &p: posts) PostCache::getInstance().put(p);
+    mysql->getPosts(posts, size, (page - 1) * size);
+
+    RedisService::getInstance().setPosts(page, size, posts);
+
     return posts;
 }
 
+//Redis -> Mysql
 std::vector<Comment> PostService::getRootComments(size_t post_id, size_t page, size_t size)
 {
-    auto mysql = pool.getConnection();
+    auto& redis = RedisService::getInstance();
 
     std::vector<Comment> comments;
-    mysql->getRootComments(comments, post_id, size, (page-1)*size);
+
+    if(redis.getComments(post_id, page, size, comments))
+        return comments;
+
+    auto mysql = pool.getConnection();
+
+    mysql->getRootComments(
+        comments,
+        post_id,
+        size,
+        (page-1)*size);
+
+    redis.setComments(post_id, page, size, comments);
+
     return comments;
 }
 
+//Redis -> Mysql
 std::vector<Comment> PostService::getComments(size_t post_id)
 {
-    auto mysql = pool.getConnection();
+    auto& redis = RedisService::getInstance();
 
     std::vector<Comment> comments;
+
+    if(redis.getComments(post_id, comments))
+        return comments;
+
+    auto mysql = pool.getConnection();
+
     mysql->getComments(comments, post_id);
+
+    redis.setComments(post_id, comments);
+
     return comments;
 }
 
+//MySQL → Redis → PostCache
 bool PostService::delPost(size_t post_id)
 {
     auto mysql = pool.getConnection();
 
     bool res = mysql->delPost(post_id);
-    
+
+    RedisService::getInstance().delPost(post_id);
+
     PostCache::getInstance().erase(post_id);
 
     return res;
@@ -149,7 +203,7 @@ int PostService::modPost(size_t post_id, size_t user_id, std::string& title, std
 {
     auto mysql = pool.getConnection();
 
-    if(mysql->checkPost(post_id, user_id))
+    if(checkPost(post_id, user_id))
     {
         if(mysql->modPost(post_id, title, content))
         {
@@ -161,3 +215,21 @@ int PostService::modPost(size_t post_id, size_t user_id, std::string& title, std
     }
     return 1;  //帖子并非当前用户所有
 }
+
+//PostCache → Redis → MySQL
+bool PostService::checkPost(size_t post_id, size_t user_id)         //判断帖子是否为本人的
+{
+    /*
+    
+    PostCache
+    
+    */
+    if(RedisService::getInstance().checkPost(post_id, user_id))
+    {
+        return true;
+    }
+
+    auto mysql = pool.getConnection();
+    return mysql->checkPost(post_id, user_id);
+}
+
