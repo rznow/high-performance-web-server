@@ -1,13 +1,17 @@
+.PHONY: clean run
+
 CXX = g++
 
 CXXFLAGS = -std=c++20 \
            -Iinclude \
            -Wall \
            -g \
-           -pthread
+		   -MMD \
+		   -MP
 
+LDFLAGS  = -pthread
 
-LDFLAGS = -lmysqlclient \
+LDLIBS = -lmysqlclient \
           -lssl \
           -lcrypto \
 		  -lhiredis
@@ -26,8 +30,8 @@ OBJ = $(SRC:src/%.cpp=build/%.o)
 $(TARGET): $(OBJ)
 
 	$(CXX) $(OBJ) \
-	$(CXXFLAGS) \
 	$(LDFLAGS) \
+	$(LDLIBS) \
 	-o $(TARGET)
 
 
