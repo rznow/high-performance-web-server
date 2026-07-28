@@ -13,7 +13,9 @@ using namespace std;
 
 constexpr int PORT = 8080;
 constexpr int MAXEVENTS = 100;
-constexpr int SUBTHREAD = 3;
+constexpr int MAIN_REACTOR_NUM = 1;
+constexpr int SUB_REACTOR_NUM  = 4;
+constexpr int THREAD_POOL_NUM  = 8;
 
 int main()
 {
@@ -24,12 +26,13 @@ int main()
 
     //创建子Reactor序列
     vector<unique_ptr<Reactor>> subReactors;
+    subReactors.reserve(SUB_REACTOR_NUM);
     vector<thread> threads;
 
     //创建线程池
-    ThreadPool threadpool(4);
+    ThreadPool threadpool(THREAD_POOL_NUM);
 
-    for(int i=0;i < SUBTHREAD; i++)
+    for(int i=0;i < SUB_REACTOR_NUM; i++)
     {
         subReactors.emplace_back(make_unique<Reactor>(MAXEVENTS, i, &threadpool));
         threads.emplace_back([&subReactors,i]{subReactors[i]->workloop();});
@@ -65,7 +68,7 @@ int main()
                     // write(new_fd, message, sizeof(message));
 
                     //通过轮询来为子Reactor添加socket端口
-                    int idx = next.fetch_add(1) % SUBTHREAD;
+                    int idx = next.fetch_add(1) % SUB_REACTOR_NUM;
 
                     subReactors[idx]->push(new_fd);
 

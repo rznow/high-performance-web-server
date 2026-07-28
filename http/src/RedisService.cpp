@@ -275,6 +275,18 @@ bool RedisService::decrLike(int post_id) const
     return redis->hincr(RedisKey::post(post_id), PostField::LIKE, DECR);
 }
 
+bool RedisService::getLikes(int post_id, int& like_count) const
+{
+    auto redis = pool.getConnection();
+
+    RedisValue rv = redis->hget(RedisKey::post(post_id), PostField::LIKE);
+
+    if(!rv.isInteger()) return false;
+    
+    like_count = rv.asInt();
+    return true;
+}
+
 bool RedisService::incrComment(int post_id) const
 {
     auto redis = pool.getConnection();
@@ -292,7 +304,7 @@ bool RedisService::decrComment(int post_id) const
 bool RedisService::incrView(int post_id) const
 {
     auto redis = pool.getConnection();
-
+    
     return redis->hincr(RedisKey::post(post_id), PostField::VIEW, INCR);
 }
 
@@ -314,4 +326,42 @@ bool RedisService::hasLiked(int post_id, int user_id) const
     auto redis = pool.getConnection();
 
     return redis->sismember(RedisKey::postLikes(post_id), RedisKey::user(user_id));
+}
+
+bool RedisService::addDirty(int post_id) const
+{
+    auto redis = pool.getConnection();
+
+    return redis->sadd(RedisKey::dirtyPost(), std::to_string(post_id));
+}
+
+bool RedisService::getDirty(std::string& post_id) const
+{
+    auto redis = pool.getConnection();
+
+    return redis->spop(RedisKey::dirtyPost(), post_id);
+}
+
+// bool RedisService::getDirty(std::vector<std::string>& dirtyPosts) const
+// {
+//     auto redis = pool.getConnection();
+
+//     bool res = redis->smembers(RedisKey::dirtyPost(), dirtyPosts);
+
+//     redis->del(RedisKey::dirtyPost());
+
+//     return res;
+// }
+
+bool RedisService::getViewLikeComment(int post_id, std::unordered_map<std::string, std::string>& fields) const
+{
+    auto redis = pool.getConnection();
+
+    const std::vector<std::string> FLUSH = {PostField::VIEW, PostField::LIKE, PostField::COMMENT};
+    for(auto &i:FLUSH)
+    {
+        fields[i] = "-1";
+    }
+
+    return redis->hmget(RedisKey::post(post_id), fields);
 }

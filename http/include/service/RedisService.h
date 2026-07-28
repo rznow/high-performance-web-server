@@ -3,7 +3,7 @@
 #include "redis/RedisPool.h"
 #include "common/Post.h"
 #include "common/Comment.h"
-
+#include <unordered_map>
 
 class RedisService
 {
@@ -44,11 +44,15 @@ class RedisService
             int post_id, 
             int user_id) const;
 
+        bool existPostLikes(int post_id) const;
+
         bool delPost(int post_id) const;
 
         bool incrLike(int post_id) const;
 
         bool decrLike(int post_id) const;
+
+        bool getLikes(int post_id, int& like_count) const;
 
         bool incrComment(int post_id) const;
 
@@ -61,4 +65,10 @@ class RedisService
         bool removeLikeUser(int post_id, int user_id) const;
 
         bool hasLiked(int post_id, int user_id) const;
+
+        bool addDirty(int post_id) const;
+
+        bool getDirty(std::string& post_id) const;
+
+        bool getViewLikeComment(int post_id, std::unordered_map<std::string, std::string>& fields) const;
 };

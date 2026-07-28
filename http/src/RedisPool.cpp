@@ -28,7 +28,7 @@ RedisPool::~RedisPool()
 
 RedisPool& RedisPool::getInstance()
 {
-    static RedisPool redisPool;
+    static RedisPool redisPool(10);
     return redisPool;
 }
 
@@ -59,16 +59,16 @@ std::shared_ptr<Redis> RedisPool::getConnection()
         pool.pop();
     }
 
-    if(redis->connect())
+    if(!redis->valid())
     {
-        return std::shared_ptr<Redis>(redis, [this](Redis* r)
+        redis->connect();
+    }
+
+    return std::shared_ptr<Redis>(redis, [this](Redis* r)
             {
                 releaseConnection(r);
             }
         ); 
-    }
-
-    return nullptr;
 }
 
 void RedisPool::releaseConnection(Redis* redis)

@@ -28,6 +28,8 @@ class Redis
             const std::string& host = "192.168.1.8",
             int port = 6379);
 
+        bool valid();
+
         bool set(const std::string& key, const std::string& value);
         RedisValue get(const std::string& key);
         bool del(const std::string& key);
@@ -53,6 +55,10 @@ class Redis
             const std::string& key, 
             const std::unordered_map<std::string,std::string>& fields);
 
+        bool hmget(
+            const std::string& key, 
+            std::unordered_map<std::string,std::string>& fields);
+
         bool hgetAll(
             const std::string& key, 
             std::unordered_map<std::string,std::string>& fields);
@@ -77,4 +83,12 @@ class Redis
         bool sismember(
             const std::string& key,
             const std::string& member);
+
+        bool smembers(
+            const std::string& key,
+            std::vector<std::string>& values);
+
+        bool spop(
+            const std::string& key,
+            std::string& value);
 };

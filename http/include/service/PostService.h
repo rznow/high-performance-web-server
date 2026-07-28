@@ -3,6 +3,7 @@
 
 #include "common/PostCache.h"
 #include "mysql/MySQLPool.h"
+#include <thread>
 class Post;
 class Comment;
 
@@ -11,6 +12,8 @@ class PostService
     private:
         PostCache& cache;
         MySQLPool& pool;
+        bool running = true;
+        std::thread flushThread;
 
         PostService();
         ~PostService();
@@ -22,7 +25,8 @@ class PostService
         void put(Post p);
         void put(Comment& c);
         bool get(int post_id, Post& p);
-        int like(int post_id, int user_id, bool& liked);
+        bool like(int post_id, int user_id);
+        int likes(int post_id);
         bool liked(int post_id, int user_id);
         std::vector<Post> getPosts(size_t page, size_t size); 
         std::vector<Comment> getRootComments(
@@ -37,6 +41,7 @@ class PostService
             std::string& title, 
             std::string& content);
         bool checkPost(size_t post_id, size_t user_id);
+        void flush();       //定时更新点赞和浏览
 };
 
 

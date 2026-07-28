@@ -5,12 +5,27 @@
 #include "common/Comment.h"
 #include "common/PostCache.h"
 #include <iostream>
+using namespace std::chrono_literals;
 
 PostService::PostService():
     cache(PostCache::getInstance()),
-    pool(MySQLPool::getInstance()){}
+    pool(MySQLPool::getInstance()){
+    flushThread = std::thread([this]{
+        while (running)
+        {
+            std::this_thread::sleep_for(30s);
 
-PostService::~PostService(){}
+            flush();
+        }
+    });
+}
+
+PostService::~PostService(){
+    running = false;
+    if (flushThread.joinable()) {
+        flushThread.join();
+    }
+}
 
 PostService& PostService::getInstance()
 {
@@ -37,7 +52,10 @@ void PostService::put(Comment& c)
 
     mysql->saveComment(c);
 
-    RedisService::getInstance().setComment(c.comment_id, c);
+    auto& redis = RedisService::getInstance();
+    redis.addDirty(c.post_id);
+
+    redis.setComment(c.comment_id, c);
 
     PostCache::getInstance().update(c);
 }
@@ -45,15 +63,17 @@ void PostService::put(Comment& c)
 //PostCache → Redis → MySQL
 bool PostService::get(int post_id, Post& p)
 {
+    auto& redis = RedisService::getInstance();
+
     if(PostCache::getInstance().get(post_id, p))
     {
-        std::cout<<"Post from postCache!"<<std::endl;
+        // std::cout<<"Post from postCache!"<<std::endl;
         return true;
     }
 
-    if(RedisService::getInstance().getPost(post_id, p))
+    if(redis.getPost(post_id, p))
     {
-        std::cout<<"Post from redis!"<<std::endl;
+        // std::cout<<"Post from redis!"<<std::endl;
         PostCache::getInstance().put(p);
         return true;
     }
@@ -62,9 +82,18 @@ bool PostService::get(int post_id, Post& p)
 
     if(mysql->getPost(post_id, p))
     {
-        std::cout<<"Post from mysql!"<<std::endl;
+        // std::cout<<"Post from mysql!"<<std::endl;
         PostCache::getInstance().put(p);
-        RedisService::getInstance().setPost(p.post_id, p);
+        redis.setPost(post_id, p);
+
+        std::vector<int> likes;
+        mysql->getLikes(post_id, likes);
+
+        for(const auto &i:likes)
+        {
+            redis.addLikeUser(post_id, i);
+        }
+
         return true;
     }
     
@@ -72,43 +101,60 @@ bool PostService::get(int post_id, Post& p)
 }
 
 //MySQL → Redis → PostCache
-int PostService::like(int post_id, int user_id, bool& liked)    //点赞和取消点赞
+bool PostService::like(int post_id, int user_id)
 {
+    auto& redis = RedisService::getInstance();
     auto mysql = pool.getConnection();
-
-    int res = mysql->like(post_id, user_id, liked);
-
-    if(liked) 
+    bool f = liked(post_id, user_id);
+    mysql->like(post_id, user_id, f);
+    redis.addDirty(post_id);
+    if(f)
     {
-        RedisService::getInstance().addLikeUser(post_id, user_id);
-        RedisService::getInstance().incrLike(post_id);
-    }
-    else 
+        f = false;
+        redis.removeLikeUser(post_id, user_id);
+        redis.decrLike(post_id);
+    }else
     {
-        RedisService::getInstance().removeLikeUser(post_id, user_id);
-        RedisService::getInstance().decrLike(post_id);
+        f = true;
+        redis.addLikeUser(post_id, user_id);
+        redis.incrLike(post_id);
     }
+    PostCache::getInstance().update(post_id, f);
 
-    PostCache::getInstance().update(post_id, liked);
-
-    return res;
+    return f;
 }
 
-//Redis -> MySQL
+//PostCache → Redis → MySQL
+int PostService::likes(int post_id)
+{
+    auto& redis = RedisService::getInstance();
+
+    int like_count = 0;
+    if(PostCache::getInstance().getLikes(post_id, like_count)||
+        redis.getLikes(post_id, like_count))
+    {
+        auto mysql = pool.getConnection();
+        mysql->likes(post_id, like_count);
+    }
+
+    return like_count;
+}
+
+
+//Redis -> MySQL()
 bool PostService::liked(int post_id, int user_id)               //是否点赞
 {
-    auto mysql = pool.getConnection();
-    
     if(RedisService::getInstance().hasLiked(post_id, user_id))
     {
         return true;
     }
 
-    if(mysql->liked(post_id, user_id))
-    {
-        RedisService::getInstance().addLikeUser(post_id, user_id);
-        return true;
-    }
+    // auto mysql = pool.getConnection();
+    // if(mysql->liked(post_id, user_id))
+    // {
+    //     RedisService::getInstance().addLikeUser(post_id, user_id);
+    //     return true;
+    // }
 
     return false;
 }
@@ -189,11 +235,13 @@ bool PostService::delPost(size_t post_id)
 //MySQL → Redis → PostCache
 void PostService::modifyView(size_t post_id)
 {
-    auto mysql = pool.getConnection();
+    // auto mysql = pool.getConnection();
 
-    mysql->view(post_id);
+    // mysql->view(post_id);
+    auto& redis = RedisService::getInstance();
+    redis.addDirty(post_id);
 
-    RedisService::getInstance().incrView(post_id);
+    redis.incrView(post_id);
 
     PostCache::getInstance().update(post_id);
 }
@@ -233,3 +281,21 @@ bool PostService::checkPost(size_t post_id, size_t user_id)         //判断帖�
     return mysql->checkPost(post_id, user_id);
 }
 
+void PostService::flush()       //定时更新点赞和浏览
+{
+    auto& redis = RedisService::getInstance();
+    auto mysql = pool.getConnection();
+    std::string dirtyPost;
+    while(redis.getDirty(dirtyPost))
+    {
+        int post_id = std::stoi(dirtyPost);
+        std::unordered_map<std::string, std::string> fields;
+        redis.getViewLikeComment(post_id, fields);
+        std::unordered_map<std::string, std::string> mysql_fields;
+        for(auto &[key, value] : fields)
+        {
+            mysql_fields[key+"_count"] = value;
+        }
+        mysql->load(post_id, mysql_fields);
+    }
+}

@@ -52,7 +52,7 @@ RedisValue::RedisValue(redisReply* reply)
         default:
             throw std::runtime_error("Unsupported redis reply type");
     }
-    std::cout<<"type: "<<(type_==Type::String)<<std::endl;
+    // std::cout<<"type: "<<(type_==Type::String)<<std::endl;
 }
 
 bool RedisValue::isNull() const     {return type_ == Type::Nil;}

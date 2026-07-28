@@ -35,6 +35,12 @@ bool Redis::connect(const std::string& host, int port)
     return true;
 }
 
+bool Redis::valid()
+{
+    if(c) return true;
+    return false;
+}
+
 bool Redis::set(const std::string& key, const std::string& value)
 {
     redisReply* reply = static_cast<redisReply*>(redisCommand(
@@ -262,6 +268,47 @@ bool Redis::hmset(
     return ok;
 }
 
+bool Redis::hmget(
+    const std::string& key, 
+    std::unordered_map<std::string,std::string>& fields)
+{
+    std::vector<const char*> argv;
+    std::vector<size_t> argvlen;
+
+    argv.push_back("HMGET");
+    argvlen.push_back(5);
+
+    argv.push_back(key.data());
+    argvlen.push_back(key.size());
+    for(auto& [key, value] : fields)
+    {
+        argv.push_back(key.data());
+        argvlen.push_back(key.size());
+    }
+
+    redisReply* reply =
+        (redisReply*)redisCommandArgv(
+            c,
+            argv.size(),
+            argv.data(),
+            argvlen.data());
+
+    if(reply->type != REDIS_REPLY_ARRAY)
+    {
+        freeReplyObject(reply);
+        return false;
+    }
+
+    int i=0;
+    for(auto& [key, value] : fields)
+    {
+        value = reply->element[i++]->str;
+        std::cout<<key<<":  "<<value<<std::endl;
+    }
+
+    return true;
+}
+
 bool Redis::hgetAll(
     const std::string& key, 
     std::unordered_map<std::string,std::string>& fields)
@@ -412,4 +459,62 @@ bool Redis::sismember(
     freeReplyObject(reply);
     if(res) return true;
     return false;
+}
+
+bool Redis::smembers(const std::string& key,
+                     std::vector<std::string>& values)
+{
+    redisReply* reply = static_cast<redisReply*>(
+        redisCommand(
+            c,
+            "SMEMBERS %b",
+            key.data(),
+            key.size()));
+
+    if (reply == nullptr)
+        return false;
+
+    if (reply->type != REDIS_REPLY_ARRAY)
+    {
+        freeReplyObject(reply);
+        return false;
+    }
+
+    values.clear();
+    values.reserve(reply->elements);
+
+    for (size_t i = 0; i < reply->elements; ++i)
+    {
+        redisReply* e = reply->element[i];
+
+        if (e->type == REDIS_REPLY_STRING)
+        {
+            values.emplace_back(e->str, e->len);
+        }
+    }
+
+    freeReplyObject(reply);
+    return true;
+}
+
+bool Redis::spop(
+    const std::string& key,
+    std::string& value)
+{
+    redisReply* reply = static_cast<redisReply*>(
+        redisCommand(
+            c,
+            "SPOP %b",
+            key.data(),
+            key.size()));
+
+    if(reply->type != REDIS_REPLY_STRING)
+    {
+        freeReplyObject(reply);
+        return false;
+    }
+
+    RedisValue rv(reply);
+    value = rv.asString();
+    return true;
 }

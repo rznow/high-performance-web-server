@@ -34,6 +34,7 @@ class PostCache
 
         static PostCache& getInstance();
         bool get(int post_id, Post& post);
+        bool getLikes(int post_id, int& like_count);
         void put(const Post& p);
         void update(int post_id);
         void update(int post_id, bool liked);

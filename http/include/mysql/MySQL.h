@@ -1,6 +1,7 @@
 #include <mysql/mysql.h>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 class UserInfo;
 class Post;
@@ -45,13 +46,19 @@ public:
 
     bool delPost(int post_id);
 
-    int like(int post_id, int user_id, bool& liked);
+    void like(int post_id, int user_id, bool liked);
 
     bool liked(int post_id, int user_id);
+
+    bool likes(int post_id, int& like_count);         //获取点赞数
+
+    bool getLikes(int post_id, std::vector<int>& likes);    //获取喜欢对应帖子的全部用户
 
     int view(int post_id);
 
     bool checkPost(int post_id, int user_id);
 
     bool modPost(int post_id, std::string title, std::string content);
+
+    bool load(int post_id, const std::unordered_map<std::string, std::string>& fields);
 };

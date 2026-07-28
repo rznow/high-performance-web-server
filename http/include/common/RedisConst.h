@@ -78,9 +78,9 @@ namespace RedisKey
         return "user:" + std::to_string(id) + ":likes";
     }
 
-    inline std::string latestPosts()
+    inline std::string dirtyPost()
     {
-        return "posts:latest";
+        return "dirty:post";
     }
 
     inline std::string hotPosts()

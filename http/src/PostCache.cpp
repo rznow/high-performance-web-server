@@ -15,7 +15,7 @@ PostCache::PostCache()
     dummyEnd = new ListNode();
     dummyHead->next = dummyEnd;
     dummyEnd->pre = dummyHead;
-    capcity = 5;
+    capcity = 10;
     count = 0;
 }
 PostCache::PostCache(int _capcity)
@@ -46,6 +46,16 @@ bool PostCache::get(int post_id, Post& post)
     }
     return false;
 
+}
+
+bool PostCache::getLikes(int post_id, int& like_count)
+{
+    if(cache.find(post_id)!=cache.end())
+    {
+        like_count = cache[post_id]->p.like_count;
+        return true;
+    }
+    return false;
 }
 
 void PostCache::put(const Post& p)

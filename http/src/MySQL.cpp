@@ -266,16 +266,16 @@ void MySQL::saveComment(Comment& c)
         
 
     int comment_id = stmt.insertId();
-    std::string sql =
-    "UPDATE posts "
-    "SET comment_count = comment_count + 1 "
-    "WHERE post_id = "
-    + std::to_string(c.post_id)
-    + ";";
+    // std::string sql =
+    // "UPDATE posts "
+    // "SET comment_count = comment_count + 1 "
+    // "WHERE post_id = "
+    // + std::to_string(c.post_id)
+    // + ";";
 
-    query(sql);
+    // query(sql);
 
-    sql = R"(
+    std::string sql = R"(
     SELECT
         c.comment_id,
         c.post_id,
@@ -304,7 +304,6 @@ void MySQL::saveComment(Comment& c)
     MYSQL_ROW row = mysql_fetch_row(res);
     if(!row) return;
     c = Comment(row);
-    c.print();
 }
 
 void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
@@ -487,23 +486,41 @@ bool MySQL::delPost(int post_id)
     return true;
 }
 
-int MySQL::like(int post_id, int user_id, bool& liked)
+void MySQL::like(int post_id, int user_id, bool liked)
 {
-    std::string sql = R"(
-    SELECT * FROM
-    post_like
-    where post_id = )" 
-    + std::to_string(post_id) +
-    " and user_id = "
-    + std::to_string(user_id) +
-    ";";
+    // std::string sql = R"(
+    // SELECT * FROM
+    // post_like
+    // where post_id = )" 
+    // + std::to_string(post_id) +
+    // " and user_id = "
+    // + std::to_string(user_id) +
+    // ";";
 
-    if(!query(sql)) return -1;
-    MYSQL_RES* res = mysql_store_result(conn);
-    if(res == nullptr) return -1;
-    MYSQL_ROW row = mysql_fetch_row(res);
-
-    if(row == nullptr) //没有点赞
+    // if(!query(sql)) return -1;
+    // MYSQL_RES* res = mysql_store_result(conn);
+    // if(res == nullptr) return -1;
+    // MYSQL_ROW row = mysql_fetch_row(res);
+    std::string sql;
+    if(liked) //取消点赞
+    {
+        sql = R"(
+            DELETE FROM post_like
+            WHERE user_id = )" +
+            std::to_string(user_id) +
+            " and post_id = " + 
+            std::to_string(post_id) + 
+            ";";
+        if(!query(sql)) return;
+        // sql = R"(
+        //     UPDATE posts
+        //     SET like_count =
+        //     like_count - 1
+        //     WHERE post_id = )" + 
+        //     std::to_string(post_id) + 
+        //     ";";
+        // if(!query(sql)) return;
+    }else
     {
         sql = R"(
             INSERT INTO post_like
@@ -513,49 +530,30 @@ int MySQL::like(int post_id, int user_id, bool& liked)
             " , " + 
             std::to_string(post_id) + 
             ");";
-        if(!query(sql)) return -1;
-        sql = R"(
-            UPDATE posts
-            SET like_count =
-            like_count + 1
-            WHERE post_id = )" + 
-            std::to_string(post_id) + 
-            ";";
-        if(!query(sql)) return -1;
-        liked = true;
-    }else
-    {
-        sql = R"(
-            DELETE FROM post_like
-            WHERE user_id = )" +
-            std::to_string(user_id) +
-            " and post_id = " + 
-            std::to_string(post_id) + 
-            ";";
-        if(!query(sql)) return -1;
-        sql = R"(
-            UPDATE posts
-            SET like_count =
-            like_count - 1
-            WHERE post_id = )" + 
-            std::to_string(post_id) + 
-            ";";
-        if(!query(sql)) return -1;
-        liked = false;
+        if(!query(sql)) return;
+        // sql = R"(
+        //     UPDATE posts
+        //     SET like_count =
+        //     like_count + 1
+        //     WHERE post_id = )" + 
+        //     std::to_string(post_id) + 
+        //     ";";
+        // if(!query(sql)) return;
+        
     }
 
-    sql = R"(
-        SELECT like_count 
-        FROM posts
-        WHERE post_id = )" + 
-        std::to_string(post_id) + 
-        ";";
-    if(!query(sql)) return -1;
+    // sql = R"(
+    //     SELECT like_count 
+    //     FROM posts
+    //     WHERE post_id = )" + 
+    //     std::to_string(post_id) + 
+    //     ";";
+    // if(!query(sql)) return -1;
 
-    res = mysql_store_result(conn);
-    row = mysql_fetch_row(res);
+    // res = mysql_store_result(conn);
+    // row = mysql_fetch_row(res);
 
-    return std::stoi(row[0]);
+    // return std::stoi(row[0]);
 }
 
 bool MySQL::liked(int post_id, int user_id)
@@ -575,6 +573,44 @@ bool MySQL::liked(int post_id, int user_id)
     MYSQL_ROW row = mysql_fetch_row(res);
 
     if(row == nullptr) return false;
+    return true;
+}
+
+bool MySQL::likes(int post_id, int& like_count) //获取点赞数
+{
+    std::string sql = R"(
+    SELECT like_count FROM
+    posts
+    where post_id = )" 
+    + std::to_string(post_id) +
+    ";";
+
+    if(!query(sql)) return false;
+    MYSQL_RES* res = mysql_store_result(conn);
+    if(res == nullptr) return false;
+    MYSQL_ROW row = mysql_fetch_row(res);
+
+    if(row == nullptr) return false;
+    return true;
+}
+
+bool MySQL::getLikes(int post_id, std::vector<int>& likes)
+{
+    std::string sql = R"(
+    SELECT user_id FROM
+    post_like
+    where post_id = )" 
+    + std::to_string(post_id) + 
+    ";";
+
+    if(!query(sql)) return false;
+    MYSQL_RES* res = mysql_store_result(conn);
+    if(res == nullptr) return false;
+    MYSQL_ROW row;
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        likes.push_back(std::stoi(row[0]));
+    }
     return true;
 }
 
@@ -652,4 +688,24 @@ bool MySQL::modPost(int post_id, std::string title, std::string content)
 
     if(!stmt.execute()) return false;
     return true;
+}
+
+bool MySQL::load(int post_id, 
+    const std::unordered_map<std::string, std::string>& fields)
+{
+    if (fields.empty()) {
+        return true;
+    }
+
+    std::string sql;
+    for (const auto& [key, value] : fields) {
+        if (!sql.empty()) {
+            sql += ", ";
+        }
+        sql += key + " = '" + value + "'";
+    }
+
+    sql = "UPDATE posts SET " + sql + " WHERE post_id = " + std::to_string(post_id);
+
+    return query(sql);
 }

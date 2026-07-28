@@ -435,8 +435,8 @@ HttpResponse HttpServer::post_like(const HttpRequest& request)
         return resp;
     }
     
-    bool liked = false;
-    int like_count = PostService::getInstance().like(post_id, user.user_id, liked);
+    bool liked = PostService::getInstance().like(post_id, user.user_id);
+    int like_count = PostService::getInstance().likes(post_id);
     if(like_count != -1)
     {
         j["code"] = 0;

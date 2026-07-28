@@ -87,7 +87,10 @@ void Reactor::enResponse(function<void()> task)
 
     //唤醒wait
     uint64_t one = 1;
-    write(wakeupFd, &one, sizeof(one));
+    // write(wakeupFd, &one, sizeof(one));
+    if (eventfd_write(wakeupFd, one) == -1) {
+        perror("eventfd_write failed");
+    }
 }
 
 void Reactor::responseLoop()
