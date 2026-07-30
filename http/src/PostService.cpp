@@ -41,6 +41,7 @@ void PostService::put(Post p)
     mysql->savePost(p);
     
     RedisService::getInstance().setPost(p.post_id, p);
+    RedisService::getInstance().delPostPage();
 
     PostCache::getInstance().put(p);
 }
@@ -226,6 +227,7 @@ bool PostService::delPost(size_t post_id)
     bool res = mysql->delPost(post_id);
 
     RedisService::getInstance().delPost(post_id);
+    RedisService::getInstance().delPostPage();
 
     PostCache::getInstance().erase(post_id);
 

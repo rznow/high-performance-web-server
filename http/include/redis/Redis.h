@@ -33,6 +33,7 @@ class Redis
         bool set(const std::string& key, const std::string& value);
         RedisValue get(const std::string& key);
         bool del(const std::string& key);
+        void delByPattern(const std::string& pattern);
         bool expire(const std::string& key, int seconds);
 
         RedisValue incr(const std::string& key);

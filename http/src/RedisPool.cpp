@@ -74,10 +74,13 @@ std::shared_ptr<Redis> RedisPool::getConnection()
 void RedisPool::releaseConnection(Redis* redis)
 {
     std::unique_lock<std::mutex> ul(mtx);
-    if(redis->connect())
+    if(!redis->valid())  
     {
-        pool.push(redis);
-    }else   delete redis;
+        redis->connect();
+    }
+    pool.push(redis);
+
+
 
     cv.notify_one();
 }

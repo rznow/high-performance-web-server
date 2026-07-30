@@ -38,6 +38,11 @@ namespace RedisKey
         return "posts:page:" + std::to_string(page) + ":size:" + std::to_string(size);
     }
 
+    inline std::string postsPage()
+    {
+        return "posts:page:*";
+    }
+
     inline std::string user(int id)
     {
         return "user:" + std::to_string(id);
@@ -87,4 +92,6 @@ namespace RedisKey
     {
         return "posts:hot";
     }
+
+
 }

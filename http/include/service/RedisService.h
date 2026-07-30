@@ -19,6 +19,7 @@ class RedisService
         static RedisService& getInstance();
 
         bool setPost(int post_id, const Post& p) const;
+        void delPostPage() const;
         bool setPosts(int page, int size, const std::vector<Post>& posts) const;
         bool getPost(int post_id, Post& p) const;
         bool getPosts(int page, int size, std::vector<Post>& posts) const;

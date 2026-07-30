@@ -74,5 +74,17 @@ clean:
 	rm -f build/*.o build/*.d $(TARGET)
 	rm -f workbench/*.o workbench/*.d $(TARGET2)
 
--include $(OBJ:.o=.d)
--include $(OBJ2:.o=.d)
+# ---------------- wrk Benchmark ----------------
+HOST      ?= http://192.168.1.8:8080
+PATH_URL  ?= /index.html
+THREADS   ?= 4
+CONNS     ?= 200
+DURATION  ?= 30s
+SCRIPT    ?=
+
+bench:
+	wrk -t$(THREADS) \
+	    -c$(CONNS) \
+	    -d$(DURATION) \
+	    $(if $(SCRIPT),-s $(SCRIPT),) \
+	    $(HOST)$(PATH_URL)

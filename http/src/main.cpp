@@ -12,7 +12,7 @@
 using namespace std;
 
 constexpr int PORT = 8080;
-constexpr int MAXEVENTS = 100;
+constexpr int MAXEVENTS = 1000;
 constexpr int MAIN_REACTOR_NUM = 1;
 constexpr int SUB_REACTOR_NUM  = 4;
 constexpr int THREAD_POOL_NUM  = 8;

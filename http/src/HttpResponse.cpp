@@ -1,4 +1,5 @@
 #include "http/HttpResponse.h"
+#include <iostream>
 
 //--------------------------------------------HttpResponse类--------------------------------------------//
 void HttpResponse::setStatus(int code, const std::string& msg)
@@ -37,6 +38,8 @@ std::string HttpResponse::toString() const
 
     res += "\r\n";
     res += body;
+
+    // std::cout<<res<<std::endl;
 
     return res;
 }

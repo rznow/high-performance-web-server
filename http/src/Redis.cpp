@@ -109,6 +109,46 @@ bool Redis::del(const std::string& key)
     return reply->integer == 1;
 }
 
+void Redis::delByPattern(const std::string& pattern)
+{
+    std::string cursor = "0";
+    do{
+        redisReply* reply = static_cast<redisReply*>(redisCommand(
+            c,
+            "SCAN %b MATCH %b COUNT 100",
+            cursor.data(),
+            cursor.size(),
+            pattern.data(),
+            pattern.size())
+        );
+
+        if(reply->type != REDIS_REPLY_ARRAY || reply->elements != 2)
+        {
+            freeReplyObject(reply);
+            return;
+        }
+
+        cursor = std::string(reply->element[0]->str, reply->element[0]->len);
+
+        redisReply* keys = reply->element[1];
+
+        if(keys->type == REDIS_REPLY_ARRAY&&keys->elements > 0)
+        {
+            std::string cmd = "DEL";
+
+            for(size_t i = 0;i < keys->elements;i++)
+            {
+                cmd += " ";
+                cmd += std::string(keys->element[i]->str,keys->element[i]->len);
+            }
+            redisReply* delreply = static_cast<redisReply*>(redisCommand(c, cmd.c_str()));
+
+            if(delreply) freeReplyObject(delreply);
+        }
+
+    }while(cursor != "0");
+}
+
 bool Redis::expire(const std::string& key, int seconds)
 {
     redisReply* reply = static_cast<redisReply*>(redisCommand(

@@ -1,7 +1,6 @@
 #include "http/HttpRequest.h"
 #include "network/Connection.h"
 #include <iostream>
-using namespace std;
 
 
 //--------------------------------------------HttpRequest类--------------------------------------------//
@@ -40,19 +39,16 @@ void HttpRequest::parseRequest(Buffer& buffer)
     size_t begin = i;
     while(i < end&& request[i]!=' ') i++;
     setMethod(request.substr(begin,i-begin));
-    // cout<< "Method:\t\t" << request.substr(begin,i-begin) <<endl;
     //Path
     while(i < end&& request[i]==' ') i++;
     begin = i;
     while(i < end&& request[i]!=' ') i++;
     setPath(request.substr(begin,i-begin));
-    // cout<< "Path:\t\t" << request.substr(begin,i-begin) <<endl;
     //Version
     while(i < end&& request[i]==' ') i++;
     begin = i;
     while(i < end&& request[i]!=' ') i++;
     setVersion(request.substr(begin,i-begin));
-    // cout<< "Version:\t" << request.substr(begin,i-begin) <<endl;
     //处理请求头
     i = end + 2;
     while(i < request.size())
@@ -82,20 +78,14 @@ void HttpRequest::parseRequest(Buffer& buffer)
         i = lineEnd + 2;
     }
     
-    // for(auto &i: headers)
-    // {
-    //     cout<<i.first<<":\t\t"<<i.second<<endl;
-    // }
     //存在body:
     int contentLen = 0;
     if(headers.count("Content-Length"))
     {
         contentLen = stoi(headers["Content-Length"]);
         setBody(buffer.data().substr(pos+4,contentLen));
-        cout<<"Body:\t\t"<<getBody()<<endl;
+        
     }
-    // cout<<endl;
-    
     buffer.retrieve(pos+4+contentLen);
 }
 
@@ -146,4 +136,17 @@ const std::string& HttpRequest::getVersion() const
 const std::string& HttpRequest::getBody() const
 {
     return body;
+}
+
+void HttpRequest::print() const
+{
+    std::cout<< "Method:\t\t" << method <<std::endl;
+    std::cout<< "Path:\t\t" << path <<std::endl;
+    std::cout<< "Version:\t" << version <<std::endl;
+
+    for(auto &[key, value]: headers)
+    {
+        std::cout<<key<<":\t\t"<<value<<std::endl;
+    }
+    std::cout<<"Body:\t\t"<<body<<std::endl;
 }

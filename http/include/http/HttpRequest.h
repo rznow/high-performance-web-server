@@ -41,6 +41,8 @@ class HttpRequest
         const std::string& getVersion() const;
 
         const std::string& getBody() const;
+
+        void print() const;
 };
 
 #endif

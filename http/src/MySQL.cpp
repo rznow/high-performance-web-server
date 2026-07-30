@@ -224,6 +224,8 @@ int MySQL::savePost(Post& p)
     }
     // std::cout<<"mysql_num_fields:"<<t<<std::endl;
     p.create_time = row[0];
+    p.like_count = 0;
+    p.view_count = 0;
     
     mysql_free_result(res);
     return p.post_id;
@@ -260,7 +262,7 @@ void MySQL::saveComment(Comment& c)
 
     if(!stmt.execute())
     {
-        std::cout << "save Comment failed\n";
+        // std::cout << "save Comment failed\n";
         return;
     }
         
@@ -467,7 +469,7 @@ bool MySQL::getPost(int post_id, Post& p)
     
     p = Post(row);
    
-    p.print();
+    // p.print();
 
     return true;
 }

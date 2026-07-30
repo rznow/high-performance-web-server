@@ -176,6 +176,11 @@ async function loadPosts()
             return;
         }
 
+        if(data.posts.length == 0)
+        {
+            return;
+        }
+
         const postList =
             document.getElementById("postList");
 

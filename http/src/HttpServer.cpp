@@ -108,6 +108,7 @@ HttpResponse HttpServer::handleRequest(const HttpRequest& request)
     HttpResponse resp;
     resp.setStatus(405, "Method Not Allowed");
     resp.setHeader("Content-Type", "text/plain");
+    resp.setHeader("Connection", "keep-alive");
     resp.setBody("Unsupported HTTP Method");
 
     return resp;
@@ -150,6 +151,7 @@ HttpResponse HttpServer::handlePost(const HttpRequest& request)
     HttpResponse resp;
     resp.setStatus(404, "Not Found");
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setBody(R"({"code":404,"msg":"route not found"})");
     return resp;
 }
@@ -174,6 +176,7 @@ HttpResponse HttpServer::handleDel(const HttpRequest& request)
         resp.setStatus(200, "OK");
         resp.setBody(body);
         resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Connection", "keep-alive");
         resp.setHeader("Content-Length", std::to_string(body.size()));
         return resp;
 
@@ -195,6 +198,7 @@ HttpResponse HttpServer::handleDel(const HttpRequest& request)
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     resp.setBody(body);
     // std::cout<<j.dump()<<std::endl<<std::endl;
@@ -222,6 +226,7 @@ HttpResponse HttpServer::handlePut(const HttpRequest& request)
         resp.setStatus(200, "OK");
         resp.setBody(body);
         resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Connection", "keep-alive");
         resp.setHeader("Content-Length", std::to_string(body.size()));
         return resp;
     }
@@ -247,6 +252,7 @@ HttpResponse HttpServer::handlePut(const HttpRequest& request)
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     resp.setBody(body);
     // std::cout<<j.dump()<<std::endl<<std::endl;
@@ -292,8 +298,8 @@ HttpResponse HttpServer::login(const HttpRequest& request)
     std::string password = data["password"];
 
 
-    std::cout<<" username: "<<name<<std::endl;
-    std::cout<<" password: "<<password<<std::endl;
+    // std::cout<<" username: "<<name<<std::endl;
+    // std::cout<<" password: "<<password<<std::endl;
 
     int result;
     UserInfo user;
@@ -333,6 +339,7 @@ HttpResponse HttpServer::login(const HttpRequest& request)
     std::string body = j.dump();
     resp.setBody(body);
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     return resp;
 }
@@ -402,6 +409,7 @@ HttpResponse HttpServer::registerUser(const HttpRequest& request)
     std::string body = j.dump();
     resp.setBody(body);
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     return resp;
 
@@ -431,6 +439,7 @@ HttpResponse HttpServer::post_like(const HttpRequest& request)
         std::string body = j.dump();
         resp.setBody(body);
         resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Connection", "keep-alive");
         resp.setHeader("Content-Length", std::to_string(body.size()));
         return resp;
     }
@@ -450,6 +459,7 @@ HttpResponse HttpServer::post_like(const HttpRequest& request)
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     resp.setBody(body);
     // std::cout<<j.dump()<<std::endl;
@@ -475,6 +485,7 @@ HttpResponse HttpServer::postCreate(const HttpRequest& request)
         std::string body = j.dump();
         resp.setBody(body);
         resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Connection", "keep-alive");
         resp.setHeader("Content-Length", std::to_string(body.size()));
         return resp;
 
@@ -496,6 +507,7 @@ HttpResponse HttpServer::postCreate(const HttpRequest& request)
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     resp.setBody(body);
     // std::cout<<j.dump()<<std::endl<<std::endl;
@@ -522,6 +534,7 @@ HttpResponse HttpServer::commentCreate(const HttpRequest& request)
         std::string body = j.dump();
         resp.setBody(body);
         resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Connection", "keep-alive");
         resp.setHeader("Content-Length", std::to_string(body.size()));
         return resp;
     }
@@ -553,6 +566,7 @@ HttpResponse HttpServer::commentCreate(const HttpRequest& request)
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     resp.setBody(body);
     // std::cout<<j.dump()<<std::endl<<std::endl;
@@ -582,6 +596,7 @@ HttpResponse HttpServer::index(const HttpRequest& request)
     }
     
     resp.setHeader("Content-Type", getContentType(path));
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     resp.setBody(body);
 
@@ -611,6 +626,7 @@ HttpResponse HttpServer::profile(const HttpRequest& request)
         resp.setStatus(200, "OK");
         resp.setBody(body);
         resp.setHeader("Content-Type", "application/json");
+        resp.setHeader("Connection", "keep-alive");
         resp.setHeader("Content-Length", std::to_string(body.size()));
 
         return resp;
@@ -623,6 +639,7 @@ HttpResponse HttpServer::profile(const HttpRequest& request)
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     resp.setBody(body);
     // std::cout<<j.dump()<<std::endl<<std::endl;
@@ -673,6 +690,7 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     resp.setBody(body);
 
@@ -755,6 +773,7 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     resp.setBody(body);
 
@@ -809,6 +828,7 @@ HttpResponse HttpServer::post(const HttpRequest& request)
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
     resp.setHeader("Content-Length", std::to_string(body.size()));
     resp.setBody(body);
     // std::cout<<j.dump()<<std::endl;

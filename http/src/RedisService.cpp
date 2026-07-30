@@ -37,6 +37,13 @@ bool RedisService::setPost(int post_id, const Post& p) const
     });
 }
 
+void RedisService::delPostPage() const
+{
+    auto redis = pool.getConnection();
+
+    redis->delByPattern(RedisKey::postsPage());
+}
+
 bool RedisService::setPosts(int page, int size, const std::vector<Post>& posts) const
 {
     auto redis = pool.getConnection();
