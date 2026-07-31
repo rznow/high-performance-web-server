@@ -104,7 +104,7 @@ bool RedisService::setComment(int comment_id, const Comment& c) const
 {
     auto redis = pool.getConnection();
 
-    return redis->hmset(RedisKey::comment(comment_id),{
+    bool res = redis->hmset(RedisKey::comment(comment_id),{
     {CommentField::ID, std::to_string(c.comment_id)},
     {CommentField::POST_ID, std::to_string(c.post_id)},
     {CommentField::USER_ID, std::to_string(c.user_id)},
@@ -117,6 +117,8 @@ bool RedisService::setComment(int comment_id, const Comment& c) const
     {CommentField::CONTENT, c.content},
     {CommentField::CREATE_TIME, c.create_time}
     });
+    if(res) redis->expire(RedisKey::comment(comment_id), 1800);
+    return res;
 }
 
 bool RedisService::setComments(
