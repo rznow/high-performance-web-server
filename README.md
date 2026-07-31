@@ -151,6 +151,7 @@ MiniForum
 ├── src
 ├── www
 ├── build
+├── workbench
 ├── Makefile
 ```
 
@@ -166,6 +167,12 @@ make
 
 ``` bash
 make run
+```
+
+# 测试
+
+``` bash
+make test
 ```
 
 默认：
@@ -187,7 +194,7 @@ http://192.168.1.8:8080
 -   [ ] WebSocket
 -   [ ] Docker
 -   [ ] Elasticsearch
--   [ ] wrk 压力测试
+-   [x] wrk 压力测试
 -   [ ] HTTPS
 
 ------------------------------------------------------------------------
