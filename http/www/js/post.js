@@ -125,15 +125,22 @@ async function checkLogin()
 
 
 
-        nav.innerHTML=
-        `
-        <span class="username">
-            欢迎 ${data.user_name}
-        </span>
+        nav.innerHTML = `
+        <div class="user-info">
 
-        <a href="#" id="logout">
-            退出
-        </a>
+            <span class="username">
+            ${data.user_name}
+            </span>
+
+            <a href="/profile.html" class="profile-link">
+                <img class="avatar" src="${data.avatar}">
+            </a>
+
+            <a href="#" id="logout">
+                退出
+            </a>
+
+        </div>
         `;
 
 

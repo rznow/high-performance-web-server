@@ -303,15 +303,16 @@ HttpResponse HttpServer::login(const HttpRequest& request)
 
     int result;
     UserInfo user;
-    {
-        auto mysql = MySQLPool::getInstance().getConnection();
-        result = mysql->loginSQL(name, password, user);
+
+    result = PostService::getInstance().login(user, name, password);
+    // {
+        // auto mysql = MySQLPool::getInstance().getConnection();
+        // result = mysql->loginSQL(name, password, user);
         // MySQL mysql;
         // mysql.connect();
         // result = mysql.loginSQL(name, password);
-    }
+    // }
 
-    
     HttpResponse resp;
     json j;
     if(result == 1)
@@ -632,10 +633,14 @@ HttpResponse HttpServer::profile(const HttpRequest& request)
         return resp;
     }
 
-
-    j["code"] = 0;
-    j["user_id"] = user.user_id;
-    j["user_name"] = user.user_name;
+    j["code"]           = 0;
+    j["user_id"]        = user.user_id;
+    j["user_name"]      = user.user_name;
+    j["avatar"]         = user.avatar;
+    j["register_time"]  = PostService::getInstance().getCreateTime(user.user_id);
+    j["post_count"]     = PostService::getInstance().getPostCount(user.user_id);
+    j["comment_count"]  = PostService::getInstance().getCommentCount(user.user_id);
+    j["like_count"]     = PostService::getInstance().getLikeCount(user.user_id);
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");

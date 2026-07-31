@@ -92,7 +92,7 @@ body{
 
 }
 
-.nav-user a{
+.nav-user .btn{
 
     text-decoration:none;
 
@@ -120,6 +120,49 @@ body{
 
     color:#409EFF;
 
+}
+
+.user-info{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.profile-link{
+    display:flex;
+    text-decoration:none;
+}
+
+.avatar{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    object-fit:cover;
+    display:block;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;           /* 继承父元素文字颜色，不单独变蓝 */
+    background: transparent;  /* 防止背景变色 */
+}
+
+a.profile-link,
+a#logout {
+    text-decoration: none !important;
+    color: inherit !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+}
+
+a.profile-link {
+    display: inline-block;
+    line-height: 0;
+}
+a.profile-link img {
+    display: block;
+    border: none;
 }
 
 /* =========================

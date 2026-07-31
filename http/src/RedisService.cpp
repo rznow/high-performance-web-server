@@ -20,11 +20,39 @@ RedisService& RedisService::getInstance()
     return redisService;
 }
 
+bool RedisService::setUser(UserInfo& u) const
+{
+    auto redis = pool.getConnection();
+
+    bool res = redis->hmset(RedisKey::user(u.user_id),{
+    {UserField::ID,             std::to_string(u.user_id)},
+    {UserField::NAME,           u.user_name},
+    {UserField::AVATAR,         u.avatar},
+    {UserField::CREATE_TIME,    u.create_time}
+    });
+
+    if(res) redis->expire(RedisKey::user(u.user_id), 1800);
+
+    return res;
+}
+
+bool RedisService::getCreateTime(int user_id, std::string& time) const
+{
+    auto redis = pool.getConnection();
+
+    RedisValue rv = redis->hget(RedisKey::user(user_id), UserField::CREATE_TIME);
+
+    if(!rv.isString()) return false;
+
+    time = rv.asString();
+    return true;
+}
+
 bool RedisService::setPost(int post_id, const Post& p) const
 {
     auto redis = pool.getConnection();
 
-    return redis->hmset(RedisKey::post(post_id),{
+    bool res = redis->hmset(RedisKey::post(post_id),{
     {PostField::ID, std::to_string(p.post_id)},
     {PostField::USER_ID, std::to_string(p.user_id)},
     {PostField::AUTHOR, p.author},
@@ -35,6 +63,10 @@ bool RedisService::setPost(int post_id, const Post& p) const
     {PostField::VIEW, std::to_string(p.view_count)},
     {PostField::TIME, p.create_time}
     });
+
+    if(res) redis->expire(RedisKey::post(post_id), 1800);
+
+    return res;
 }
 
 void RedisService::delPostPage() const
@@ -98,6 +130,81 @@ bool RedisService::getPosts(int page, int size, std::vector<Post>& posts) const
     }
 
     return true;
+}
+
+bool RedisService::getPostCount(int user_id, int& count) const
+{
+    auto redis = pool.getConnection();
+
+    RedisValue rv = redis->hget(RedisKey::userStat(user_id),
+        UserField::POST_COUNT
+    );
+
+    if(!rv.isInteger()) return false;
+
+    count = rv.asInt();
+    return true;
+}
+
+bool RedisService::setPostCount(int user_id, const int count) const
+{
+    auto redis = pool.getConnection();
+
+    bool res = redis->hmset(RedisKey::userStat(user_id),{
+    {UserField::POST_COUNT, std::to_string(count)}
+    });
+    if(res) redis->expire(RedisKey::userStat(user_id), 1800);
+    return res;
+}
+
+bool RedisService::getCommentCount(int user_id, int& count) const
+{
+    auto redis = pool.getConnection();
+
+    RedisValue rv = redis->hget(RedisKey::userStat(user_id),
+        UserField::COMMENT_COUNT
+    );
+
+    if(!rv.isInteger()) return false;
+
+    count = rv.asInt();
+    return true;
+}
+
+bool RedisService::setCommentCount(int user_id, const int count) const
+{
+    auto redis = pool.getConnection();
+
+    bool res = redis->hmset(RedisKey::userStat(user_id),{
+    {UserField::COMMENT_COUNT, std::to_string(count)}
+    });
+    if(res) redis->expire(RedisKey::userStat(user_id), 1800);
+    return res;
+}
+
+bool RedisService::getLikeCount(int user_id, int& count) const
+{
+    auto redis = pool.getConnection();
+
+    RedisValue rv = redis->hget(RedisKey::userStat(user_id),
+        UserField::LIKE_COUNT
+    );
+
+    if(!rv.isInteger()) return false;
+
+    count = rv.asInt();
+    return true;
+}
+
+bool RedisService::setLikeCount(int user_id, const int count) const
+{
+    auto redis = pool.getConnection();
+
+    bool res = redis->hmset(RedisKey::userStat(user_id),{
+    {UserField::LIKE_COUNT, std::to_string(count)}
+    });
+    if(res) redis->expire(RedisKey::userStat(user_id), 1800);
+    return res;
 }
 
 bool RedisService::setComment(int comment_id, const Comment& c) const

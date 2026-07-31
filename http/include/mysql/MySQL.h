@@ -61,4 +61,8 @@ public:
     bool modPost(int post_id, std::string title, std::string content);
 
     bool load(int post_id, const std::unordered_map<std::string, std::string>& fields);
+
+    bool getPostCount(int user_id, int& count);
+    bool getCommentCount(int user_id, int& count);
+    bool getLikeCount(int user_id, int& count);
 };

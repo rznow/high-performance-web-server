@@ -1,3 +1,14 @@
+namespace UserField
+{
+    inline constexpr const char* ID             = "id";
+    inline constexpr const char* NAME           = "name";
+    inline constexpr const char* AVATAR         = "avatar";
+    inline constexpr const char* CREATE_TIME    = "create_time";
+    inline constexpr const char* POST_COUNT     = "posts";
+    inline constexpr const char* COMMENT_COUNT  = "comments";
+    inline constexpr const char* LIKE_COUNT     = "likes";
+}
+
 namespace PostField
 {
     inline constexpr const char* ID      = "id";
@@ -46,6 +57,16 @@ namespace RedisKey
     inline std::string user(int id)
     {
         return "user:" + std::to_string(id);
+    }
+
+    inline std::string userStat(int id)
+    {
+        return "user:" + std::to_string(id) + ":stat";
+    }
+
+    inline std::string avatar(int id)
+    {
+        return "user:" + std::to_string(id) + "avatar";
     }
 
     inline int deuser(std::string key)

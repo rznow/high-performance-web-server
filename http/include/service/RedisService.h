@@ -2,6 +2,7 @@
 
 #include "redis/RedisPool.h"
 #include "common/Post.h"
+#include "common/UserInfo.h"
 #include "common/Comment.h"
 #include <unordered_map>
 
@@ -18,11 +19,21 @@ class RedisService
         RedisService& operator=(const RedisService&) = delete;
         static RedisService& getInstance();
 
+        bool setUser(UserInfo& u) const;
+        bool getCreateTime(int user_id, std::string& time) const;
+
         bool setPost(int post_id, const Post& p) const;
         void delPostPage() const;
         bool setPosts(int page, int size, const std::vector<Post>& posts) const;
         bool getPost(int post_id, Post& p) const;
         bool getPosts(int page, int size, std::vector<Post>& posts) const;
+
+        bool getPostCount(int user_id, int& count) const;
+        bool setPostCount(int user_id, const int count) const;
+        bool getCommentCount(int user_id, int& count) const;
+        bool setCommentCount(int user_id, const int count) const;
+        bool getLikeCount(int user_id, int& count) const;
+        bool setLikeCount(int user_id, const int count) const;
 
         bool setComment(int comment_id, const Comment& c) const;
         bool setComments(int post_id, const std::vector<Comment>& comments) const;

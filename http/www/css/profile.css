@@ -1,0 +1,143 @@
+body{
+
+    margin:0;
+
+    background:#f5f7fa;
+
+    font-family:Arial;
+
+}
+
+.container{
+
+    width:700px;
+
+    margin:40px auto;
+
+}
+
+.profile-card{
+
+    background:white;
+
+    border-radius:12px;
+
+    padding:40px;
+
+    text-align:center;
+
+    box-shadow:0 2px 12px rgba(0,0,0,.08);
+
+}
+
+.avatar{
+
+    width:140px;
+    height:140px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+    border:4px solid #409EFF;
+
+    display:block;
+
+    margin:0 auto;
+
+}
+
+#changeAvatar{
+
+    margin:15px auto 30px;
+
+    display:block;
+
+    width:120px;
+
+    height:38px;
+
+    border:none;
+
+    border-radius:20px;
+
+    background:#409EFF;
+
+    color:white;
+
+    cursor:pointer;
+
+    font-size:14px;
+
+    transition:0.2s;
+
+}
+
+#changeAvatar:hover{
+
+    background:#2f7de1;
+
+}
+.stat{
+
+    margin-top:30px;
+
+    display:flex;
+
+    justify-content:space-around;
+
+    background:white;
+
+    border-radius:12px;
+
+    padding:25px;
+
+}
+
+.item{
+
+    text-align:center;
+
+}
+
+.item span{
+
+    font-size:30px;
+
+    color:#409EFF;
+
+    font-weight:bold;
+
+}
+
+.menu{
+
+    margin-top:30px;
+
+    background:white;
+
+    border-radius:12px;
+
+    overflow:hidden;
+
+}
+
+.menu a{
+
+    display:block;
+
+    padding:20px;
+
+    text-decoration:none;
+
+    color:#333;
+
+    border-bottom:1px solid #eee;
+
+}
+
+.menu a:hover{
+
+    background:#f7f7f7;
+
+}

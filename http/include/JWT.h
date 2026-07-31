@@ -29,6 +29,9 @@ std::string JWT::createToken(const UserInfo& user)
         .set_payload_claim(
             "user_name", 
             jwt::claim(user.user_name))
+        .set_payload_claim(
+            "avatar", 
+            jwt::claim(user.avatar))
         .set_expires_at(
             std::chrono::system_clock::now() +
             std::chrono::hours(24))
@@ -56,6 +59,10 @@ bool JWT::verifyToken(const std::string& token,UserInfo& user)
 
         user.user_name =
             decoded.get_payload_claim("user_name")
+                   .as_string();
+
+        user.avatar =
+            decoded.get_payload_claim("avatar")
                    .as_string();
         return true;
     }

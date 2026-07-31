@@ -33,6 +33,18 @@ PostService& PostService::getInstance()
     return ps;
 }
 
+int PostService::login(UserInfo& user, std::string name, std::string password)
+{
+    auto mysql = pool.getConnection();
+    int result = mysql->loginSQL(name, password, user);
+
+    if(result == 1)
+    {
+        RedisService::getInstance().setUser(user);
+    }
+    return result;
+}
+
 //MySQL → Redis → PostCache
 void PostService::put(Post p)
 {
@@ -300,4 +312,69 @@ void PostService::flush()       //定时更新点赞和浏览
         }
         mysql->load(post_id, mysql_fields);
     }
+}
+
+int PostService::getPostCount(size_t user_id)
+{
+    auto &redis = RedisService::getInstance();
+
+    int count = 0;
+    if(redis.getPostCount(user_id, count))
+    {
+        return count;
+    }
+
+    auto mysql = pool.getConnection();
+    if(mysql->getPostCount(user_id, count))
+    {
+        redis.setPostCount(user_id, count);
+    }
+    return count;
+}
+
+
+int PostService::getCommentCount(size_t user_id)
+{
+    auto &redis = RedisService::getInstance();
+
+    int count = 0;
+    if(redis.getCommentCount(user_id, count))
+    {
+        return count;
+    }
+
+    auto mysql = pool.getConnection();
+    if(mysql->getCommentCount(user_id, count))
+    {
+        redis.setCommentCount(user_id, count);
+    }
+    return count;
+}
+
+int PostService::getLikeCount(size_t user_id)
+{
+    auto &redis = RedisService::getInstance();
+
+    int count = 0;
+    if(redis.getLikeCount(user_id, count))
+    {
+        return count;
+    }
+
+    auto mysql = pool.getConnection();
+    if(mysql->getLikeCount(user_id, count))
+    {
+        redis.setLikeCount(user_id, count);
+    }
+    return count;
+}
+
+std::string PostService::getCreateTime(size_t user_id)
+{
+    auto &redis = RedisService::getInstance();
+
+    std::string time;
+
+    redis.getCreateTime(user_id, time);
+    return time;
 }

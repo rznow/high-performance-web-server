@@ -1,50 +1,5 @@
 // index.js
 
-async function loadUser()
-{
-
-    const token =
-        localStorage.getItem("token");
-
-    const nav = document.getElementById("nav-user");
-    if(!token)
-    {
-        // location.href="/login.html";
-        return;
-    }
-
-    const response =
-        await fetch("/profile",{
-
-        method:"GET",
-
-        headers:{
-
-            Authorization:
-                "Bearer " + token
-
-        }
-
-    });
-
-    const data =
-        await response.json();
-
-    if(data.code!=0)
-    {
-        localStorage.removeItem("token");
-
-        return;
-    }
-
-    document.getElementById("username").innerHTML =
-        data.username;
-
-    
-}
-
-loadUser();
-
 //检验token
 async function checkLogin()
 {
@@ -88,13 +43,21 @@ async function checkLogin()
         }
 
         nav.innerHTML = `
+        <div class="user-info">
+
             <span class="username">
-                欢迎，${data.user_name}
+            ${data.user_name}
             </span>
+
+            <a href="/profile.html" class="profile-link">
+                <img class="avatar" src="${data.avatar}">
+            </a>
 
             <a href="#" id="logout">
                 退出
             </a>
+
+        </div>
         `;
 
         document.getElementById("logout")

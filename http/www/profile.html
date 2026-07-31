@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="UTF-8">
+
+<title>个人中心</title>
+
+<link rel="stylesheet" href="/css/profile.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>个人中心</h1>
+
+    <div class="profile-card">
+
+        <img
+            id="avatar"
+            class="avatar"
+            src="/images/default_avatar.png"
+        >
+
+        <input
+            type="file"
+            id="avatarInput"
+            accept="image/*"
+            hidden
+        >
+
+        <button id="changeAvatar">
+            更换头像
+        </button>
+
+        <h2 id="username">Loading...</h2>
+
+        <!-- <p id="uid"></p> -->
+
+        <p id="registerTime"></p>
+
+    </div>
+
+    <div class="stat">
+
+        <div class="item">
+
+            <span id="postCount">0</span>
+
+            <p>帖子</p>
+
+        </div>
+
+        <div class="item">
+
+            <span id="commentCount">0</span>
+
+            <p>评论</p>
+
+        </div>
+
+        <div class="item">
+
+            <span id="likeCount">0</span>
+
+            <p>获赞</p>
+
+        </div>
+
+    </div>
+
+    <div class="menu">
+
+        <a href="/myPost.html">
+
+            我的帖子
+
+        </a>
+
+        <a href="/myComment.html">
+
+            我的评论
+
+        </a>
+
+        <a href="/changePassword.html">
+
+            修改密码
+
+        </a>
+
+        <a href="/index.html">
+
+            返回首页
+
+        </a>
+
+    </div>
+
+</div>
+
+<script src="/js/profile.js"></script>
+
+</body>
+
+</html>

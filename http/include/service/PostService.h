@@ -2,6 +2,7 @@
 #define POSTSERVICE_H
 
 #include "common/PostCache.h"
+#include "common/UserInfo.h"
 #include "mysql/MySQLPool.h"
 #include <thread>
 class Post;
@@ -22,6 +23,7 @@ class PostService
         PostService(const PostService&) = delete;
         PostService& operator=(const PostService&) = delete;
         static PostService& getInstance();
+        int login(UserInfo& user, std::string name, std::string password);
         void put(Post p);
         void put(Comment& c);
         bool get(int post_id, Post& p);
@@ -42,6 +44,11 @@ class PostService
             std::string& content);
         bool checkPost(size_t post_id, size_t user_id);
         void flush();       //定时更新点赞和浏览
+        int getPostCount(size_t user_id);
+        int getCommentCount(size_t user_id);
+        int getLikeCount(size_t user_id);
+        std::string getCreateTime(size_t user_id);
+        // std::string getAvatar(int user_id);    //获取头像
 };
 
 

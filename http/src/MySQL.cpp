@@ -89,10 +89,15 @@ bool MySQL::reconnect()
 */
 int MySQL::loginSQL(const std::string& name, const std::string& password, UserInfo& user)
 {
-    Statement stmt(conn,
-        "SELECT user_id,password "
-        "FROM user_info "
-        "WHERE user_name=?");
+    Statement stmt(conn,R"(
+        SELECT 
+        user_id,
+        password,
+        avatar,
+        DATE_FORMAT(create_time,'%Y-%m-%d %H:%i:%s') AS create_time
+        FROM user_info
+        WHERE user_name=?
+    )");
 
     stmt.bindString(0,name);
 
@@ -118,6 +123,8 @@ int MySQL::loginSQL(const std::string& name, const std::string& password, UserIn
 
     user.user_id=id;
     user.user_name=name;
+    user.avatar            = row.getString(2);
+    user.create_time       = row.getString(3);
     
     return 1;
 }
@@ -710,4 +717,75 @@ bool MySQL::load(int post_id,
     sql = "UPDATE posts SET " + sql + " WHERE post_id = " + std::to_string(post_id);
 
     return query(sql);
+}
+
+bool MySQL::getPostCount(int user_id, int& count)
+{
+    Statement stmt(conn,R"(
+        SELECT COUNT(*)
+        FROM posts
+        WHERE user_id=?
+    )");
+
+    stmt.bindInt(0, user_id);
+
+    if(!stmt.execute())
+    {
+        std::cout<<"get postCount failrd!"<<std::endl;
+        return false;
+    }
+
+    stmt.storeResult();
+    stmt.fetch();
+    count = stmt.row().getInt(0);
+
+    return true;
+}
+
+bool MySQL::getCommentCount(int user_id, int& count)
+{
+    Statement stmt(conn,R"(
+        SELECT COUNT(*)
+        FROM comments
+        WHERE user_id=?
+    )");
+
+    stmt.bindInt(0, user_id);
+
+    if(!stmt.execute())
+    {
+        std::cout<<"get commentCount failrd!"<<std::endl;
+        return false;
+    }
+
+    stmt.storeResult();
+    stmt.fetch();
+    count = stmt.row().getInt(0);
+
+    return true;
+}
+
+bool MySQL::getLikeCount(int user_id, int& count)
+{
+    Statement stmt(conn,R"(
+        SELECT COUNT(*)
+        FROM post_like pl
+        JOIN posts p
+        ON pl.post_id=p.post_id
+        WHERE p.user_id=?
+    )");
+
+    stmt.bindInt(0, user_id);
+
+    if(!stmt.execute())
+    {
+        std::cout<<"get likeCount failrd!"<<std::endl;
+        return false;
+    }
+
+    stmt.storeResult();
+    stmt.fetch();
+    count = stmt.row().getInt(0);
+
+    return true;
 }
