@@ -1,5 +1,7 @@
 async function loadProfile(){
 
+    console.log("loadProfile start");
+
     const token=localStorage.getItem("token");
 
     const resp=await fetch("/profile",{
@@ -19,7 +21,7 @@ async function loadProfile(){
         return;
     }
 
-    avatar.src=data.avatar;
+    avatar.src = avatarUrl(data.avatar);
 
     username.innerText=data.user_name;
 
@@ -34,8 +36,12 @@ async function loadProfile(){
     likeCount.innerText=data.like_count;
 
 }
+window.addEventListener("load",()=>{
 
-loadProfile();
+    loadProfile();
+
+});
+
 
 changeAvatar.onclick=()=>{
 
@@ -68,11 +74,19 @@ avatarInput.onchange=async function(){
     });
 
     let data=await resp.json();
+    console.log(data);
+    if (data.code == 0)
+    {
+        console.log("upload success");
 
-    if(data.code==0){
+        await loadProfile();
 
-        avatar.src=data.avatar+"?"+Date.now();
-
+        console.log("loadProfile finished");
     }
 
+}
+
+function avatarUrl(url)
+{
+    return url + "?t=" + Date.now();
 }

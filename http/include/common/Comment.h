@@ -22,6 +22,7 @@ struct Comment
 
     std::string author;
     std::string reply_author;
+    std::string avatar;
 
     std::string content;
 

@@ -43,3 +43,16 @@ std::string HttpResponse::toString() const
 
     return res;
 }
+
+HttpResponse HttpResponse::JsonResponse(const nlohmann::json& j)
+{
+    HttpResponse resp;
+
+    resp.setStatus(200, "OK");
+    resp.setHeader("Content-Type", "application/json");
+    resp.setHeader("Connection", "keep-alive");
+    resp.setHeader("Content-Length", std::to_string(j.dump().size()));
+    resp.setBody(j.dump());
+
+    return resp;
+}

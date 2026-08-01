@@ -64,6 +64,11 @@ namespace RedisKey
         return "user:" + std::to_string(id) + ":stat";
     }
 
+    inline std::string userCreateTime(int id)
+    {
+        return "user:" + std::to_string(id) + ":create_time";
+    }
+
     inline std::string avatar(int id)
     {
         return "user:" + std::to_string(id) + "avatar";
@@ -97,6 +102,11 @@ namespace RedisKey
     inline std::string postLikes(int id)
     {
         return "post:" + std::to_string(id) + ":likes";
+    }
+
+    inline std::string postView(int id, int uid)
+    {
+        return "view:" + std::to_string(id) + ":" + std::to_string(uid);
     }
 
     inline std::string userLikes(int id)

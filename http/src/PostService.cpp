@@ -5,16 +5,22 @@
 #include "common/Comment.h"
 #include "common/PostCache.h"
 #include <iostream>
+#include <unordered_set>
 using namespace std::chrono_literals;
 
 PostService::PostService():
     cache(PostCache::getInstance()),
     pool(MySQLPool::getInstance()){
+    // std::cout << "PostService create " << this << std::endl;
+
+
     flushThread = std::thread([this]{
-        while (running)
+        
+        // std::cout << "flush thread start " << this << std::endl;
+
+        while(running)
         {
             std::this_thread::sleep_for(30s);
-
             flush();
         }
     });
@@ -221,7 +227,8 @@ std::vector<Comment> PostService::getComments(size_t post_id)
 
     if(redis.getComments(post_id, comments))
         return comments;
-
+    
+    std::cout<<"comments from mysql"<<std::endl;
     auto mysql = pool.getConnection();
 
     mysql->getComments(comments, post_id);
@@ -247,17 +254,23 @@ bool PostService::delPost(size_t post_id)
 }
 
 //MySQL → Redis → PostCache
-void PostService::modifyView(size_t post_id)
+void PostService::modifyView(size_t post_id,size_t user_id)
 {
     // auto mysql = pool.getConnection();
 
     // mysql->view(post_id);
     auto& redis = RedisService::getInstance();
-    redis.addDirty(post_id);
+    if(!redis.existPostView(post_id, user_id))
+    {
+        redis.addDirty(post_id);
 
-    redis.incrView(post_id);
+        redis.incrView(post_id);
 
-    PostCache::getInstance().update(post_id);
+        PostCache::getInstance().update(post_id);
+
+        redis.setPostView(post_id, user_id);
+    }
+    
 }
 
 //MySQL → Redis → PostCache
@@ -300,8 +313,12 @@ void PostService::flush()       //定时更新点赞和浏览
     auto& redis = RedisService::getInstance();
     auto mysql = pool.getConnection();
     std::string dirtyPost;
-    while(redis.getDirty(dirtyPost))
+    std::unordered_set<std::string> s;
+    int idx = 0;
+    while(redis.getDirty(dirtyPost)&&idx++<50)
     {
+        if(s.find(dirtyPost) != s.end()) continue;
+        s.emplace(dirtyPost);
         int post_id = std::stoi(dirtyPost);
         std::unordered_map<std::string, std::string> fields;
         redis.getViewLikeComment(post_id, fields);
@@ -375,6 +392,39 @@ std::string PostService::getCreateTime(size_t user_id)
 
     std::string time;
 
-    redis.getCreateTime(user_id, time);
+    if(redis.getCreateTime(user_id, time))
+        return time;
+    
+    auto mysql = pool.getConnection();
+    if(mysql->getCreateTime(user_id, time))
+    {
+        redis.setCreateTime(user_id, time);
+    }
     return time;
+}
+
+//MySQL -> Redis
+bool PostService::updateAvatar(int user_id, const std::string& avatarUrl)
+{
+    auto mysql = pool.getConnection();
+
+    mysql->modAvatar(user_id, avatarUrl);
+
+    RedisService::getInstance().delUser(user_id);
+
+    return true;
+}
+//Redis -> MySQL
+std::string PostService::getAvatar(int user_id)
+{
+    std::string avatar = "/images/default_avatar.png";
+    if(RedisService::getInstance().getAvatar(user_id, avatar))
+    {
+        return avatar;
+    }
+
+    auto mysql = pool.getConnection();
+    mysql->getAvatar(user_id, avatar);
+
+    return avatar;
 }

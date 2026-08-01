@@ -30,6 +30,10 @@ public:
 
     int registerSQL(const std::string& name, const std::string& password);
 
+    bool modAvatar(int user_id, const std::string& avatarUrl);
+
+    bool getAvatar(int user_id, std::string& avatarUrl);
+
     int savePost(Post& p);
 
     void saveComment(Comment& c);
@@ -65,4 +69,6 @@ public:
     bool getPostCount(int user_id, int& count);
     bool getCommentCount(int user_id, int& count);
     bool getLikeCount(int user_id, int& count);
+
+    bool getCreateTime(int user_id, std::string& time);
 };

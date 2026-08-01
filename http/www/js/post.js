@@ -594,6 +594,7 @@ function createCommentDom(c)
 
     div.innerHTML=`
         <div class="comment-header">
+            <img class="comment-avatar" src="${c.avatar || '/images/default_avatar.png'}" alt="avatar">
             <span class="comment-user">${c.author}</span>
 
             <span class="comment-time">${formatTime(c.time)}</span>
@@ -638,7 +639,7 @@ function createReplyDom(c)
 
     div.innerHTML=`
         <div class="comment-header">
-
+            <img class="comment-avatar" src="${c.avatar || '/images/default_avatar.png'}" alt="avatar">
             <span class="comment-user">${c.author}
             </span>
 

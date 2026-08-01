@@ -20,7 +20,11 @@ class RedisService
         static RedisService& getInstance();
 
         bool setUser(UserInfo& u) const;
+        bool expireUser(UserInfo& u) const;
+        bool delUser(int user_id) const;
+        bool setCreateTime(int user_id, const std::string& time) const;
         bool getCreateTime(int user_id, std::string& time) const;
+        bool getAvatar(int user_id, std::string& avatar) const;
 
         bool setPost(int post_id, const Post& p) const;
         void delPostPage() const;
@@ -83,4 +87,8 @@ class RedisService
         bool getDirty(std::string& post_id) const;
 
         bool getViewLikeComment(int post_id, std::unordered_map<std::string, std::string>& fields) const;
+
+        bool setPostView(int post_id, int user_id);
+
+        bool existPostView(int post_id, int user_id);
 };

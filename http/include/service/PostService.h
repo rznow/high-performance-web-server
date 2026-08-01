@@ -37,7 +37,7 @@ class PostService
             size_t size);
         std::vector<Comment> getComments(size_t post_id);  
         bool delPost(size_t post_id);
-        void modifyView(size_t post_id);
+        void modifyView(size_t post_id, size_t user_id);
         int modPost(size_t post_id, 
             size_t user_id, 
             std::string& title, 
@@ -48,6 +48,8 @@ class PostService
         int getCommentCount(size_t user_id);
         int getLikeCount(size_t user_id);
         std::string getCreateTime(size_t user_id);
+        bool updateAvatar(int user_id, const std::string& avatarUrl);
+        std::string getAvatar(int user_id);
         // std::string getAvatar(int user_id);    //获取头像
 };
 

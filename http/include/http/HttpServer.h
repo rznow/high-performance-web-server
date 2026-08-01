@@ -17,6 +17,7 @@ private:
     //POST
     HttpResponse login(const HttpRequest& request);
     HttpResponse registerUser(const HttpRequest& request);
+    HttpResponse avatar(const HttpRequest& request);
     HttpResponse postCreate(const HttpRequest& request);
     HttpResponse commentCreate(const HttpRequest& request);
     HttpResponse post_like(const HttpRequest& request);

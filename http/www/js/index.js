@@ -45,10 +45,6 @@ async function checkLogin()
         nav.innerHTML = `
         <div class="user-info">
 
-            <span class="username">
-            ${data.user_name}
-            </span>
-
             <a href="/profile.html" class="profile-link">
                 <img class="avatar" src="${data.avatar}">
             </a>
@@ -59,6 +55,8 @@ async function checkLogin()
 
         </div>
         `;
+
+        document.getElementById("username").textContent = data.user_name;
 
         document.getElementById("logout")
             .onclick = logout;

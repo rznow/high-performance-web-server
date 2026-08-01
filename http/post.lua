@@ -2,6 +2,6 @@
 wrk.method = "GET"
 
 wrk.headers["Authorization"] =
-"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdmF0YXIiOiJcL2ltYWdlc1wvZGVmYXVsdF9hdmF0YXIucG5nIiwiZXhwIjoxNzg1NTk2Mzg1LCJpc3MiOiJyem5vdyIsInVzZXJfaWQiOiIyIiwidXNlcl9uYW1lIjoid2luZHkifQ.9M-d5AF1W_tgfYpneRzDCd9id77IVVN6j8pHBNCRaLo"
+"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdmF0YXIiOiJcL2ltYWdlc1wvZGVmYXVsdF9hdmF0YXIucG5nIiwiZXhwIjoxNzg1NjgyMDEzLCJpc3MiOiJyem5vdyIsInVzZXJfaWQiOiI3IiwidXNlcl9uYW1lIjoicmFpbnkifQ.JjT5ZTtSQFkHmsE-WsVbsSskIj0k6dHDZdGlVFX7Qa8"
 
 wrk.headers["Accept"] = "application/json"

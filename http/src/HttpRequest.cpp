@@ -1,5 +1,6 @@
 #include "http/HttpRequest.h"
 #include "network/Connection.h"
+#include "JWT.h"
 #include <iostream>
 
 
@@ -149,4 +150,22 @@ void HttpRequest::print() const
         std::cout<<key<<":\t\t"<<value<<std::endl;
     }
     std::cout<<"Body:\t\t"<<body<<std::endl;
+}
+
+bool HttpRequest::verify() const
+{
+    std::string auth = getHeader("Authorization");
+
+    if(auth.starts_with("Bearer "))
+    {
+        auth = auth.substr(7);
+    }
+
+    return JWT::verifyToken(auth, user);
+}
+
+
+UserInfo HttpRequest::getUser() const
+{
+    return user;
 }

@@ -124,7 +124,6 @@ int MySQL::loginSQL(const std::string& name, const std::string& password, UserIn
     user.user_id=id;
     user.user_name=name;
     user.avatar            = row.getString(2);
-    user.create_time       = row.getString(3);
     
     return 1;
 }
@@ -181,6 +180,45 @@ int MySQL::registerSQL(const std::string& name, const std::string& password)
 
     std::cout << "register success!" << std::endl;
     return 1;
+}
+
+bool MySQL::modAvatar(int user_id, const std::string& avatarUrl)
+{
+    Statement stmt(conn, R"(
+        UPDATE user_info
+        SET avatar=?
+        WHERE user_id=?;
+    )");
+
+    stmt.bindString(0, avatarUrl);
+    stmt.bindInt(1, user_id);
+
+    if(!stmt.execute())
+        return false;
+
+    return true;
+}
+
+bool MySQL::getAvatar(int user_id, std::string& avatarUrl)
+{
+    Statement stmt(conn, R"(
+        SELECT avatar
+        FROM user_info
+        WHERE user_id=?;
+    )");
+
+    stmt.bindInt(0, user_id);
+
+    if(!stmt.execute())
+        return false;
+    stmt.storeResult();
+
+    if(!stmt.fetch())
+        return -1;
+    
+    avatarUrl = stmt.row().getString(0);
+
+    return true;
 }
 
 MYSQL* MySQL::get()
@@ -787,5 +825,29 @@ bool MySQL::getLikeCount(int user_id, int& count)
     stmt.fetch();
     count = stmt.row().getInt(0);
 
+    return true;
+}
+
+bool MySQL::getCreateTime(int user_id, std::string& time)
+{
+    Statement stmt(conn,R"(
+        SELECT 
+        DATE_FORMAT(create_time,'%Y-%m-%d %H:%i:%s') AS create_time
+        FROM user_info
+        WHERE user_id=?
+    )");
+
+    stmt.bindInt(0, user_id);
+
+    if(!stmt.execute())
+        return false;
+
+    stmt.storeResult();
+
+    if(!stmt.fetch())
+        return false;
+    
+    time = stmt.row().getString(0);
+    
     return true;
 }

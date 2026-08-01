@@ -3,12 +3,14 @@
 
 #include <string>
 #include <unordered_map>
+#include "common/UserInfo.h"
 
 class Buffer;
 
 class HttpRequest
 {
     private:
+        mutable UserInfo user;
         //请求行
         std::string method;
         std::string path;
@@ -43,6 +45,10 @@ class HttpRequest
         const std::string& getBody() const;
 
         void print() const;
+
+        bool verify() const;
+
+        UserInfo getUser() const;
 };
 
 #endif

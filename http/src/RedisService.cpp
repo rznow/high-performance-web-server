@@ -24,27 +24,74 @@ bool RedisService::setUser(UserInfo& u) const
 {
     auto redis = pool.getConnection();
 
-    bool res = redis->hmset(RedisKey::user(u.user_id),{
-    {UserField::ID,             std::to_string(u.user_id)},
-    {UserField::NAME,           u.user_name},
-    {UserField::AVATAR,         u.avatar},
-    {UserField::CREATE_TIME,    u.create_time}
-    });
+    if(!redis->exists(RedisKey::user(u.user_id)))
+    {
+        redis->hmset(RedisKey::user(u.user_id),{
+        {UserField::ID,             std::to_string(u.user_id)},
+        {UserField::NAME,           u.user_name},
+        {UserField::AVATAR,         u.avatar}
+        });
+    }
 
-    if(res) redis->expire(RedisKey::user(u.user_id), 1800);
+    redis->expire(RedisKey::user(u.user_id), 1800);
+
+    return true;
+}
+
+bool RedisService::expireUser(UserInfo& u) const
+{
+    auto redis = pool.getConnection();
+
+    if(redis->exists(RedisKey::user(u.user_id)))
+    {
+        redis->expire(RedisKey::user(u.user_id), 1800);
+    }
+
+    return true;
+}
+
+
+
+bool RedisService::delUser(int user_id) const
+{
+    auto redis = pool.getConnection();
+
+    return redis->del(RedisKey::user(user_id));
+}
+
+bool RedisService::setCreateTime(int user_id, const std::string& time) const
+{
+    auto redis = pool.getConnection();
+
+    bool res = redis->set(RedisKey::userCreateTime(user_id), time);
+
+    redis->expire(RedisKey::userCreateTime(user_id), 1800);
 
     return res;
 }
+
 
 bool RedisService::getCreateTime(int user_id, std::string& time) const
 {
     auto redis = pool.getConnection();
 
-    RedisValue rv = redis->hget(RedisKey::user(user_id), UserField::CREATE_TIME);
+    RedisValue rv = redis->get(RedisKey::userCreateTime(user_id));
 
     if(!rv.isString()) return false;
 
     time = rv.asString();
+    return true;
+}
+
+bool RedisService::getAvatar(int user_id, std::string& avatar) const
+{
+    auto redis = pool.getConnection();
+
+    RedisValue rv = redis->hget(RedisKey::user(user_id), UserField::AVATAR);
+
+    if(!rv.isString()) return false;
+
+    avatar = rv.asString();
     return true;
 }
 
@@ -88,6 +135,7 @@ bool RedisService::setPosts(int page, int size, const std::vector<Post>& posts) 
     }
 
     redis->lpush(RedisKey::postsPage(page, size), posts_id);
+    redis->expire(RedisKey::postsPage(page, size), 1800);
 
     return true;
 }
@@ -480,4 +528,21 @@ bool RedisService::getViewLikeComment(int post_id, std::unordered_map<std::strin
     }
 
     return redis->hmget(RedisKey::post(post_id), fields);
+}
+
+bool RedisService::setPostView(int post_id, int user_id)
+{
+    auto redis = pool.getConnection();
+
+    bool res = redis->set(RedisKey::postView(post_id, user_id), "1");
+    if(res) redis->expire(RedisKey::postView(post_id, user_id), 3600);
+
+    return res;
+}
+
+bool RedisService::existPostView(int post_id, int user_id)
+{
+    auto redis = pool.getConnection();
+
+    return redis->exists(RedisKey::postView(post_id, user_id));
 }

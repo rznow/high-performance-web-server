@@ -61,7 +61,7 @@ bool Redis::set(const std::string& key, const std::string& value)
     bool ok = false;
     if (reply->type == REDIS_REPLY_STATUS)
     {
-        std::cout << "reply: " << reply->str << std::endl;
+        // std::cout << "reply: " << reply->str << std::endl;
 
         ok = (std::string(reply->str) == "OK");
     }
@@ -87,6 +87,22 @@ RedisValue Redis::get(const std::string& key)
     freeReplyObject(reply);
 
     return rv;
+}
+
+bool Redis::exists(const std::string& key)
+{
+    redisReply* reply = static_cast<redisReply*>(redisCommand(
+        c,
+        "EXISTS %b",
+        key.data(),
+        key.size())
+        );
+    
+    RedisValue rv(reply);
+    if(!rv.isInteger()) return false;
+
+    return rv.asInt() == 1;
+
 }
 
 bool Redis::del(const std::string& key)

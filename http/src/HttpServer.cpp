@@ -11,6 +11,7 @@
 #include "http/HttpServer.h"
 #include "http/HttpResponse.h"
 #include "http/HttpRequest.h"
+#include "http/MultipartParser.h"
 #include "mysql/MySQL.h"
 #include "mysql/MySQLPool.h"
 #include "JWT.h"
@@ -25,20 +26,28 @@
 
 using json = nlohmann::json;
 //读文件
-std::string readFile(std::string& filename)
+std::string readFile(std::string& path)
 {
-    std::ifstream ifs(filename, std::ios::binary);
+    std::ifstream ifs(path, std::ios::binary);
 
     if (!ifs.is_open())
     {
-        filename = "www/404.html";
-        return readFile(filename);
+        path = "www/404.html";
+        return readFile(path);
     }
     //拷贝整个文件
     return std::string(
         std::istreambuf_iterator<char>(ifs),
         std::istreambuf_iterator<char>()
     );
+}
+
+void saveFile(std::string& path, const std::string& content)
+{
+    // 保存二进制内容
+    std::ofstream ofs(path, std::ios::binary);
+    ofs.write(content.data(), content.size());
+    ofs.close();
 }
 
 std::string getContentType(std::string path)
@@ -77,7 +86,7 @@ json buildComment(Comment* c)
 
     obj["author"] = c->author;
     obj["reply_author"] = c->reply_author;
-
+    obj["avatar"] = PostService::getInstance().getAvatar(c->user_id);
     obj["content"] = c->content;
     obj["time"] = c->create_time;
 
@@ -146,6 +155,9 @@ HttpResponse HttpServer::handlePost(const HttpRequest& request)
         if(path.ends_with("/like")) return post_like(request);
         else if(path.ends_with("/comments")) return commentCreate(request);
         return postCreate(request);
+    }else if(path == "/avatar")
+    {
+        return avatar(request);
     }
     
     HttpResponse resp;
@@ -167,23 +179,17 @@ HttpResponse HttpServer::handleDel(const HttpRequest& request)
         auth = auth.substr(7);
     }
 
-    UserInfo user;
-    if(!JWT::verifyToken(auth, user))
+    
+    if(!request.verify())
     {
-        j["code"] = 1003;
-        j["msg"] = "token invalid";
-        std::string body = j.dump();
-        resp.setStatus(200, "OK");
-        resp.setBody(body);
-        resp.setHeader("Content-Type", "application/json");
-        resp.setHeader("Connection", "keep-alive");
-        resp.setHeader("Content-Length", std::to_string(body.size()));
-        return resp;
-
+        return HttpResponse::JsonResponse({
+            {"code", 1003},
+            {"msg", "token invalid"}
+        });
     }
-
+    UserInfo user = request.getUser();
     int id = std::stoi(request.getPath().substr(7));
-
+    RedisService::getInstance().expireUser(user);
     if(PostService::getInstance().delPost(id))
     {
         j["code"] = 0;
@@ -217,22 +223,17 @@ HttpResponse HttpServer::handlePut(const HttpRequest& request)
         auth = auth.substr(7);
     }
 
-    UserInfo user;
-    if(!JWT::verifyToken(auth, user))
+    if(!request.verify())
     {
-        j["code"] = 1003;
-        j["msg"] = "token invalid";
-        std::string body = j.dump();
-        resp.setStatus(200, "OK");
-        resp.setBody(body);
-        resp.setHeader("Content-Type", "application/json");
-        resp.setHeader("Connection", "keep-alive");
-        resp.setHeader("Content-Length", std::to_string(body.size()));
-        return resp;
+        return HttpResponse::JsonResponse({
+            {"code", 1003},
+            {"msg", "token invalid"}
+        });
     }
+    UserInfo user = request.getUser();
 
     int id = std::stoi(request.getPath().substr(7));
-
+    RedisService::getInstance().expireUser(user);
     json data = json::parse(request.getBody());
     std::string title = data["title"];
     std::string content = data["content"];
@@ -416,6 +417,60 @@ HttpResponse HttpServer::registerUser(const HttpRequest& request)
 
 }
 
+HttpResponse HttpServer::avatar(const HttpRequest& request)
+{
+    MultipartParser parser;
+    json j;
+    if (!parser.parse(request))
+    {
+        return HttpResponse::JsonResponse({
+            {"code",-1},
+            {"msg","上传头像失败"}
+        });
+    }
+
+    UploadFile avatar = parser.getFile("avatar");
+
+    if (avatar.filename.empty())
+    {
+        return HttpResponse::JsonResponse({
+            {"code",-1},
+            {"msg","未找到头像"}
+        });
+    }
+
+    if(!request.verify())
+    {
+        return HttpResponse::JsonResponse({
+            {"code", 1003},
+            {"msg", "token invalid"}
+        });
+    }
+    UserInfo user = request.getUser();
+    int user_id = user.user_id;
+    // 生成保存文件名
+    std::string ext = ".png";
+    auto pos = avatar.filename.find_last_of('.');
+    if (pos != std::string::npos)
+        ext = avatar.filename.substr(pos);
+
+    std::string filename =
+        std::to_string(user_id) + ext;
+
+    std::string path =
+        "./www/upload/avatar/" + filename;
+
+    saveFile(path, avatar.content);
+    // 数据库存储的是访问路径
+    std::string avatarUrl =
+        "/upload/avatar/" + filename;
+
+    PostService::getInstance().updateAvatar(user_id, avatarUrl);
+    j["code"] = 0;
+    j["avatar"] = avatarUrl;
+    return HttpResponse::JsonResponse(j);
+}
+
 HttpResponse HttpServer::post_like(const HttpRequest& request)
 {
     std::string path = request.getPath();
@@ -431,20 +486,16 @@ HttpResponse HttpServer::post_like(const HttpRequest& request)
         auth = auth.substr(7);
     }
     HttpResponse resp;
-    UserInfo user;
     json j;
-    if(!JWT::verifyToken(auth, user))
+    if(!request.verify())
     {
-        j["code"] = 1003;
-        j["msg"] = "token invalid";
-        std::string body = j.dump();
-        resp.setBody(body);
-        resp.setHeader("Content-Type", "application/json");
-        resp.setHeader("Connection", "keep-alive");
-        resp.setHeader("Content-Length", std::to_string(body.size()));
-        return resp;
+        return HttpResponse::JsonResponse({
+            {"code", 1003},
+            {"msg", "token invalid"}
+        });
     }
-    
+    UserInfo user = request.getUser();
+    RedisService::getInstance().expireUser(user);
     bool liked = PostService::getInstance().like(post_id, user.user_id);
     int like_count = PostService::getInstance().likes(post_id);
     if(like_count != -1)
@@ -478,19 +529,15 @@ HttpResponse HttpServer::postCreate(const HttpRequest& request)
         auth = auth.substr(7);
     }
 
-    UserInfo user;
-    if(!JWT::verifyToken(auth, user))
+    if(!request.verify())
     {
-        j["code"] = 1003;
-        j["msg"] = "token invalid";
-        std::string body = j.dump();
-        resp.setBody(body);
-        resp.setHeader("Content-Type", "application/json");
-        resp.setHeader("Connection", "keep-alive");
-        resp.setHeader("Content-Length", std::to_string(body.size()));
-        return resp;
-
+        return HttpResponse::JsonResponse({
+            {"code", 1003},
+            {"msg", "token invalid"}
+        });
     }
+    UserInfo user = request.getUser();
+    RedisService::getInstance().expireUser(user);
     Post p;
     p.user_id = user.user_id;
     p.author = user.user_name;
@@ -527,19 +574,15 @@ HttpResponse HttpServer::commentCreate(const HttpRequest& request)
         auth = auth.substr(7);
     }
 
-    UserInfo user;
-    if(!JWT::verifyToken(auth, user))
+    if(!request.verify())
     {
-        j["code"] = 1003;
-        j["msg"] = "token invalid";
-        std::string body = j.dump();
-        resp.setBody(body);
-        resp.setHeader("Content-Type", "application/json");
-        resp.setHeader("Connection", "keep-alive");
-        resp.setHeader("Content-Length", std::to_string(body.size()));
-        return resp;
+        return HttpResponse::JsonResponse({
+            {"code", 1003},
+            {"msg", "token invalid"}
+        });
     }
-
+    UserInfo user = request.getUser();
+    RedisService::getInstance().expireUser(user);
     Comment c;
 
     
@@ -616,31 +659,26 @@ HttpResponse HttpServer::profile(const HttpRequest& request)
         auth = auth.substr(7);
     }
 
-    UserInfo user;
-    if(!JWT::verifyToken(auth, user))
+    if(!request.verify())
     {
-        j["code"] = 1003;
-        j["msg"] = "token invalid";
-
-        std::string body = j.dump();
-
-        resp.setStatus(200, "OK");
-        resp.setBody(body);
-        resp.setHeader("Content-Type", "application/json");
-        resp.setHeader("Connection", "keep-alive");
-        resp.setHeader("Content-Length", std::to_string(body.size()));
-
-        return resp;
+        return HttpResponse::JsonResponse({
+            {"code", 1003},
+            {"msg", "token invalid"}
+        });
     }
+    UserInfo user = request.getUser();
 
     j["code"]           = 0;
     j["user_id"]        = user.user_id;
     j["user_name"]      = user.user_name;
-    j["avatar"]         = user.avatar;
+    j["avatar"]         = PostService::getInstance().getAvatar(user.user_id);
     j["register_time"]  = PostService::getInstance().getCreateTime(user.user_id);
     j["post_count"]     = PostService::getInstance().getPostCount(user.user_id);
     j["comment_count"]  = PostService::getInstance().getCommentCount(user.user_id);
     j["like_count"]     = PostService::getInstance().getLikeCount(user.user_id);
+
+    user.avatar = j["avatar"];
+    RedisService::getInstance().setUser(user);
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
@@ -803,8 +841,16 @@ HttpResponse HttpServer::post(const HttpRequest& request)
     {
         auth = auth.substr(7);
     }
-    UserInfo user;
-    JWT::verifyToken(auth, user);
+
+    if(!request.verify())
+    {
+        return HttpResponse::JsonResponse({
+            {"code", 1003},
+            {"msg", "token invalid"}
+        });
+    }
+    UserInfo user = request.getUser();
+
     if(PostService::getInstance().get(id, p))
     {
         j["code"] = 0;
@@ -816,7 +862,7 @@ HttpResponse HttpServer::post(const HttpRequest& request)
         j["post"]["like_count"]     = p.like_count;
         if(user.user_id!=0&&p.user_id != user.user_id)
         {
-            PostService::getInstance().modifyView(id);
+            PostService::getInstance().modifyView(id, user.user_id);
             j["post"]["view_count"] = p.view_count+1;
         }else 
         j["post"]["view_count"]     = p.view_count;
@@ -830,6 +876,7 @@ HttpResponse HttpServer::post(const HttpRequest& request)
         j["msg"] = "post not found";
     }
     // p.print();
+    RedisService::getInstance().expireUser(user);
     std::string body = j.dump();
     resp.setStatus(200, "OK");
     resp.setHeader("Content-Type", "application/json");
