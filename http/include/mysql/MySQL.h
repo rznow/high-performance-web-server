@@ -50,6 +50,11 @@ public:
         std::vector<Comment>& comments, 
         size_t post_id, size_t size, size_t offset);
 
+    void getComments(
+        const std::vector<int>& ids, 
+        std::vector<Comment>& comments, 
+        const std::vector<int>& missCom);
+
     void getComments(std::vector<Comment>& comments, size_t post_id);
 
     bool getPost(int post_id, Post& p);

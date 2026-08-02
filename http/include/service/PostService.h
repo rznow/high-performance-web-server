@@ -41,6 +41,11 @@ class PostService
             size_t post_id, 
             size_t page, 
             size_t size);
+        bool getComments(
+            const std::vector<int>& ids,
+            std::vector<Comment>& comments,
+            std::vector<int>& missCom) const;
+        
         std::vector<Comment> getComments(size_t post_id);  
         bool delPost(size_t post_id);
         void modifyView(size_t post_id, size_t user_id);

@@ -486,6 +486,56 @@ void MySQL::getRootComments(std::vector<Comment>& comments, size_t post_id, size
     }
 }
 
+void MySQL::getComments(
+    const std::vector<int>& ids, 
+    std::vector<Comment>& comments, 
+    const std::vector<int>& missCom)
+{
+    if (ids.empty()) return;
+
+    std::string ids_str;
+    for (size_t i = 0; i < ids.size(); ++i) {
+        if (i > 0) ids_str += ",";
+        ids_str += std::to_string(ids[i]);
+    }
+
+    std::string sql = R"(
+    SELECT
+        c.comment_id,
+        c.post_id,
+        c.user_id,
+
+        c.parent_id,
+        c.reply_user_id,
+
+        u.user_name,
+        u2.user_name AS reply_name,
+        c.content,
+        DATE_FORMAT(c.create_time,'%Y-%m-%d %H:%i:%s') AS create_time
+    FROM comments c
+    JOIN user_info u
+    ON c.user_id=u.user_id
+
+    LEFT JOIN user_info u2
+    ON c.reply_user_id=u2.user_id
+
+    WHERE parent_id = 0
+    AND c.comment_id IN ()" + ids_str + ");";
+
+    if(!query(sql)) return;
+    MYSQL_RES * res = mysql_store_result(conn);
+    if(res == nullptr) return;
+    MYSQL_ROW row;
+    for(auto &i: missCom)
+    {
+        if((row = mysql_fetch_row(res)) != nullptr)
+        {
+            Comment c(row);
+            comments[i] = std::move(c);
+        }else return;
+    }
+}
+
 void MySQL::getComments(std::vector<Comment>& comments, size_t post_id)
 {
     std::string sql = R"(

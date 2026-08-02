@@ -1,3 +1,44 @@
+/* =======================
+        顶部导航
+======================= */
+
+.navbar{
+
+    position:fixed;
+
+    top:0;
+    left:0;
+    right:0;
+
+    height:64px;
+
+    background:white;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:0 40px;
+
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+
+    z-index:999;
+
+}
+
+.logo{
+
+    font-size:28px;
+
+    font-weight:bold;
+
+    color:#409EFF;
+
+}
+
+
 body{
 
     margin:0;
@@ -139,5 +180,29 @@ body{
 .menu a:hover{
 
     background:#f7f7f7;
+
+}
+
+/* =========================
+        Logo
+========================= */
+
+.logo{
+
+    user-select:none;
+
+}
+
+.logo a{
+
+    color:#409EFF;
+
+    text-decoration:none;
+
+}
+
+.logo a:hover{
+
+    color:#2f7de1;
 
 }

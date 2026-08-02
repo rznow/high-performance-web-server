@@ -84,14 +84,19 @@ namespace RedisKey
         return "comment:" + std::to_string(id);
     }
 
+    inline std::string commentChildren(int id)
+    {
+        return "comment:children:" + std::to_string(id);
+    }
+
     inline int decomment(std::string key)
     {
         return std::stoi(key.substr(8));
     }
 
-    inline std::string commentsPage(int id)
+    inline std::string rootCommentsPage(int id)
     {
-        return "post:" + std::to_string(id) + ":root_comments";
+        return "comment:index:" + std::to_string(id);
     }
 
     inline std::string postComments(int id)

@@ -51,10 +51,10 @@ class RedisService
             int post_id, int page, int size, 
             const std::vector<Comment>& comments) const;
         bool getComment(int comment_id, Comment& c) const;
-        bool getComments(int post_id, std::vector<Comment>& comments) const;
+        bool getComments(int post_id, std::vector<int>& comments_id) const;
         bool getComments(
             int post_id, int page, int size, 
-            std::vector<Comment>& comments) const;
+            std::vector<int>& comments_id) const;
         
 
         bool updatePost(

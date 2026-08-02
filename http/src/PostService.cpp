@@ -59,7 +59,7 @@ void PostService::put(Post p)
     mysql->savePost(p);
     
     RedisService::getInstance().setPost(p);
-    RedisService::getInstance().delPostPage();
+    // RedisService::getInstance().delPostPage();
 
     PostCache::getInstance().put(p);
 }
@@ -186,7 +186,7 @@ std::vector<Post> PostService::getPosts(size_t page, size_t size)
     posts_id.reserve(size);
 
     auto &redis = RedisService::getInstance();
-    auto mysql = pool.getConnection();
+    
     if(redis.getPostPage(page, size, posts_id))
     {
         posts.resize(posts_id.size());
@@ -197,12 +197,15 @@ std::vector<Post> PostService::getPosts(size_t page, size_t size)
         {
             missIds.push_back(posts_id[pos]);
         }
-
-        mysql->getPosts(missIds, posts, missPos);
+        if(missIds.size() > 0)
+        {
+            auto mysql = pool.getConnection();
+            mysql->getPosts(missIds, posts, missPos);
+        }
     }else
     {
+        auto mysql = pool.getConnection();
         mysql->getPosts(posts, size, (page - 1) * size);
-
         RedisService::getInstance().setPosts(posts);
     }
     return posts;
@@ -232,21 +235,54 @@ std::vector<Comment> PostService::getRootComments(size_t post_id, size_t page, s
     auto& redis = RedisService::getInstance();
 
     std::vector<Comment> comments;
+    std::vector<int> comments_id;
+    comments_id.reserve(size);
 
-    if(redis.getComments(post_id, page, size, comments))
-        return comments;
+    if(redis.getComments(post_id, page, size, comments_id))
+    {
+        comments.resize(comments_id.size());
+        std::vector<int> missCom;
+        getComments(comments_id, comments, missCom);
+        std::vector<int> missIds;
+        for(auto com : missCom)
+        {
+            missIds.push_back(comments_id[com]);
+        }
+        if(missIds.size() > 0)
+        {
+            auto mysql = pool.getConnection();
+            mysql->getComments(missIds, comments, missCom);
+        }
+    }else
+    {
+        auto mysql = pool.getConnection();
 
-    auto mysql = pool.getConnection();
+        mysql->getRootComments(
+            comments,
+            post_id,
+            size,
+            (page-1)*size);
 
-    mysql->getRootComments(
-        comments,
-        post_id,
-        size,
-        (page-1)*size);
-
-    redis.setComments(post_id, page, size, comments);
-
+        redis.setComments(post_id, page, size, comments);
+    }
     return comments;
+}
+
+bool PostService::getComments(
+    const std::vector<int>& ids,
+    std::vector<Comment>& comments,
+    std::vector<int>& missCom) const
+{
+    auto &redis = RedisService::getInstance();
+    for(size_t i = 0; i < ids.size(); i++)
+    {
+        Comment c;
+        if(redis.getComment(ids[i], c))
+        {
+            comments[i] = std::move(c);
+        }else   missCom.emplace_back(i);
+    }
+    return true;
 }
 
 //Redis -> Mysql
@@ -255,17 +291,31 @@ std::vector<Comment> PostService::getComments(size_t post_id)
     auto& redis = RedisService::getInstance();
 
     std::vector<Comment> comments;
+    std::vector<int> comments_id;
 
-    if(redis.getComments(post_id, comments))
-        return comments;
-    
-    std::cout<<"comments from mysql"<<std::endl;
-    auto mysql = pool.getConnection();
+    if(redis.getComments(post_id, comments_id))
+    {
+        comments.resize(comments_id.size());
+        std::vector<int> missCom;
+        getComments(comments_id, comments, missCom);
+        std::vector<int> missIds;
+        for(auto com : missCom)
+        {
+            missIds.push_back(comments_id[com]);
+        }
+        if(missIds.size() > 0)
+        {
+            auto mysql = pool.getConnection();
+            mysql->getComments(missIds, comments, missCom);
+        }
+    }else
+    {
+        auto mysql = pool.getConnection();
 
-    mysql->getComments(comments, post_id);
+        mysql->getComments(comments, post_id);
 
-    redis.setComments(post_id, comments);
-
+        redis.setComments(post_id, comments);
+    }
     return comments;
 }
 
@@ -277,7 +327,7 @@ bool PostService::delPost(size_t post_id)
     bool res = mysql->delPost(post_id);
 
     RedisService::getInstance().delPost(post_id);
-    RedisService::getInstance().delPostPage();
+    // RedisService::getInstance().delPostPage();
 
     PostCache::getInstance().erase(post_id);
 
