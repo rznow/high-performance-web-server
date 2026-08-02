@@ -392,6 +392,50 @@ void MySQL::getPosts(std::vector<Post>& posts,size_t size,size_t offset)
     
 }
 
+void MySQL::getPosts(
+    const std::vector<int>& ids, 
+    std::vector<Post>& posts, 
+    const std::vector<int>& missPos)
+{
+    if (ids.empty()) return;
+
+    std::string ids_str;
+    for (size_t i = 0; i < ids.size(); ++i) {
+        if (i > 0) ids_str += ",";
+        ids_str += std::to_string(ids[i]);
+    }
+
+    std::string sql = R"(
+    SELECT
+        p.post_id,
+        p.user_id,
+        u.user_name,
+        p.title,
+        p.content,
+        p.like_count,
+        p.comment_count,
+        p.view_count,
+        p.create_time
+    FROM posts p
+    INNER JOIN user_info u
+    ON p.user_id = u.user_id
+    WHERE p.deleted = 0
+    AND p.post_id IN ()" + ids_str + ");";
+
+    if(!query(sql)) return;
+    MYSQL_RES * res = mysql_store_result(conn);
+    if(res == nullptr) return;
+    MYSQL_ROW row;
+    for(auto &i: missPos)
+    {
+        if((row = mysql_fetch_row(res)) != nullptr)
+        {
+            Post p(row);
+            posts[i] = std::move(p);
+        }else return;
+    }
+}
+
 void MySQL::getRootComments(std::vector<Comment>& comments, size_t post_id, size_t size, size_t offset)
 {
     Statement stmt(conn, R"(

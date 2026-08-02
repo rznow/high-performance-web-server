@@ -58,7 +58,7 @@ void PostService::put(Post p)
 
     mysql->savePost(p);
     
-    RedisService::getInstance().setPost(p.post_id, p);
+    RedisService::getInstance().setPost(p);
     RedisService::getInstance().delPostPage();
 
     PostCache::getInstance().put(p);
@@ -103,7 +103,7 @@ bool PostService::get(int post_id, Post& p)
     {
         // std::cout<<"Post from mysql!"<<std::endl;
         PostCache::getInstance().put(p);
-        redis.setPost(post_id, p);
+        redis.setPost(p);
 
         std::vector<int> likes;
         mysql->getLikes(post_id, likes);
@@ -178,21 +178,52 @@ bool PostService::liked(int post_id, int user_id)               //是否点赞
     return false;
 }
 
-//Redis -> Mysql
+//PostCache -> Redis -> Mysql
 std::vector<Post> PostService::getPosts(size_t page, size_t size)
 {
     std::vector<Post> posts;
+    std::vector<int> posts_id;
+    posts_id.reserve(size);
 
-    if(RedisService::getInstance().getPosts(page, size, posts))
-        return posts;
-
+    auto &redis = RedisService::getInstance();
     auto mysql = pool.getConnection();
+    if(redis.getPostPage(page, size, posts_id))
+    {
+        posts.resize(posts_id.size());
+        std::vector<int> missPos;
+        getPosts(posts_id, posts, missPos);
+        std::vector<int> missIds;
+        for(auto pos : missPos)
+        {
+            missIds.push_back(posts_id[pos]);
+        }
 
-    mysql->getPosts(posts, size, (page - 1) * size);
+        mysql->getPosts(missIds, posts, missPos);
+    }else
+    {
+        mysql->getPosts(posts, size, (page - 1) * size);
 
-    RedisService::getInstance().setPosts(page, size, posts);
-
+        RedisService::getInstance().setPosts(posts);
+    }
     return posts;
+}
+
+bool PostService::getPosts(
+    const std::vector<int>& ids,
+    std::vector<Post>& posts,
+    std::vector<int>& missPos) const
+{
+    auto &redis = RedisService::getInstance();
+    auto &cache = PostCache::getInstance();
+    for(size_t i = 0; i < ids.size(); i++)
+    {
+        Post p;
+        if(cache.get(ids[i], p) || redis.getPost(ids[i], p))
+        {
+            posts[i] = std::move(p);
+        }else   missPos.emplace_back(i);
+    }
+    return true;
 }
 
 //Redis -> Mysql

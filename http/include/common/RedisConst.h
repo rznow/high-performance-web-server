@@ -44,6 +44,11 @@ namespace RedisKey
         return "post:" + std::to_string(id);
     }
 
+    inline std::string postIndex()
+    {
+        return "post:index";
+    }
+
     inline std::string postsPage(int page, int size)
     {
         return "posts:page:" + std::to_string(page) + ":size:" + std::to_string(size);
@@ -72,11 +77,6 @@ namespace RedisKey
     inline std::string avatar(int id)
     {
         return "user:" + std::to_string(id) + "avatar";
-    }
-
-    inline int deuser(std::string key)
-    {
-        return std::stoi(key.substr(5));
     }
 
     inline std::string comment(int id)
@@ -123,6 +123,4 @@ namespace RedisKey
     {
         return "posts:hot";
     }
-
-
 }

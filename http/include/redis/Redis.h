@@ -93,4 +93,14 @@ class Redis
         bool spop(
             const std::string& key,
             std::string& value);
+
+        bool zadd(
+            const std::string& key,
+            const std::vector<std::pair<double,std::string>>& values);
+
+        bool zrange(
+            const std::string& key, 
+            std::vector<std::string>& values,
+            int start = 0,
+            int end = -1);
 };

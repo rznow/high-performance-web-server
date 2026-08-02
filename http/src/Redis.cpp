@@ -574,3 +574,71 @@ bool Redis::spop(
     value = rv.asString();
     return true;
 }
+
+bool Redis::zadd(
+    const std::string& key,
+    const std::vector<std::pair<double,std::string>>& values)
+{
+    std::vector<const char*> argv;
+    std::vector<size_t> argvlen;
+    std::vector<std::string> scores;
+    scores.reserve(values.size());
+
+    argv.push_back("ZADD");
+    argvlen.push_back(4);
+
+    argv.push_back(key.data());
+    argvlen.push_back(key.size());
+    
+    for (size_t i = 0; i < values.size(); i++)
+    {
+        scores.emplace_back(std::to_string(values[i].first));
+        argv.push_back(scores[i].data());
+        argvlen.push_back(scores[i].size());
+
+        argv.push_back(values[i].second.data());
+        argvlen.push_back(values[i].second.size());
+    }
+
+    redisReply* reply =
+        (redisReply*)redisCommandArgv(
+            c,
+            argv.size(),
+            argv.data(),
+            argvlen.data());
+
+    bool ok = reply && reply->type != REDIS_REPLY_ERROR;
+
+    freeReplyObject(reply);
+
+    return ok;
+}
+
+bool Redis::zrange(
+    const std::string& key, 
+    std::vector<std::string>& values,
+    int start,
+    int end)
+{
+    redisReply* reply = static_cast<redisReply*>(redisCommand(
+        c,
+        "ZREVRANGE %b %d %d",
+        key.data(),
+        key.size(),
+        start,
+        end)
+    );
+
+    if(!reply) return false;
+
+    if(reply->type!=REDIS_REPLY_ARRAY) return false;
+
+    if(reply->elements == 0) return false;
+
+    for(size_t i=0; i < reply->elements; i++)
+    {
+        values.emplace_back(reply->element[i]->str);
+    }
+
+    return true;
+}

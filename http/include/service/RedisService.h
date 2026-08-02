@@ -26,11 +26,17 @@ class RedisService
         bool getCreateTime(int user_id, std::string& time) const;
         bool getAvatar(int user_id, std::string& avatar) const;
 
-        bool setPost(int post_id, const Post& p) const;
+        bool setPost(const Post& p) const;
         void delPostPage() const;
-        bool setPosts(int page, int size, const std::vector<Post>& posts) const;
+        bool getPostPage(
+            int page, int size, 
+            std::vector<int>& posts_id) const;
+        bool setPosts(const std::vector<Post>& posts) const;
+
         bool getPost(int post_id, Post& p) const;
-        bool getPosts(int page, int size, std::vector<Post>& posts) const;
+        bool getPosts(
+            int page, int size, 
+            std::vector<Post>& posts) const;
 
         bool getPostCount(int user_id, int& count) const;
         bool setPostCount(int user_id, const int count) const;

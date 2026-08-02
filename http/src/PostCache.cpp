@@ -79,11 +79,6 @@ void PostCache::put(const Post& p)
             count--;
         }
     }
-    ul.unlock();
-    // std::cout<<"count:\t"<<count<<std::endl;
-    
-    // printPosts();
-    
 }
 
 void PostCache::update(int post_id)
@@ -122,12 +117,7 @@ void PostCache::update(const Comment& c)
     if(cache.find(post_id)!=cache.end())
     {
         cache[post_id]->p.comment_count++;
-
     }
-    // std::cout<<"count:\t"<<count<<std::endl;
-    
-    // printPosts();
-    
 }
 
 ListNode* PostCache::removeNode(int post_id)

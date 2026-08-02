@@ -679,14 +679,9 @@ HttpResponse HttpServer::profile(const HttpRequest& request)
 
     user.avatar = j["avatar"];
     RedisService::getInstance().setUser(user);
-    std::string body = j.dump();
-    resp.setStatus(200, "OK");
-    resp.setHeader("Content-Type", "application/json");
-    resp.setHeader("Connection", "keep-alive");
-    resp.setHeader("Content-Length", std::to_string(body.size()));
-    resp.setBody(body);
-    // std::cout<<j.dump()<<std::endl<<std::endl;
-    return resp;
+
+    
+    return HttpResponse::JsonResponse(j);
 }
 
 HttpResponse HttpServer::posts(const HttpRequest& request)
@@ -714,7 +709,7 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
     json post_array = json::array();
     for(auto &i: posts)
     {
-        RedisService::getInstance().setPost(i.post_id, i);
+        RedisService::getInstance().setPost(i);
         post_array.push_back({
             {"post_id",         i.post_id},
             {"user_id",         i.user_id},
@@ -730,15 +725,8 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
         });
     }
     j["posts"] = post_array;
-    std::string body = j.dump();
-    resp.setStatus(200, "OK");
-    resp.setHeader("Content-Type", "application/json");
-    resp.setHeader("Connection", "keep-alive");
-    resp.setHeader("Content-Length", std::to_string(body.size()));
-    resp.setBody(body);
 
-
-    return resp;
+    return HttpResponse::JsonResponse(j);
 }
 
 HttpResponse HttpServer::comments(const HttpRequest& request)
@@ -788,40 +776,16 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
             
     }
 
-
     j["code"] = 0;
     json comment_array = json::array();
     for(auto &i: roots)
     {
-        // i->print();
         comment_array.push_back(buildComment(i));
-        // comment_array.push_back({
-        //     {"comment_id",      i.comment_id},
-        //     {"post_id",         i.post_id},
-        //     {"user_id",         i.user_id},
-
-        //     {"parent_id",       i.parent_id},
-        //     {"reply_user_id",   i.reply_user_id},
-
-
-        //     {"author",          i.author},
-        //     {"reply_author",    i.reply_author},
-        //     {"content",         i.content},
-        //     {"time",            i.create_time}
-
-        // });
     }
-    // std::cout<<comment_array.dump()<<std::endl;
     j["comments"] = comment_array;
-    std::string body = j.dump();
-    resp.setStatus(200, "OK");
-    resp.setHeader("Content-Type", "application/json");
-    resp.setHeader("Connection", "keep-alive");
-    resp.setHeader("Content-Length", std::to_string(body.size()));
-    resp.setBody(body);
 
-
-    return resp;
+    
+    return HttpResponse::JsonResponse(j);
 }
 
 HttpResponse HttpServer::post(const HttpRequest& request)
@@ -875,14 +839,6 @@ HttpResponse HttpServer::post(const HttpRequest& request)
         j["code"] = 1001;
         j["msg"] = "post not found";
     }
-    // p.print();
     RedisService::getInstance().expireUser(user);
-    std::string body = j.dump();
-    resp.setStatus(200, "OK");
-    resp.setHeader("Content-Type", "application/json");
-    resp.setHeader("Connection", "keep-alive");
-    resp.setHeader("Content-Length", std::to_string(body.size()));
-    resp.setBody(body);
-    // std::cout<<j.dump()<<std::endl;
-    return resp;
+    return HttpResponse::JsonResponse(j);
 }

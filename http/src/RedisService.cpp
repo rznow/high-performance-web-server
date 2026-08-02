@@ -10,6 +10,23 @@ using namespace RedisKey;
 constexpr std::string INCR = "1";
 constexpr std::string DECR = "-1";
 
+time_t StringToDatetime(std::string str)
+{
+    char *cha = (char*)str.data();             // 将string转换成char*。
+    tm tm_;                                    // 定义tm结构体。
+    int year, month, day, hour, minute, second;// 定义时间的各个int临时变量。
+    sscanf(cha, "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &minute, &second);// 将string存储的日期时间，转换为int临时变量。
+    tm_.tm_year = year - 1900;                 // 年，由于tm结构体存储的是从1900年开始的时间，所以tm_year为int临时变量减去1900。
+    tm_.tm_mon = month - 1;                    // 月，由于tm结构体的月份存储范围为0-11，所以tm_mon为int临时变量减去1。
+    tm_.tm_mday = day;                         // 日。
+    tm_.tm_hour = hour;                        // 时。
+    tm_.tm_min = minute;                       // 分。
+    tm_.tm_sec = second;                       // 秒。
+    tm_.tm_isdst = 0;                          // 非夏令时。
+    time_t t_ = mktime(&tm_);                  // 将tm结构体转换成time_t格式。
+    return t_;                                 // 返回值。
+}
+
 RedisService::RedisService():pool(RedisPool::getInstance()){}
 
 RedisService::~RedisService(){}
@@ -95,11 +112,11 @@ bool RedisService::getAvatar(int user_id, std::string& avatar) const
     return true;
 }
 
-bool RedisService::setPost(int post_id, const Post& p) const
+bool RedisService::setPost(const Post& p) const
 {
     auto redis = pool.getConnection();
 
-    bool res = redis->hmset(RedisKey::post(post_id),{
+    bool res = redis->hmset(RedisKey::post(p.post_id),{
     {PostField::ID, std::to_string(p.post_id)},
     {PostField::USER_ID, std::to_string(p.user_id)},
     {PostField::AUTHOR, p.author},
@@ -111,7 +128,7 @@ bool RedisService::setPost(int post_id, const Post& p) const
     {PostField::TIME, p.create_time}
     });
 
-    if(res) redis->expire(RedisKey::post(post_id), 1800);
+    if(res) redis->expire(RedisKey::post(p.post_id), 1800);
 
     return res;
 }
@@ -123,19 +140,34 @@ void RedisService::delPostPage() const
     redis->delByPattern(RedisKey::postsPage());
 }
 
-bool RedisService::setPosts(int page, int size, const std::vector<Post>& posts) const
+bool RedisService::getPostPage(int page, int size, std::vector<int>& posts_id) const
+{
+    auto redis = pool.getConnection();
+    std::vector<std::string> ids;
+    if(redis->zrange(RedisKey::postIndex(), ids, (page-1)*size, page*size-1))
+    {
+        for(auto &i:ids)
+        {
+            posts_id.emplace_back(std::stoi(i));
+        }
+        return true;
+    }
+    return false;
+}
+
+bool RedisService::setPosts(const std::vector<Post>& posts) const
 {
     auto redis = pool.getConnection();
 
-    std::vector<std::string> posts_id;
+    std::vector<std::pair<double, std::string>> members;
     for(const auto &i:posts)
     {
-        posts_id.emplace_back(RedisKey::post(i.post_id));
-        setPost(i.post_id, i);
+        members.emplace_back(static_cast<double>(StringToDatetime(i.create_time)), std::to_string(i.post_id));
+        setPost(i);
     }
 
-    redis->lpush(RedisKey::postsPage(page, size), posts_id);
-    redis->expire(RedisKey::postsPage(page, size), 1800);
+    redis->zadd(RedisKey::postIndex(), members);
+    redis->expire(RedisKey::postIndex(), 1800);
 
     return true;
 }
@@ -162,7 +194,9 @@ bool RedisService::getPost(int post_id, Post& p) const
     return true;
 }
 
-bool RedisService::getPosts(int page, int size, std::vector<Post>& posts) const
+bool RedisService::getPosts(
+    int page, int size, 
+    std::vector<Post>& posts) const
 {
     auto redis = pool.getConnection();
 
@@ -173,7 +207,7 @@ bool RedisService::getPosts(int page, int size, std::vector<Post>& posts) const
     for(auto &i:posts_id)
     {
         Post p;
-        getPost(RedisKey::deuser(i), p);
+        getPost(std::stoi(i), p);
         posts.emplace_back(std::move(p));
     }
 

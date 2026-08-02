@@ -41,8 +41,14 @@ public:
     MYSQL* get();
 
     void getPosts(std::vector<Post>& posts, size_t size,size_t offset);
+    void getPosts(
+        const std::vector<int>& ids, 
+        std::vector<Post>& posts, 
+        const std::vector<int>& missPos);
 
-    void getRootComments(std::vector<Comment>& comments, size_t post_id, size_t size, size_t offset);
+    void getRootComments(
+        std::vector<Comment>& comments, 
+        size_t post_id, size_t size, size_t offset);
 
     void getComments(std::vector<Comment>& comments, size_t post_id);
 

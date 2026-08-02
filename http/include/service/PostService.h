@@ -30,7 +30,13 @@ class PostService
         bool like(int post_id, int user_id);
         int likes(int post_id);
         bool liked(int post_id, int user_id);
+
         std::vector<Post> getPosts(size_t page, size_t size); 
+        bool getPosts(
+            const std::vector<int>& ids,
+            std::vector<Post>& posts,
+            std::vector<int>& missPos) const;
+
         std::vector<Comment> getRootComments(
             size_t post_id, 
             size_t page, 
