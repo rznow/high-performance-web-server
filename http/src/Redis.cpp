@@ -1,11 +1,11 @@
 #include "redis/Redis.h"
 #include <iostream>
 
-Redis::Redis()
-{
-    connect();
-    // if(connect())   std::cout<<" Connect success!"<<std::endl;
-}
+// Redis::Redis()
+// {
+//     connect();
+//     // if(connect())   std::cout<<" Connect success!"<<std::endl;
+// }
 
 Redis::~Redis()
 {
@@ -640,5 +640,87 @@ bool Redis::zrange(
         values.emplace_back(reply->element[i]->str);
     }
 
+    return true;
+}
+
+bool Redis::zcard(
+    const std::string& key,
+    size_t& count)
+{
+    redisReply* reply =
+        (redisReply*)redisCommand(
+            c,
+            "ZCARD %s",
+            key.c_str());
+
+    if(reply == nullptr)
+        return false;
+
+    bool ok = false;
+
+    if(reply->type == REDIS_REPLY_INTEGER)
+    {
+        count = reply->integer;
+        ok = true;
+    }
+
+    freeReplyObject(reply);
+
+    return ok;
+}
+
+bool Redis::zcount(
+    const std::string& key,
+    const std::string& min,
+    const std::string& max,
+    size_t& count)
+{
+    redisReply* reply =
+        (redisReply*)redisCommand(
+            c,
+            "ZCOUNT %s %s %s",
+            key.c_str(),
+            min.c_str(),
+            max.c_str());
+
+    if(reply == nullptr)
+        return false;
+
+    bool ok = false;
+
+    if(reply->type == REDIS_REPLY_INTEGER)
+    {
+        count = reply->integer;
+        ok = true;
+    }
+
+    freeReplyObject(reply);
+
+    return ok;
+}
+
+bool Redis::zremrangebyscore(
+    const std::string& key,
+    const std::string& min,
+    const std::string& max)
+{
+    redisReply* reply =
+        (redisReply*)redisCommand(
+            c,
+            "ZREMRANGEBYSCORE %s %s %s",
+            key.c_str(),
+            min.c_str(),
+            max.c_str());
+
+    if(reply == nullptr)
+        return false;
+
+    if(reply->type == REDIS_REPLY_ERROR) 
+    {
+        freeReplyObject(reply);
+        return false;
+    }
+    
+    freeReplyObject(reply);
     return true;
 }

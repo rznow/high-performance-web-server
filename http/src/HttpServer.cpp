@@ -130,7 +130,11 @@ HttpResponse HttpServer::handleGet(const HttpRequest& request)
     if(path == "/profile")
     {
         return profile(request);
-    }else if(path.starts_with("/posts"))
+    }else if(path == "/siteInfo")
+    {
+        return siteInfo(request);
+    }
+    else if(path.starts_with("/posts"))
     {
         if(path.starts_with("/posts?"))
             return posts(request);
@@ -173,13 +177,7 @@ HttpResponse HttpServer::handleDel(const HttpRequest& request)
     //服务器回应
     HttpResponse resp;
     json j;
-    std::string auth = request.getHeader("Authorization");
-    if(auth.starts_with("Bearer "))
-    {
-        auth = auth.substr(7);
-    }
 
-    
     if(!request.verify())
     {
         return HttpResponse::JsonResponse({
@@ -190,6 +188,7 @@ HttpResponse HttpServer::handleDel(const HttpRequest& request)
     UserInfo user = request.getUser();
     int id = std::stoi(request.getPath().substr(7));
     RedisService::getInstance().expireUser(user);
+    RedisService::getInstance().updateOnline(user.user_id);
     if(PostService::getInstance().delPost(id))
     {
         j["code"] = 0;
@@ -234,6 +233,7 @@ HttpResponse HttpServer::handlePut(const HttpRequest& request)
 
     int id = std::stoi(request.getPath().substr(7));
     RedisService::getInstance().expireUser(user);
+    RedisService::getInstance().updateOnline(user.user_id);
     json data = json::parse(request.getBody());
     std::string title = data["title"];
     std::string content = data["content"];
@@ -323,6 +323,7 @@ HttpResponse HttpServer::login(const HttpRequest& request)
         j["code"] = 0;
         j["msg"] = "login success";
         j["token"] = token;
+        RedisService::getInstance().updateOnline(user.user_id);
     }
     else if(result == 0)
     {
@@ -447,6 +448,7 @@ HttpResponse HttpServer::avatar(const HttpRequest& request)
         });
     }
     UserInfo user = request.getUser();
+    RedisService::getInstance().updateOnline(user.user_id);
     int user_id = user.user_id;
     // 生成保存文件名
     std::string ext = ".png";
@@ -496,6 +498,7 @@ HttpResponse HttpServer::post_like(const HttpRequest& request)
     }
     UserInfo user = request.getUser();
     RedisService::getInstance().expireUser(user);
+    RedisService::getInstance().updateOnline(user.user_id);
     bool liked = PostService::getInstance().like(post_id, user.user_id);
     int like_count = PostService::getInstance().likes(post_id);
     if(like_count != -1)
@@ -538,6 +541,7 @@ HttpResponse HttpServer::postCreate(const HttpRequest& request)
     }
     UserInfo user = request.getUser();
     RedisService::getInstance().expireUser(user);
+    RedisService::getInstance().updateOnline(user.user_id);
     Post p;
     p.user_id = user.user_id;
     p.author = user.user_name;
@@ -583,6 +587,7 @@ HttpResponse HttpServer::commentCreate(const HttpRequest& request)
     }
     UserInfo user = request.getUser();
     RedisService::getInstance().expireUser(user);
+    RedisService::getInstance().updateOnline(user.user_id);
     Comment c;
 
     
@@ -667,7 +672,7 @@ HttpResponse HttpServer::profile(const HttpRequest& request)
         });
     }
     UserInfo user = request.getUser();
-
+    RedisService::getInstance().updateOnline(user.user_id);
     j["code"]           = 0;
     j["user_id"]        = user.user_id;
     j["user_name"]      = user.user_name;
@@ -681,6 +686,18 @@ HttpResponse HttpServer::profile(const HttpRequest& request)
     RedisService::getInstance().setUser(user);
 
     
+    return HttpResponse::JsonResponse(j);
+}
+
+HttpResponse HttpServer::siteInfo(const HttpRequest& request)
+{
+    //服务器回应
+    json j;
+
+    j["code"]               = 0;
+    j["online_count"]       = RedisService::getInstance().getOnlineCount();
+    j["post_count"]         = RedisService::getInstance().getPostCount();
+
     return HttpResponse::JsonResponse(j);
 }
 
@@ -798,23 +815,14 @@ HttpResponse HttpServer::post(const HttpRequest& request)
     HttpResponse resp;
     json j;
     Post p;
-    
-    std::string auth = request.getHeader("Authorization");
-
-    if(auth.starts_with("Bearer "))
-    {
-        auth = auth.substr(7);
-    }
 
     if(!request.verify())
     {
-        return HttpResponse::JsonResponse({
-            {"code", 1003},
-            {"msg", "token invalid"}
-        });
+        j["msg"] = "token invalid";
     }
-    UserInfo user = request.getUser();
 
+    UserInfo user = request.getUser();
+    RedisService::getInstance().updateOnline(user.user_id);
     if(PostService::getInstance().get(id, p))
     {
         j["code"] = 0;

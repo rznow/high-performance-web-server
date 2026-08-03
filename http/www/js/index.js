@@ -72,7 +72,7 @@ function logout()
 {
     localStorage.removeItem("token");
 
-    location.replace("/login.html");
+    location.replace("/index.html");
 }
 
 //发帖
@@ -193,24 +193,16 @@ async function loadPosts()
     loading=false;
 }
 
-window.addEventListener(
-    "load",
-    function(){
+async function init()
+{
+    await checkLogin();     // 更新在线状态
 
-        checkLogin();
+    await loadSiteInfo();   // 再统计在线人数
 
-    }
-);
+    loadPosts();            // 不必等待
+}
 
-
-window.addEventListener(
-    "load",
-    function(){
-
-        loadPosts();
-
-    }
-);
+window.addEventListener("load", init);
 
 window.addEventListener(
     "scroll",
@@ -236,3 +228,33 @@ window.addEventListener(
         }
     }
 );
+
+function renderSiteInfo(onlineCount, postCount)
+{
+    const siteInfo = document.getElementById("siteInfo");
+
+    siteInfo.innerHTML = `
+        <div class="card">
+            <h3>站点信息</h3>
+
+            <p>在线人数：${onlineCount}</p>
+
+            <p>帖子数量：${postCount}</p>
+        </div>
+    `;
+}
+
+async function loadSiteInfo()
+{
+    const resp = await fetch("/siteInfo");
+    const data = await resp.json();
+
+    if(data.code !== 0)
+        return;
+
+    renderSiteInfo(
+        data.online_count,
+        data.post_count
+    );
+}
+

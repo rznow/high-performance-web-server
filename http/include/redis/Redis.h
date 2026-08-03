@@ -21,12 +21,12 @@ class Redis
     private:
         redisContext *c;
     public:
-        Redis();
+        Redis() = default;
         ~Redis();
 
         bool connect(
-            const std::string& host = "192.168.1.8",
-            int port = 6379);
+            const std::string& host,
+            int port);
 
         bool valid();
 
@@ -103,4 +103,19 @@ class Redis
             std::vector<std::string>& values,
             int start = 0,
             int end = -1);
+
+        bool zcard(
+            const std::string& key,
+            size_t& count);
+
+        bool zcount(
+            const std::string& key,
+            const std::string& min,
+            const std::string& max,
+            size_t& count);
+
+        bool zremrangebyscore(
+            const std::string& key,
+            const std::string& min,
+            const std::string& max);
 };

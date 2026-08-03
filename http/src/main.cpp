@@ -9,6 +9,9 @@
 #include "network/Reactor.h"
 #include "network/Acceptor.h"
 #include "thread/ThreadPool.hpp"
+#include "redis/RedisPool.h"
+#include "mysql/MySQLPool.h"
+#include "util/Config.h"
 using namespace std;
 
 constexpr int PORT = 8080;
@@ -19,22 +22,29 @@ constexpr int THREAD_POOL_NUM  = 8;
 
 int main()
 {
-    Acceptor acceptor(PORT);
+    //读取配置文件
+    Config cfg;
+    cfg.load("./server.conf");
+
+    MySQLPool::getInstance().init(cfg);
+    RedisPool::getInstance().init(cfg);
+
+    Acceptor acceptor(cfg.getInt("port", 8080));
 
     Reactor master;
     master.pushListen(acceptor.fd());
 
     //创建子Reactor序列
     vector<unique_ptr<Reactor>> subReactors;
-    subReactors.reserve(SUB_REACTOR_NUM);
+    subReactors.reserve(cfg.getInt("reactor_num", 4));
     vector<thread> threads;
 
     //创建线程池
-    ThreadPool threadpool(THREAD_POOL_NUM);
-
-    for(int i=0;i < SUB_REACTOR_NUM; i++)
+    ThreadPool threadpool(cfg.getInt("thread_num", 8));
+    
+    for(int i=0;i < cfg.getInt("reactor_num", 4); i++)
     {
-        subReactors.emplace_back(make_unique<Reactor>(MAXEVENTS, i, &threadpool));
+        subReactors.emplace_back(make_unique<Reactor>(cfg.getInt("max_events"), i, &threadpool));
         threads.emplace_back([&subReactors,i]{subReactors[i]->workloop();});
     }
 

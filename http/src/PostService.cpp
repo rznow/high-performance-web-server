@@ -24,6 +24,18 @@ PostService::PostService():
             flush();
         }
     });
+
+    onlineUserThread = std::thread([this]{
+        auto &redis = RedisService::getInstance();
+        while(running)
+        {
+            std::this_thread::sleep_for(30s);
+            // std::cout<<" 清理下线用户 "<<std::endl;
+            redis.clearOfflineUsers();
+        }
+
+
+    });
 }
 
 PostService::~PostService(){
@@ -47,6 +59,7 @@ int PostService::login(UserInfo& user, std::string name, std::string password)
     if(result == 1)
     {
         RedisService::getInstance().setUser(user);
+        RedisService::getInstance().updateOnline(user.user_id);
     }
     return result;
 }

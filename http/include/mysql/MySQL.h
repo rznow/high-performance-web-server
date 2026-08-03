@@ -16,11 +16,11 @@ public:
     ~MySQL();
 
     bool connect(
-        const std::string& host = "127.0.0.1",
-        const std::string& user = "webserver",
-        const std::string& password = "123456",
-        const std::string& db = "miniforum",
-        int port = 3306);
+        const std::string& host,
+        const std::string& user,
+        const std::string& password,
+        const std::string& db,
+        int port);
 
     bool query(const std::string& sql);
 

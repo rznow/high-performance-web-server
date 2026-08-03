@@ -138,6 +138,7 @@ body{
 
     gap:15px;
 
+    user-select:none;
 }
 
 .nav-user .btn{
@@ -146,9 +147,17 @@ body{
     border-radius:6px;
 }
 
+.nav-user a{
+
+    color:#409EFF;
+
+    text-decoration:none;
+
+}
+
 .nav-user a:hover{
 
-    background:#2f7de1;
+    color:#2f7de1;
 
 }
 

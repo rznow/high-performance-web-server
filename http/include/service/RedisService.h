@@ -20,6 +20,8 @@ class RedisService
         static RedisService& getInstance();
 
         bool setUser(UserInfo& u) const;
+        bool updateOnline(int user_id) const;
+        bool clearOfflineUsers();     //定时更新在线用户
         bool expireUser(UserInfo& u) const;
         bool delUser(int user_id) const;
         bool setCreateTime(int user_id, const std::string& time) const;
@@ -97,4 +99,8 @@ class RedisService
         bool setPostView(int post_id, int user_id);
 
         bool existPostView(int post_id, int user_id);
+
+        size_t getOnlineCount();
+
+        size_t getPostCount();
 };

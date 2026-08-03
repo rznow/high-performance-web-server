@@ -64,6 +64,11 @@ namespace RedisKey
         return "user:" + std::to_string(id);
     }
 
+    inline std::string onlineUsers()
+    {
+        return "online:user";
+    }
+
     inline std::string userStat(int id)
     {
         return "user:" + std::to_string(id) + ":stat";

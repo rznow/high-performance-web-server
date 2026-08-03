@@ -25,6 +25,7 @@ private:
     //GET
     HttpResponse index(const HttpRequest& request);
     HttpResponse profile(const HttpRequest& request);
+    HttpResponse siteInfo(const HttpRequest& request);
     HttpResponse posts(const HttpRequest& request);
     HttpResponse comments(const HttpRequest& request);
     HttpResponse post(const HttpRequest& request);

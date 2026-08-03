@@ -1,20 +1,22 @@
 #include "mysql/MySQLPool.h"
 #include "mysql/MySQL.h"
+#include "util/Config.h"
 
-MySQLPool::MySQLPool(size_t _capcity):capcity(_capcity)
-{
-    for(size_t i=0;i < _capcity;i++)
-    {
-        MySQL* mysql = new MySQL();
-        if (!mysql->connect())
-        {
-            delete mysql;
-            continue;
-        }
-        // mysql->query(R"(select * from user_info;)");
-        pool.push(mysql);
-    }
-}
+// MySQLPool::MySQLPool()
+// {
+    // for(size_t i=0;i < _capcity;i++)
+    // {
+    //     MySQL* mysql = new MySQL();
+    //     if (!mysql->connect())
+    //     {
+    //         delete mysql;
+    //         continue;
+    //     }
+    //     // mysql->query(R"(select * from user_info;)");
+    //     pool.push(mysql);
+    // }
+// }
+
 MySQLPool::~MySQLPool()
 {
     std::lock_guard<std::mutex> lock(mtx);
@@ -24,25 +26,64 @@ MySQLPool::~MySQLPool()
     }
 }
 
+bool MySQLPool::init(const Config& cfg)
+{
+    if(initialized)
+        return true;
+
+    host = cfg.get("mysql_host", "127.0.0.1");
+    user = cfg.get("mysql_user", "webserver");
+    password = cfg.get("mysql_password", "123456");
+    database = cfg.get("mysql_database", "miniforum");
+    port = cfg.getInt("mysql_port", 3306);
+
+    capcity = cfg.getInt("mysql_pool_size", 10);
+
+    for(size_t i = 0; i < capcity; i++)
+    {
+        auto conn = new MySQL();
+
+        if(!conn->connect(
+                host,
+                user,
+                password,
+                database,
+                port))
+        {
+            return false;
+        }
+
+        pool.push(std::move(conn));
+    }
+
+    initialized = true;
+    return true;
+}
+
 void MySQLPool::createConns()
 {
     for(size_t i=0;i<3;i++)
     {
         MySQL* mysql = new MySQL();
 
-        if (!mysql->connect())
+        if (!mysql->connect(
+                host,
+                user,
+                password,
+                database,
+                port))
         {
             delete mysql;
             continue;
         }
 
-        pool.push(mysql);
+        pool.push(std::move(mysql));
     }
 }
 
 MySQLPool& MySQLPool::getInstance()
 {
-    static MySQLPool pool(10);
+    static MySQLPool pool;
     return pool;
 }
 

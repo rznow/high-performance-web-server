@@ -48,12 +48,34 @@ bool RedisService::setUser(UserInfo& u) const
         {UserField::NAME,           u.user_name},
         {UserField::AVATAR,         u.avatar}
         });
+
     }
 
     redis->expire(RedisKey::user(u.user_id), 1800);
 
     return true;
 }
+
+bool RedisService::updateOnline(int user_id) const
+{
+    auto redis = pool.getConnection();
+
+    double now = static_cast<double>(time(nullptr));
+
+    return redis->zadd(RedisKey::onlineUsers(),{{now,   std::to_string(user_id)}});
+}
+
+bool RedisService::clearOfflineUsers()     //定时更新在线用户
+{
+    auto redis = pool.getConnection();
+    
+    double now = time(nullptr);
+
+    return redis->zremrangebyscore(RedisKey::onlineUsers(),
+            "0",
+            std::to_string(now - 60));
+}
+
 
 bool RedisService::expireUser(UserInfo& u) const
 {
@@ -149,7 +171,7 @@ bool RedisService::getPostPage(int page, int size, std::vector<int>& posts_id) c
         {
             posts_id.emplace_back(std::stoi(i));
         }
-        redis->expire(RedisKey::postIndex(), 1800);
+        // redis->expire(RedisKey::postIndex(), 1800);
         return true;
     }
     return false;
@@ -177,7 +199,7 @@ bool RedisService::setPosts(const std::vector<Post>& posts) const
     }
 
     redis->zadd(RedisKey::postIndex(), members);
-    redis->expire(RedisKey::postIndex(), 1800);
+    // redis->expire(RedisKey::postIndex(), 1800);
 
     return true;
 }
@@ -316,7 +338,22 @@ bool RedisService::setComment(int comment_id, const Comment& c) const
     {CommentField::CONTENT, c.content},
     {CommentField::CREATE_TIME, c.create_time}
     });
-    if(res) redis->expire(RedisKey::comment(comment_id), 1800);
+    if(res) 
+    {
+        redis->expire(RedisKey::comment(comment_id), 1800);
+        double score = StringToDatetime(c.create_time);
+        if(c.parent_id > 0)
+        {
+            redis->zadd(RedisKey::commentChildren(c.parent_id), {{score, std::to_string(c.comment_id)}});
+            redis->expire(RedisKey::commentChildren(c.parent_id), 1800);
+        }
+        else
+        {
+            redis->zadd(RedisKey::postComments(c.post_id), {{score, std::to_string(c.comment_id)}});
+            redis->expire(RedisKey::postComments(c.post_id), 1800);
+        }
+    }
+
     return res;
 }
 
@@ -605,4 +642,30 @@ bool RedisService::existPostView(int post_id, int user_id)
     auto redis = pool.getConnection();
 
     return redis->exists(RedisKey::postView(post_id, user_id));
+}
+
+size_t RedisService::getOnlineCount()
+{
+    auto redis = pool.getConnection();
+
+    size_t count = 0;
+    double now = time(nullptr);
+    redis->zcount(
+        RedisKey::onlineUsers(),
+        std::to_string(now - 60),
+        "+inf",
+        count);
+
+    return count;
+}
+
+size_t RedisService::getPostCount()
+{
+    auto redis = pool.getConnection();
+    size_t count = 0;
+    if(redis->zcard(RedisKey::postIndex(), count))
+    {
+        return count;
+    }
+    return 0;
 }

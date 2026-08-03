@@ -15,6 +15,7 @@ class PostService
         MySQLPool& pool;
         bool running = true;
         std::thread flushThread;
+        std::thread onlineUserThread;
 
         PostService();
         ~PostService();
