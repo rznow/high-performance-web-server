@@ -108,7 +108,12 @@ std::shared_ptr<MySQL> MySQLPool::getConnection()
     
     if(mysql_ping(mysql->get()) != 0)
     {
-        mysql->reconnect();
+        mysql->reconnect(
+                    host,
+                    user,
+                    password,
+                    database,
+                    port);
     }
     return std::shared_ptr<MySQL>(mysql, [this](MySQL* p)
         {
@@ -124,7 +129,12 @@ void MySQLPool::releaseConnection(MySQL* mysql)
         std::unique_lock<std::mutex> ul(mtx);
         if(mysql_ping(mysql->get()) != 0)
         {
-            mysql->reconnect();
+            mysql->reconnect(
+                        host,
+                        user,
+                        password,
+                        database,
+                        port);
         }
         pool.push(mysql);
     }

@@ -54,7 +54,12 @@ bool MySQL::query(const std::string& sql)
     return true;
 }
 
-bool MySQL::reconnect()
+bool MySQL::reconnect(
+        const std::string& host,
+        const std::string& user,
+        const std::string& password,
+        const std::string& db,
+        int port)
 {
     // 先释放旧连接
     if(conn != nullptr)
@@ -71,7 +76,12 @@ bool MySQL::reconnect()
         return false;
     }
 
-    connect();
+    connect(
+        host,
+        user,
+        password,
+        db,
+        port);
 
     if(conn == nullptr)
     {
@@ -405,6 +415,22 @@ void MySQL::getPosts(
         ids_str += std::to_string(ids[i]);
     }
 
+    // std::string sql = R"(
+    // SELECT
+    //     p.post_id,
+    //     p.user_id,
+    //     u.user_name,
+    //     p.title,
+    //     p.content,
+    //     p.like_count,
+    //     p.comment_count,
+    //     p.view_count,
+    //     p.create_time
+    // FROM posts p
+    // INNER JOIN user_info u
+    // ON p.user_id = u.user_id
+    // WHERE p.deleted = 0
+    // AND p.post_id IN ()" + ids_str + ");";
     std::string sql = R"(
     SELECT
         p.post_id,
@@ -420,7 +446,8 @@ void MySQL::getPosts(
     INNER JOIN user_info u
     ON p.user_id = u.user_id
     WHERE p.deleted = 0
-    AND p.post_id IN ()" + ids_str + ");";
+    AND p.post_id IN ()" + ids_str + ")"
+    "ORDER BY FIELD(p.post_id," + ids_str + ");";
 
     if(!query(sql)) return;
     MYSQL_RES * res = mysql_store_result(conn);

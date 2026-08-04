@@ -15,9 +15,10 @@ PostCache::PostCache()
     dummyEnd = new ListNode();
     dummyHead->next = dummyEnd;
     dummyEnd->pre = dummyHead;
-    capcity = 10;
+    capcity = 100;
     count = 0;
 }
+
 PostCache::PostCache(int _capcity)
 {
     dummyHead = new ListNode();

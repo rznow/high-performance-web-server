@@ -24,7 +24,12 @@ public:
 
     bool query(const std::string& sql);
 
-    bool reconnect();
+    bool reconnect(
+        const std::string& host,
+        const std::string& user,
+        const std::string& password,
+        const std::string& db,
+        int port);
 
     int loginSQL(const std::string& name, const std::string& password, UserInfo& user);
 

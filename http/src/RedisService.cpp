@@ -148,8 +148,15 @@ bool RedisService::setPost(const Post& p) const
     {PostField::TIME, p.create_time}
     });
 
-    redis->zadd(RedisKey::postIndex(), {{static_cast<double>(StringToDatetime(p.create_time)), std::to_string(p.post_id)}});
-    if(res) redis->expire(RedisKey::post(p.post_id), 1800);
+    if(res) 
+    {
+        redis->expire(RedisKey::post(p.post_id), 1800);
+        redis->zadd(RedisKey::postIndex(), {{
+                static_cast<double>(StringToDatetime(p.create_time)), 
+                std::to_string(p.post_id)
+                }}
+                );
+    }
 
     return res;
 }

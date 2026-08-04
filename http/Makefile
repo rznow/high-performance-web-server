@@ -1,7 +1,7 @@
 .PHONY: clean run
 
-build:
-	mkdir -p build
+# build:
+# 	mkdir -p build
 
 workbench:
 	mkdir -p workbench
@@ -44,7 +44,6 @@ OBJ2 = $(SRC:src/%.cpp=workbench/%.o)
 
 
 $(TARGET): $(OBJ)
-
 	$(CXX) $(OBJ) \
 	$(LDFLAGS) \
 	$(LDLIBS) \
@@ -56,9 +55,11 @@ $(TARGET2): $(OBJ2)
 	$(LDLIBS) \
 	-o $@
 
+build: $(TARGET)
+
 release: $(TARGET2)
 
-build/%.o: src/%.cpp | build
+build/%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 workbench/%.o: src/%.cpp | workbench

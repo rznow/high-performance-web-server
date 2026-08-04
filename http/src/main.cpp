@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <atomic>
 #include <vector>
-#include <iostream>
+// #include <iostream>
 #include <memory>
 #include <thread>
 
@@ -12,13 +12,6 @@
 #include "redis/RedisPool.h"
 #include "mysql/MySQLPool.h"
 #include "util/Config.h"
-using namespace std;
-
-constexpr int PORT = 8080;
-constexpr int MAXEVENTS = 1000;
-constexpr int MAIN_REACTOR_NUM = 1;
-constexpr int SUB_REACTOR_NUM  = 4;
-constexpr int THREAD_POOL_NUM  = 8;
 
 int main()
 {
@@ -78,7 +71,7 @@ int main()
                     // write(new_fd, message, sizeof(message));
 
                     //通过轮询来为子Reactor添加socket端口
-                    int idx = next.fetch_add(1) % SUB_REACTOR_NUM;
+                    int idx = next.fetch_add(1) % cfg.getInt("reactor_num", 4);
 
                     subReactors[idx]->push(new_fd);
 

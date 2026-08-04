@@ -214,6 +214,10 @@ std::vector<Post> PostService::getPosts(size_t page, size_t size)
         {
             auto mysql = pool.getConnection();
             mysql->getPosts(missIds, posts, missPos);
+            for(auto i: missPos)
+            {
+                redis.setPost(posts[i]);
+            }
         }
     }else
     {
@@ -221,6 +225,9 @@ std::vector<Post> PostService::getPosts(size_t page, size_t size)
         mysql->getPosts(posts, size, (page - 1) * size);
         RedisService::getInstance().setPosts(posts);
     }
+    for(auto &p:posts)
+        PostCache::getInstance().put(p);
+
     return posts;
 }
 
