@@ -19,6 +19,7 @@ struct Comment
 
     int parent_id = 0;      // 回复哪条评论，0 表示一级评论
     int reply_user_id = 0;  // 回复的用户
+    // int root_id;         // 根评论 0 表示 当前评论为根评论
 
     std::string author;
     std::string reply_author;

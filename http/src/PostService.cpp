@@ -87,7 +87,7 @@ void PostService::put(Comment& c)
     auto& redis = RedisService::getInstance();
     redis.addDirty(c.post_id);
 
-    redis.setComment(c.comment_id, c);
+    redis.setComment(c);
 
     PostCache::getInstance().update(c);
 }
@@ -327,6 +327,10 @@ std::vector<Comment> PostService::getComments(size_t post_id)
         {
             auto mysql = pool.getConnection();
             mysql->getComments(missIds, comments, missCom);
+            for(auto i: missCom)
+            {
+                redis.setComment(comments[i]);
+            }
         }
     }else
     {

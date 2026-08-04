@@ -547,7 +547,8 @@ void MySQL::getComments(
     ON c.reply_user_id=u2.user_id
 
     WHERE parent_id = 0
-    AND c.comment_id IN ()" + ids_str + ");";
+    AND c.comment_id IN ()" + ids_str + ")"
+    "ORDER BY FIELD(c.comment_id," + ids_str + ");";
 
     if(!query(sql)) return;
     MYSQL_RES * res = mysql_store_result(conn);

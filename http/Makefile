@@ -88,4 +88,4 @@ bench:
 	    -c$(CONNS) \
 	    -d$(DURATION) \
 	    $(if $(SCRIPT),-s $(SCRIPT),) \
-	    $(HOST)$(PATH_URL)
+	    "$(HOST)$(PATH_URL)"

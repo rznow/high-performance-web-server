@@ -758,7 +758,6 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
     start = path.find("page=")+5;
     end = path.find('&');
     size_t page = std::stoi(path.substr(start, end-start));
-    pos = end + 1;
     start = path.find("size=", pos)+5;
     size_t size = std::stoi(path.substr(start));
 

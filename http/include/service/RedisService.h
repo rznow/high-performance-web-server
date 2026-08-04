@@ -47,7 +47,7 @@ class RedisService
         bool getLikeCount(int user_id, int& count) const;
         bool setLikeCount(int user_id, const int count) const;
 
-        bool setComment(int comment_id, const Comment& c) const;
+        bool setComment(const Comment& c) const;
         bool setComments(int post_id, const std::vector<Comment>& comments) const;
         bool setComments(
             int post_id, int page, int size, 

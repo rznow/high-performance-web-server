@@ -2,6 +2,7 @@
 #include "common/RedisConst.h"
 #include "redis/Redis.h"
 #include <unordered_map>
+#include <iostream>
 
 using namespace PostField;
 using namespace CommentField;
@@ -328,11 +329,11 @@ bool RedisService::setLikeCount(int user_id, const int count) const
     return res;
 }
 
-bool RedisService::setComment(int comment_id, const Comment& c) const
+bool RedisService::setComment(const Comment& c) const
 {
     auto redis = pool.getConnection();
 
-    bool res = redis->hmset(RedisKey::comment(comment_id),{
+    bool res = redis->hmset(RedisKey::comment(c.comment_id),{
     {CommentField::ID, std::to_string(c.comment_id)},
     {CommentField::POST_ID, std::to_string(c.post_id)},
     {CommentField::USER_ID, std::to_string(c.user_id)},
@@ -347,7 +348,7 @@ bool RedisService::setComment(int comment_id, const Comment& c) const
     });
     if(res) 
     {
-        redis->expire(RedisKey::comment(comment_id), 1800);
+        redis->expire(RedisKey::comment(c.comment_id), 1800);
         double score = StringToDatetime(c.create_time);
         if(c.parent_id > 0)
         {
@@ -406,7 +407,7 @@ bool RedisService::setComments(
 
     for(const auto& c : comments)
     {
-        setComment(c.comment_id, c);
+        setComment(c);
         double score = StringToDatetime(c.create_time);
         if(c.parent_id == 0)    roots.emplace_back(score, std::to_string(c.comment_id));
         else    children[c.parent_id].emplace_back(score, std::to_string(c.comment_id));
@@ -481,7 +482,7 @@ bool RedisService::getComments(
 
     std::vector<std::string> ids; 
 
-    if(!redis->lrange(
+    if(!redis->zrange(
             RedisKey::postComments(post_id), 
             ids
             ))
