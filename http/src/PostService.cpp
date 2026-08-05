@@ -256,6 +256,10 @@ std::vector<Comment> PostService::getRootComments(size_t post_id, size_t page, s
 
     std::vector<Comment> comments;
     std::vector<int> comments_id;
+    if(getPostCommentCount(post_id) <= 0)
+    {
+        return comments;
+    }
     comments_id.reserve(size);
 
     if(redis.getComments(post_id, page, size, comments_id))
@@ -312,6 +316,10 @@ std::vector<Comment> PostService::getComments(size_t post_id)
 
     std::vector<Comment> comments;
     std::vector<int> comments_id;
+    if(getPostCommentCount(post_id) <= 0)
+    {
+        return comments;
+    }
 
     if(redis.getComments(post_id, comments_id))
     {
@@ -454,6 +462,31 @@ int PostService::getPostCount(size_t user_id)
     return count;
 }
 
+int PostService::getPostCommentCount(size_t post_id)
+{
+    auto &redis = RedisService::getInstance();
+
+    int count = 0;
+    Post p;
+    if(PostCache::getInstance().get(post_id, p))
+    {
+        return p.comment_count;
+    }
+
+    if(redis.getPost(post_id, p))
+    {
+        return p.comment_count;
+    }
+
+    auto mysql = pool.getConnection();
+    if(mysql->getPost(post_id, p))
+    {
+        PostCache::getInstance().put(p);
+        redis.setPost(p);
+        return p.comment_count;
+    }
+    return count;
+}
 
 int PostService::getCommentCount(size_t user_id)
 {

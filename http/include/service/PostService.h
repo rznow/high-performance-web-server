@@ -57,6 +57,7 @@ class PostService
         bool checkPost(size_t post_id, size_t user_id);
         void flush();       //定时更新点赞和浏览
         int getPostCount(size_t user_id);
+        int getPostCommentCount(size_t post_id);
         int getCommentCount(size_t user_id);
         int getLikeCount(size_t user_id);
         std::string getCreateTime(size_t user_id);

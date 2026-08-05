@@ -781,15 +781,19 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
         mp[c.comment_id] = &c;
     }
 
-    for(auto &c : comments)
+    for(auto& c : comments)
+    {
+        mp[c.comment_id] = &c;
+    }
+
+    for(auto& c : comments)
     {
         auto it = mp.find(c.parent_id);
+
         if(it != mp.end())
         {
-            mp[c.comment_id] = &c;
             it->second->children.push_back(&c);
         }
-            
     }
 
     j["code"] = 0;
