@@ -38,16 +38,20 @@ class PostService
             std::vector<Post>& posts,
             std::vector<int>& missPos) const;
 
-        std::vector<Comment> getRootComments(
+        std::vector<int> getRootComments(
             size_t post_id, 
             size_t page, 
             size_t size);
+        // std::vector<Comment> getRootComments(
+        //     size_t post_id, 
+        //     size_t page, 
+        //     size_t size);
         bool getComments(
             const std::vector<int>& ids,
             std::vector<Comment>& comments,
             std::vector<int>& missCom) const;
         
-        std::vector<Comment> getComments(size_t post_id);  
+        std::vector<Comment> getComments(size_t post_id, std::vector<int>& rootComments);  
         bool delPost(size_t post_id);
         void modifyView(size_t post_id, size_t user_id);
         int modPost(size_t post_id, 

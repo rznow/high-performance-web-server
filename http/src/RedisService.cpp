@@ -338,6 +338,7 @@ bool RedisService::setComment(const Comment& c) const
     {CommentField::POST_ID, std::to_string(c.post_id)},
     {CommentField::USER_ID, std::to_string(c.user_id)},
     {CommentField::PARENT_ID, std::to_string(c.parent_id)},
+    {CommentField::ROOT_COMMENT_ID, std::to_string(c.root_comment_id)},
     {CommentField::REPLY_USER_ID, std::to_string(c.reply_user_id)},
 
     {CommentField::AUTHOR, c.author},
@@ -352,13 +353,13 @@ bool RedisService::setComment(const Comment& c) const
         double score = StringToDatetime(c.create_time);
         if(c.parent_id > 0)
         {
-            redis->zadd(RedisKey::commentChildren(c.parent_id), {{score, std::to_string(c.comment_id)}});
-            redis->expire(RedisKey::commentChildren(c.parent_id), 1800);
+            redis->zadd(RedisKey::commentChildren(c.root_comment_id), {{score, std::to_string(c.comment_id)}});
+            redis->expire(RedisKey::commentChildren(c.root_comment_id), 1800);
         }
         else
         {
-            redis->zadd(RedisKey::postComments(c.post_id), {{score, std::to_string(c.comment_id)}});
-            redis->expire(RedisKey::postComments(c.post_id), 1800);
+            redis->zadd(RedisKey::rootCommentsPage(c.post_id), {{score, std::to_string(c.comment_id)}});
+            redis->expire(RedisKey::rootCommentsPage(c.post_id), 1800);
         }
     }
 
@@ -381,6 +382,7 @@ bool RedisService::setComments(
             {CommentField::POST_ID, std::to_string(c.post_id)},
             {CommentField::USER_ID, std::to_string(c.user_id)},
             {CommentField::PARENT_ID, std::to_string(c.parent_id)},
+            {CommentField::ROOT_COMMENT_ID, std::to_string(c.root_comment_id)},
             {CommentField::REPLY_USER_ID, std::to_string(c.reply_user_id)},
 
             {CommentField::AUTHOR, c.author},
@@ -410,19 +412,19 @@ bool RedisService::setComments(
         setComment(c);
         double score = StringToDatetime(c.create_time);
         if(c.parent_id == 0)    roots.emplace_back(score, std::to_string(c.comment_id));
-        else    children[c.parent_id].emplace_back(score, std::to_string(c.comment_id));
+        else    children[c.root_comment_id].emplace_back(score, std::to_string(c.comment_id));
     }
 
     if(!roots.empty())
     {
-        redis->zadd(RedisKey::postComments(post_id), roots);
-        redis->expire(RedisKey::postComments(post_id), 1800);
+        redis->zadd(RedisKey::rootCommentsPage(post_id), roots);
+        redis->expire(RedisKey::rootCommentsPage(post_id), 1800);
     }
 
-    for(auto& [parentId, ids] : children)
+    for(auto& [rootId, ids] : children)
     {
-        redis->zadd(RedisKey::commentChildren(parentId),ids);
-        redis->expire(RedisKey::commentChildren(parentId),1800);
+        redis->zadd(RedisKey::commentChildren(rootId),ids);
+        redis->expire(RedisKey::commentChildren(rootId),1800);
     }
 
     return true;
@@ -442,6 +444,7 @@ bool RedisService::getComment(int comment_id, Comment& c) const
     c.user_id         = std::stoi(fields[CommentField::USER_ID]);          //评论用户id
 
     c.parent_id       = std::stoi(fields[CommentField::PARENT_ID]);       //父评论id
+    c.root_comment_id = std::stoi(fields[CommentField::ROOT_COMMENT_ID]);       //父评论id
     c.reply_user_id   = std::stoi(fields[CommentField::REPLY_USER_ID]);       //父评论用户id
 
     c.author          = fields[CommentField::AUTHOR];          //当前评论作者
@@ -471,6 +474,7 @@ bool RedisService::getComments(
     {
         comments_id.push_back(std::stoi(i));
     }
+    redis->expire(RedisKey::rootCommentsPage(post_id), 1800);
     return true;
 }
 
@@ -483,7 +487,7 @@ bool RedisService::getComments(
     std::vector<std::string> ids; 
 
     if(!redis->zrange(
-            RedisKey::postComments(post_id), 
+            RedisKey::rootCommentsPage(post_id), 
             ids
             ))
         return false;
@@ -493,6 +497,35 @@ bool RedisService::getComments(
         comments_id.push_back(std::stoi(i));
     }
     return true;
+}
+
+bool RedisService::getChildComments(
+    int comment_id,
+    std::vector<int>& comments_id) const
+{
+    auto redis = pool.getConnection();
+
+    std::vector<std::string> ids; 
+
+    if(!redis->zrange(
+            RedisKey::commentChildren(comment_id), 
+            ids
+            ))
+        return false;
+
+    for(auto &i:ids)
+    {
+        comments_id.push_back(std::stoi(i));
+    }
+    redis->expire(RedisKey::commentChildren(comment_id), 1800);
+    return true;
+}
+
+bool RedisService::existPostCommentIndex(int post_id) const
+{
+    auto redis = pool.getConnection();
+
+    return redis->exists(RedisKey::rootCommentsPage(post_id));
 }
 
 bool RedisService::updatePost(

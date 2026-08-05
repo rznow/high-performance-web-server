@@ -295,11 +295,13 @@ void MySQL::saveComment(Comment& c)
         post_id,
         user_id,
         parent_id,
+        root_comment_id,
         reply_user_id,
         content
         )
         VALUES
         (
+        ?,
         ?,
         ?,
         ?,
@@ -311,9 +313,10 @@ void MySQL::saveComment(Comment& c)
     stmt.bindInt(0, c.post_id);
     stmt.bindInt(1, c.user_id);
     stmt.bindInt(2, c.parent_id);
-    if(c.reply_user_id==-1) stmt.bindNull(3);
-    else stmt.bindInt(3, c.reply_user_id);
-    stmt.bindString(4, c.content);
+    stmt.bindInt(3, c.root_comment_id);
+    if(c.reply_user_id==-1) stmt.bindNull(4);
+    else stmt.bindInt(4, c.reply_user_id);
+    stmt.bindString(5, c.content);
 
     if(!stmt.execute())
     {
@@ -323,14 +326,18 @@ void MySQL::saveComment(Comment& c)
         
 
     int comment_id = stmt.insertId();
-    // std::string sql =
-    // "UPDATE posts "
-    // "SET comment_count = comment_count + 1 "
-    // "WHERE post_id = "
-    // + std::to_string(c.post_id)
-    // + ";";
 
-    // query(sql);
+    if(c.parent_id == 0)
+    {
+        std::string sql =
+        "UPDATE comments "
+        "SET root_comment_id = " + std::to_string(comment_id) +
+        " WHERE comment_id = "
+        + std::to_string(comment_id)
+        + ";";
+
+        query(sql);
+    }
 
     std::string sql = R"(
     SELECT
@@ -339,6 +346,7 @@ void MySQL::saveComment(Comment& c)
         c.user_id,
 
         c.parent_id,
+        c.root_comment_id,
         c.reply_user_id,
 
         u.user_name,
@@ -449,6 +457,8 @@ void MySQL::getPosts(
     AND p.post_id IN ()" + ids_str + ")"
     "ORDER BY FIELD(p.post_id," + ids_str + ");";
 
+
+
     if(!query(sql)) return;
     MYSQL_RES * res = mysql_store_result(conn);
     if(res == nullptr) return;
@@ -463,32 +473,15 @@ void MySQL::getPosts(
     }
 }
 
-void MySQL::getRootComments(std::vector<Comment>& comments, size_t post_id, size_t size, size_t offset)
+void MySQL::getRootComments(std::vector<int>& comments_id, size_t post_id, size_t size, size_t offset)
 {
     Statement stmt(conn, R"(
     SELECT
-        c.comment_id,
-        c.post_id,
-        c.user_id,
-
-        c.parent_id,
-        c.reply_user_id,
-
-        u.user_name,
-        u2.user_name AS reply_name,
-        c.content,
-        DATE_FORMAT(c.create_time,'%Y-%m-%d %H:%i:%s') AS create_time
+        c.comment_id
     FROM comments c
-    JOIN user_info u
-    ON c.user_id=u.user_id
-
-    LEFT JOIN user_info u2
-    ON c.reply_user_id=u2.user_id
-
     WHERE c.post_id=?
     AND parent_id = 0
     ORDER BY
-    parent_id,
     create_time
     LIMIT ?
     OFFSET ?;
@@ -509,7 +502,7 @@ void MySQL::getRootComments(std::vector<Comment>& comments, size_t post_id, size
 
     while(stmt.fetch())
     {
-        comments.push_back(stmt.row());
+        comments_id.push_back(stmt.row().getInt(0));
     }
 }
 
@@ -527,28 +520,31 @@ void MySQL::getComments(
     }
 
     std::string sql = R"(
-    SELECT
-        c.comment_id,
-        c.post_id,
-        c.user_id,
+        SELECT
+            c.comment_id,
+            c.post_id,
+            c.user_id,
 
-        c.parent_id,
-        c.reply_user_id,
+            c.parent_id,
+            c.root_comment_id,
+            c.reply_user_id,
 
-        u.user_name,
-        u2.user_name AS reply_name,
-        c.content,
-        DATE_FORMAT(c.create_time,'%Y-%m-%d %H:%i:%s') AS create_time
-    FROM comments c
-    JOIN user_info u
-    ON c.user_id=u.user_id
+            u.user_name,
+            u2.user_name AS reply_name,
+            c.content,
+            DATE_FORMAT(c.create_time,'%Y-%m-%d %H:%i:%s') AS create_time
+        FROM comments c
+        JOIN user_info u
+        ON c.user_id = u.user_id
 
-    LEFT JOIN user_info u2
-    ON c.reply_user_id=u2.user_id
+        LEFT JOIN user_info u2
+        ON c.reply_user_id = u2.user_id
 
-    WHERE parent_id = 0
-    AND c.comment_id IN ()" + ids_str + ")"
-    "ORDER BY FIELD(c.comment_id," + ids_str + ");";
+        AND c.comment_id IN (
+        )" + ids_str + R"(
+        )
+        ORDER BY FIELD(c.comment_id,
+        )" + ids_str + ");";
 
     if(!query(sql)) return;
     MYSQL_RES * res = mysql_store_result(conn);
@@ -573,6 +569,7 @@ void MySQL::getComments(std::vector<Comment>& comments, size_t post_id)
         c.user_id,
 
         c.parent_id,
+        c.root_comment_id,
         c.reply_user_id,
 
         u.user_name,
@@ -602,6 +599,53 @@ void MySQL::getComments(std::vector<Comment>& comments, size_t post_id)
     while((row = mysql_fetch_row(res)) != nullptr)
     {
         comments.emplace_back(row);
+    }
+}
+
+void MySQL::getComments(std::vector<Comment>& comments, size_t post_id, std::vector<int>& rootComments)
+{
+    if (rootComments.empty()) return;
+
+    std::string ids_str;
+    for (size_t i = 0; i < rootComments.size(); ++i) {
+        if (i > 0) ids_str += ",";
+        ids_str += std::to_string(rootComments[i]);
+    }
+
+    std::string sql = R"(
+        SELECT
+            c.comment_id,
+            c.post_id,
+            c.user_id,
+
+            c.parent_id,
+            c.root_comment_id,
+            c.reply_user_id,
+
+            u.user_name,
+            u2.user_name AS reply_name,
+            c.content,
+            DATE_FORMAT(c.create_time,'%Y-%m-%d %H:%i:%s') AS create_time
+        FROM comments c
+        JOIN user_info u
+        ON c.user_id = u.user_id
+
+        LEFT JOIN user_info u2
+        ON c.reply_user_id = u2.user_id
+
+        WHERE c.root_comment_id IN (
+        )" + ids_str + R"(
+        )ORDER BY FIELD(c.root_comment_id,
+        )" + ids_str + ");";
+
+    if(!query(sql)) return;
+    MYSQL_RES * res = mysql_store_result(conn);
+    if(res == nullptr) return;
+    MYSQL_ROW row;
+    while((row = mysql_fetch_row(res)) != nullptr)
+    {
+        Comment c(row);
+        comments.emplace_back(std::move(c));
     }
 }
 

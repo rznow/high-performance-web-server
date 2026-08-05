@@ -52,7 +52,7 @@ public:
         const std::vector<int>& missPos);
 
     void getRootComments(
-        std::vector<Comment>& comments, 
+        std::vector<int>& comments_id, 
         size_t post_id, size_t size, size_t offset);
 
     void getComments(
@@ -60,7 +60,13 @@ public:
         std::vector<Comment>& comments, 
         const std::vector<int>& missCom);
 
-    void getComments(std::vector<Comment>& comments, size_t post_id);
+    void getComments(   //获取全部评论
+        std::vector<Comment>& comments, 
+        size_t post_id);
+    void getComments(   //获取根评论下评论
+        std::vector<Comment>& comments, 
+        size_t post_id, 
+        std::vector<int>& rootComments);
 
     bool getPost(int post_id, Post& p);
 

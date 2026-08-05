@@ -24,17 +24,18 @@ namespace PostField
 
 namespace CommentField
 {
-    inline constexpr const char* ID            = "id";
-    inline constexpr const char* POST_ID       = "post_id";
-    inline constexpr const char* USER_ID       = "user_id";
-    inline constexpr const char* PARENT_ID     = "parent_id";
-    inline constexpr const char* REPLY_USER_ID = "reply_user_id";
+    inline constexpr const char* ID                 = "id";
+    inline constexpr const char* POST_ID            = "post_id";
+    inline constexpr const char* USER_ID            = "user_id";
+    inline constexpr const char* PARENT_ID          = "parent_id";
+    inline constexpr const char* REPLY_USER_ID      = "reply_user_id";
+    inline constexpr const char* ROOT_COMMENT_ID    = "root_comment_id";
 
-    inline constexpr const char* AUTHOR        = "author";
-    inline constexpr const char* REPLY_AUTHOR  = "reply_author";
+    inline constexpr const char* AUTHOR             = "author";
+    inline constexpr const char* REPLY_AUTHOR       = "reply_author";
 
-    inline constexpr const char* CONTENT       = "content";
-    inline constexpr const char* CREATE_TIME   = "create_time";
+    inline constexpr const char* CONTENT            = "content";
+    inline constexpr const char* CREATE_TIME        = "create_time";
 }
 
 namespace RedisKey
@@ -99,10 +100,10 @@ namespace RedisKey
         return "comment:index:" + std::to_string(id);
     }
 
-    inline std::string postComments(int id)
-    {
-        return "post:" + std::to_string(id) + ":comments";
-    }
+    // inline std::string postComments(int id)
+    // {
+    //     return "post:" + std::to_string(id) + ":comments";
+    // }
     
     inline std::string postLikes(int id)
     {

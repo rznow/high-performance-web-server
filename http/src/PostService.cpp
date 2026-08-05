@@ -250,47 +250,72 @@ bool PostService::getPosts(
 }
 
 //Redis -> Mysql
-std::vector<Comment> PostService::getRootComments(size_t post_id, size_t page, size_t size)
+std::vector<int> PostService::getRootComments(size_t post_id, size_t page, size_t size)
 {
-    auto& redis = RedisService::getInstance();
-
-    std::vector<Comment> comments;
     std::vector<int> comments_id;
     if(getPostCommentCount(post_id) <= 0)
     {
-        return comments;
+        return comments_id;
     }
     comments_id.reserve(size);
-
+    auto& redis = RedisService::getInstance();
     if(redis.getComments(post_id, page, size, comments_id))
     {
-        comments.resize(comments_id.size());
-        std::vector<int> missCom;
-        getComments(comments_id, comments, missCom);
-        std::vector<int> missIds;
-        for(auto com : missCom)
-        {
-            missIds.push_back(comments_id[com]);
-        }
-        if(missIds.size() > 0)
-        {
-            auto mysql = pool.getConnection();
-            mysql->getComments(missIds, comments, missCom);
-        }
-    }else
+        return comments_id;
+    }
+
     {
         auto mysql = pool.getConnection();
 
         mysql->getRootComments(
-            comments,
+            comments_id,
             post_id,
             size,
             (page-1)*size);
-
-        redis.setComments(post_id, page, size, comments);
     }
-    return comments;
+    return comments_id;
 }
+// std::vector<Comment> PostService::getRootComments(size_t post_id, size_t page, size_t size)
+// {
+//     auto& redis = RedisService::getInstance();
+
+//     std::vector<Comment> comments;
+//     std::vector<int> comments_id;
+//     if(getPostCommentCount(post_id) <= 0)
+//     {
+//         return comments;
+//     }
+//     comments_id.reserve(size);
+
+//     if(redis.getComments(post_id, page, size, comments_id))
+//     {
+//         comments.resize(comments_id.size());
+//         std::vector<int> missCom;
+//         getComments(comments_id, comments, missCom);
+//         std::vector<int> missIds;
+//         for(auto com : missCom)
+//         {
+//             missIds.push_back(comments_id[com]);
+//         }
+//         if(missIds.size() > 0)
+//         {
+//             auto mysql = pool.getConnection();
+//             mysql->getComments(missIds, comments, missCom);
+//         }
+//     }else
+//     {
+//         auto mysql = pool.getConnection();
+
+//         mysql->getRootComments(
+//             comments,
+//             post_id,
+//             size,
+//             (page-1)*size);
+
+//         redis.setComments(post_id, page, size, comments);
+//     }
+//     return comments;
+// }
 
 bool PostService::getComments(
     const std::vector<int>& ids,
@@ -310,7 +335,7 @@ bool PostService::getComments(
 }
 
 //Redis -> Mysql
-std::vector<Comment> PostService::getComments(size_t post_id)
+std::vector<Comment> PostService::getComments(size_t post_id, std::vector<int>& rootComments)
 {
     auto& redis = RedisService::getInstance();
 
@@ -320,9 +345,13 @@ std::vector<Comment> PostService::getComments(size_t post_id)
     {
         return comments;
     }
-
-    if(redis.getComments(post_id, comments_id))
+    if(redis.existPostCommentIndex(post_id))
     {
+        for(auto &i:rootComments)
+        {
+            comments_id.push_back(i);
+            redis.getChildComments(i, comments_id);   
+        }
         comments.resize(comments_id.size());
         std::vector<int> missCom;
         getComments(comments_id, comments, missCom);
@@ -335,16 +364,13 @@ std::vector<Comment> PostService::getComments(size_t post_id)
         {
             auto mysql = pool.getConnection();
             mysql->getComments(missIds, comments, missCom);
-            for(auto i: missCom)
-            {
-                redis.setComment(comments[i]);
-            }
+            for(auto i:missCom) redis.setComment(comments[i]);
         }
-    }else
-    {
+
+    }else{
         auto mysql = pool.getConnection();
 
-        mysql->getComments(comments, post_id);
+        mysql->getComments(comments, post_id, rootComments);
 
         redis.setComments(post_id, comments);
     }

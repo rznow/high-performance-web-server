@@ -18,8 +18,9 @@ struct Comment
     int user_id = 0;
 
     int parent_id = 0;      // 回复哪条评论，0 表示一级评论
+    int root_comment_id;     // 所属根评论
     int reply_user_id = 0;  // 回复的用户
-    // int root_id;         // 根评论 0 表示 当前评论为根评论
+    
 
     std::string author;
     std::string reply_author;
@@ -41,9 +42,11 @@ struct Comment
 
         parent_id       = row.isNull(idx)?0:row.getInt(idx);       //父评论id
         idx++;
+        root_comment_id  = row.isNull(idx)?0:row.getInt(idx);       //根评论id
+        idx++;
         reply_user_id   = row.isNull(idx)?0:row.getInt(idx);       //父评论用户id
         idx++;
-
+        
         author          = row.getString(idx++);          //当前评论作者
         reply_author    = row.getString(idx++);          //父评论作者
         content         = row.getString(idx++);          //文本内容
@@ -58,8 +61,9 @@ struct Comment
         user_id         = safeInt(row[idx++]);          //评论用户id
 
         parent_id       = safeInt(row[idx++], 0);       //父评论id
+        root_comment_id  = safeInt(row[idx++], 0);          //根评论id
         reply_user_id   = safeInt(row[idx++], 0);       //父评论用户id
-
+        
         author          = safeStr(row[idx++]);          //当前评论作者
         reply_author    = safeStr(row[idx++]);          //父评论作者
         content         = safeStr(row[idx++]);          //文本内容
@@ -72,6 +76,7 @@ struct Comment
         std::cout << "post_id:\t"    << post_id << '\n';
         std::cout << "user_id:\t"    << user_id << '\n';
         std::cout << "parent_id:\t"    << parent_id << '\n';
+        std::cout << "root_comment_id:\t"    << root_comment_id << '\n';
         std::cout << "reply_user_id:\t"    << reply_user_id << '\n';
         std::cout << "author:\t\t"   << author << '\n';
         std::cout << "content:\t"    << content << '\n';

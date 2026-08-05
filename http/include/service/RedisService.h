@@ -57,7 +57,11 @@ class RedisService
         bool getComments(
             int post_id, int page, int size, 
             std::vector<int>& comments_id) const;
+        bool getChildComments(
+            int comment_id,
+            std::vector<int>& comments_id) const;
         
+        bool existPostCommentIndex(int post_id) const;
 
         bool updatePost(
             int post_id, 

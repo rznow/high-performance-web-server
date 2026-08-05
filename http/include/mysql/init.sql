@@ -84,7 +84,9 @@ CREATE TABLE comments
 
     user_id         INT NOT NULL,
 
-    parent_id       INT DEFAULT 0 COMMENT '父评论, 0表示一级评论',
+    parent_id       INT DEFAULT 0 COMMENT '父评论，0表示根评论',
+
+    root_comment_id INT DEFAULT NULL COMMENT '所属根评论',
 
     reply_user_id   INT DEFAULT NULL COMMENT '回复的用户',
 
@@ -95,6 +97,9 @@ CREATE TABLE comments
     create_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     deleted         TINYINT DEFAULT 0,
+
+    INDEX idx_post_root(post_id, root_comment_id),
+    INDEX idx_parent(parent_id),
 
     FOREIGN KEY(post_id)
         REFERENCES posts(post_id)

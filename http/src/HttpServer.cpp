@@ -23,6 +23,9 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <iostream>
+#include <chrono>
+
+using Clock = std::chrono::steady_clock;
 
 using json = nlohmann::json;
 //读文件
@@ -82,6 +85,7 @@ json buildComment(Comment* c)
     obj["user_id"] = c->user_id;
 
     obj["parent_id"] = c->parent_id;
+    obj["root_comment_id"] = c->root_comment_id;
     obj["reply_user_id"] = c->reply_user_id;
 
     obj["author"] = c->author;
@@ -91,12 +95,10 @@ json buildComment(Comment* c)
     obj["time"] = c->create_time;
 
     obj["children"] = json::array();
-
     for(auto child : c->children)
     {
         obj["children"].push_back(buildComment(child));
     }
-
     return obj;
 }
 
@@ -200,14 +202,7 @@ HttpResponse HttpServer::handleDel(const HttpRequest& request)
         j["user_id"] = user.user_id;
         j["msg"] = "delete fail";
     }
-    std::string body = j.dump();
-    resp.setStatus(200, "OK");
-    resp.setHeader("Content-Type", "application/json");
-    resp.setHeader("Connection", "keep-alive");
-    resp.setHeader("Content-Length", std::to_string(body.size()));
-    resp.setBody(body);
-    // std::cout<<j.dump()<<std::endl<<std::endl;
-    return resp;
+    return HttpResponse::JsonResponse(j);
 }
 
 HttpResponse HttpServer::handlePut(const HttpRequest& request)
@@ -604,8 +599,8 @@ HttpResponse HttpServer::commentCreate(const HttpRequest& request)
     c.content       = data.value("content","");
 
     c.parent_id     = data.value("parent_id",0);
-
     c.reply_user_id = data.value("reply_user_id",0);
+    c.root_comment_id = data.value("root_comment_id",0);
     // c.print();
     PostService::getInstance().put(c);
 
@@ -767,23 +762,20 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
 
     HttpResponse resp;
     json j;
-
-    std::vector<Comment> rootComments = PostService::getInstance().getRootComments(post_id, page, size);
-    std::vector<Comment> comments = PostService::getInstance().getComments(post_id);
+    // auto t1 = Clock::now();
+    std::vector<int> rootComments = PostService::getInstance().getRootComments(post_id, page, size);
+    // auto t2 = Clock::now();
+    std::vector<Comment> comments = PostService::getInstance().getComments(post_id, rootComments);
+    // auto t3 = Clock::now();
 
     std::unordered_map<int, Comment*> mp;
 
     std::vector<Comment*> roots;
 
-    for(auto &c: rootComments)
-    {
-        roots.push_back(&c);
-        mp[c.comment_id] = &c;
-    }
-
     for(auto& c : comments)
     {
         mp[c.comment_id] = &c;
+        if(c.parent_id == 0) roots.push_back(&c);
     }
 
     for(auto& c : comments)
@@ -795,6 +787,7 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
             it->second->children.push_back(&c);
         }
     }
+    // auto t4 = Clock::now();
 
     j["code"] = 0;
     json comment_array = json::array();
@@ -803,7 +796,15 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
         comment_array.push_back(buildComment(i));
     }
     j["comments"] = comment_array;
+    // auto t5 = Clock::now();
+    std::string s=j.dump();
 
+    // auto t6=Clock::now();
+    // std::cout<<"rc: "<< t2-t1<<std::endl;
+    // std::cout<<"c:  "<< t3-t2<<std::endl;
+    // std::cout<<"pre: "<< t4-t3<<std::endl;
+    // std::cout<<"btree: "<< t5-t4<<std::endl;
+    // std::cout<<"json: "<< t6-t5<<std::endl;
     
     return HttpResponse::JsonResponse(j);
 }

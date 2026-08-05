@@ -71,6 +71,9 @@ run: $(TARGET)
 test: $(TARGET2)
 	./$(TARGET2)
 
+gdb: $(TARGET)
+	gdb ./$<
+
 clean:
 	rm -f build/*.o build/*.d $(TARGET)
 	rm -f workbench/*.o workbench/*.d $(TARGET2)

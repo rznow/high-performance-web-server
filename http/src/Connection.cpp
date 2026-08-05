@@ -115,7 +115,7 @@ void Connection::handleRead(Reactor* reactor)
                 HttpResponse resp = httpServer.handleRequest(request);
                 // //注册发送事件(需要在主业务逻辑中)
                 reactor->enResponse([self, resp = std::move(resp), reactor]{
-                    self->outputbuffer.append(resp.toString());
+                    self->outputbuffer.append(std::move(resp.toString()));
 
                     reactor->enableWrite(self->fd);
                 }); 

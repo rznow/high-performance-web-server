@@ -604,7 +604,8 @@ function createCommentDom(c)
                 onclick="replyComment(
                     ${c.comment_id},
                     ${c.user_id},
-                    '${c.author}'
+                    '${c.author}',
+                    ${c.root_comment_id}
                 )">
                 回复
             </button>
@@ -654,7 +655,8 @@ ${c.content}
                 onclick="replyComment(
                     ${c.comment_id},
                     ${c.user_id},
-                    '${c.author}'
+                    '${c.author}',
+                    ${c.root_comment_id}
                 )">
 
                 回复
@@ -722,11 +724,13 @@ async function loadComments(reset = false)
 
 let currentParent=0;
 let currentReplyUser=-1;
+let currentRoot=0;
 
-function replyComment(parentId, userId, author)
+function replyComment(parentId, userId, author, rootId)
 {
     currentParent = parentId;
     currentReplyUser = userId;
+    currentRoot = rootId;
 
     const textarea =
         document.getElementById("comment");
@@ -744,6 +748,7 @@ document.getElementById("cancelReply").onclick = function(){
 
     currentParent = 0;
     currentReplyUser = -1;
+    currentRoot = 0;
 
     document.getElementById("comment").placeholder =
         "发表你的评论...";
@@ -833,7 +838,9 @@ document
 
             parent_id:currentParent,
 
-            reply_user_id:currentReplyUser
+            reply_user_id:currentReplyUser,
+
+            root_comment_id:currentRoot
         })
     });
 
