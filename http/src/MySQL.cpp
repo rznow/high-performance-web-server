@@ -540,7 +540,7 @@ void MySQL::getComments(
         LEFT JOIN user_info u2
         ON c.reply_user_id = u2.user_id
 
-        AND c.comment_id IN (
+        WHERE c.comment_id IN (
         )" + ids_str + R"(
         )
         ORDER BY FIELD(c.comment_id,

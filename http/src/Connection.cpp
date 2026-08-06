@@ -8,7 +8,6 @@
 
 
 
-
 //--------------------------------------------Buffer类--------------------------------------------//
 size_t Buffer::size()
 {
@@ -81,9 +80,13 @@ void Connection::handleRead(Reactor* reactor)
     //判断是否为完整HTTP请求
     while(HttpRequest::isRequestComplete(inputbuffer))
     {
+        // auto t1 = Clock::now();
         HttpRequest request;
         request.parseRequest(inputbuffer);
         auto self = shared_from_this();
+        // auto t2 = Clock::now();
+
+        // std::cout<<"parse request: "<<t2-t1<<std::endl;
         // if(request.getMethod() == "GET")
         // {
         //     HttpServer httpServer;
@@ -109,16 +112,33 @@ void Connection::handleRead(Reactor* reactor)
         //         }
         //     );
         // }
+        // auto enqueueTime = Clock::now();
         pool->enqueue([request, self, reactor] 
             {
+                // auto t1 = Clock::now();
+                // std::cout<<"queue wait:"
+                //     <<t1-enqueueTime
+                //     <<std::endl;
                 HttpServer httpServer;
                 HttpResponse resp = httpServer.handleRequest(request);
                 // //注册发送事件(需要在主业务逻辑中)
                 reactor->enResponse([self, resp = std::move(resp), reactor]{
-                    self->outputbuffer.append(std::move(resp.toString()));
+                    // auto t1 = Clock::now();
+
+                    self->outputbuffer.append(
+                        std::move(resp.toString())
+                    );
 
                     reactor->enableWrite(self->fd);
+
+
+                    // auto t2 = Clock::now();
+
+                    // cout<<"response queue:"<<t2-t1<<endl;
                 }); 
+                // auto t2 = Clock::now();
+
+                // std::cout<<"http server: "<<t2-t1<<std::endl;
             }
         );
         
@@ -129,6 +149,7 @@ void Connection::handleWrite(Reactor* reactor)
 {
     //处理对应连接的写入(ET)
     // cout << outputbuffer.data() <<endl;
+    // auto t1 = Clock::now();
     while(!outputbuffer.empty())
     {
         int n = write(fd, outputbuffer.data().c_str(), outputbuffer.size());
@@ -146,6 +167,10 @@ void Connection::handleWrite(Reactor* reactor)
     }
     if (outputbuffer.empty())
     reactor->disableWrite(fd);
+
+    // auto t2 = Clock::now();
+
+    // std::cout<<"write: "<<t2-t1<<std::endl;
 }
 
 Connection::~Connection()

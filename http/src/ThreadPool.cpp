@@ -12,6 +12,7 @@ ThreadPool::ThreadPool(int _size)
                     function<void()> task;
                     {
                         unique_lock<mutex> ul(mtx);
+
                         cv.wait(ul,[this]{return !tasks.empty()||stop;});
                         if(tasks.empty()&&stop)    break;
                         task = move(tasks.front());

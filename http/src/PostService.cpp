@@ -364,7 +364,10 @@ std::vector<Comment> PostService::getComments(size_t post_id, std::vector<int>& 
         {
             auto mysql = pool.getConnection();
             mysql->getComments(missIds, comments, missCom);
-            for(auto i:missCom) redis.setComment(comments[i]);
+            for(auto i:missCom) 
+            {
+                redis.setComment(comments[i]);
+            }
         }
 
     }else{
