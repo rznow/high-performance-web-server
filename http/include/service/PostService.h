@@ -24,6 +24,7 @@ class PostService
         PostService(const PostService&) = delete;
         PostService& operator=(const PostService&) = delete;
         static PostService& getInstance();
+        void initPostIndex();
         int login(UserInfo& user, std::string name, std::string password);
         void put(Post p);
         void put(Comment& c);

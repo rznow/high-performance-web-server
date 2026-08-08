@@ -90,7 +90,7 @@ json buildComment(Comment* c)
 
     obj["author"] = c->author;
     obj["reply_author"] = c->reply_author;
-    obj["avatar"] = PostService::getInstance().getAvatar(c->user_id);
+    obj["avatar"] = c->avatar;
     obj["content"] = c->content;
     obj["time"] = c->create_time;
 
@@ -518,14 +518,7 @@ HttpResponse HttpServer::post_like(const HttpRequest& request)
 
 HttpResponse HttpServer::postCreate(const HttpRequest& request)
 {
-    HttpResponse resp;
     json j;
-    std::string auth = request.getHeader("Authorization");
-
-    if(auth.starts_with("Bearer "))
-    {
-        auth = auth.substr(7);
-    }
 
     if(!request.verify())
     {
@@ -551,14 +544,7 @@ HttpResponse HttpServer::postCreate(const HttpRequest& request)
     j["msg"] = "post success";
     j["user_id"] = user.user_id;
     j["user_name"] = user.user_name;
-    std::string body = j.dump();
-    resp.setStatus(200, "OK");
-    resp.setHeader("Content-Type", "application/json");
-    resp.setHeader("Connection", "keep-alive");
-    resp.setHeader("Content-Length", std::to_string(body.size()));
-    resp.setBody(body);
-    // std::cout<<j.dump()<<std::endl<<std::endl;
-    return resp;
+    return HttpResponse::JsonResponse(j);
 
 }
 
@@ -566,12 +552,6 @@ HttpResponse HttpServer::commentCreate(const HttpRequest& request)
 {
     HttpResponse resp;
     json j;
-    std::string auth = request.getHeader("Authorization");
-
-    if(auth.starts_with("Bearer "))
-    {
-        auth = auth.substr(7);
-    }
 
     if(!request.verify())
     {
@@ -721,7 +701,6 @@ HttpResponse HttpServer::posts(const HttpRequest& request)
     json post_array = json::array();
     for(auto &i: posts)
     {
-        RedisService::getInstance().setPost(i);
         post_array.push_back({
             {"post_id",         i.post_id},
             {"user_id",         i.user_id},
@@ -771,11 +750,13 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
     std::unordered_map<int, Comment*> mp;
 
     std::vector<Comment*> roots;
-
     for(auto& c : comments)
     {
         mp[c.comment_id] = &c;
-        if(c.parent_id == 0) roots.push_back(&c);
+        if(c.parent_id == 0) 
+        {
+            roots.push_back(&c);
+        }
     }
 
     for(auto& c : comments)
@@ -791,10 +772,12 @@ HttpResponse HttpServer::comments(const HttpRequest& request)
 
     j["code"] = 0;
     json comment_array = json::array();
+    
     for(auto &i: roots)
     {
         comment_array.push_back(buildComment(i));
     }
+
     j["comments"] = comment_array;
     // auto t5 = Clock::now();
     std::string s=j.dump();

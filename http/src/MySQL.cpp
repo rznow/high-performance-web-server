@@ -46,11 +46,11 @@ bool MySQL::query(const std::string& sql)
 
     if(ret != 0)
     {
-        std::cout << "SQL failed: " << sql << std::endl;
-        std::cout << "Error: " << mysql_error(conn) << std::endl;
+        // std::cout << "SQL failed: " << sql << std::endl;
+        // std::cout << "Error: " << mysql_error(conn) << std::endl;
         return false;
     }
-    std::cout << "SQL success: " << sql << std::endl << std::endl;
+    // std::cout << "SQL success: " << sql << std::endl << std::endl;
     return true;
 }
 
@@ -236,6 +236,32 @@ MYSQL* MySQL::get()
     return conn;
 }
 
+void MySQL::getAllPostIds(std::unordered_map<std::string, std::string>& members)
+{
+    std::string sql = R"(
+        SELECT 
+        post_id,
+        create_time
+        FROM posts
+        WHERE deleted = 0;
+    )";
+
+    if (!query(sql))    return;
+
+    MYSQL_RES* res = mysql_store_result(conn);
+
+    if (!res)   return;
+
+    MYSQL_ROW row;
+
+    while ((row = mysql_fetch_row(res)) != nullptr)
+    {
+        members[row[0]] = row[1];
+    }
+
+    mysql_free_result(res);
+}
+
 int MySQL::savePost(Post& p)
 {
     Statement stmt(conn, R"(
@@ -351,6 +377,7 @@ void MySQL::saveComment(Comment& c)
 
         u.user_name,
         u2.user_name AS reply_name,
+        u.avatar,
         c.content,
         c.create_time
     FROM comments c
@@ -482,7 +509,7 @@ void MySQL::getRootComments(std::vector<int>& comments_id, size_t post_id, size_
     WHERE c.post_id=?
     AND parent_id = 0
     ORDER BY
-    create_time
+    create_time DESC
     LIMIT ?
     OFFSET ?;
     )"
@@ -528,9 +555,11 @@ void MySQL::getComments(
             c.parent_id,
             c.root_comment_id,
             c.reply_user_id,
+            u.avatar,
 
             u.user_name,
             u2.user_name AS reply_name,
+            u.avatar,
             c.content,
             DATE_FORMAT(c.create_time,'%Y-%m-%d %H:%i:%s') AS create_time
         FROM comments c
@@ -574,6 +603,7 @@ void MySQL::getComments(std::vector<Comment>& comments, size_t post_id)
 
         u.user_name,
         u2.user_name AS reply_name,
+        u.avatar,
         c.content,
         c.create_time
     FROM comments c
@@ -624,6 +654,7 @@ void MySQL::getComments(std::vector<Comment>& comments, size_t post_id, std::vec
 
             u.user_name,
             u2.user_name AS reply_name,
+            u.avatar,
             c.content,
             DATE_FORMAT(c.create_time,'%Y-%m-%d %H:%i:%s') AS create_time
         FROM comments c

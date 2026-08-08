@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <unordered_map>
 #include <mysql/mysql.h>
 #include "mysql/StatementRow.h"
 struct Post
@@ -20,46 +21,12 @@ struct Post
     Post():post_id(-1){};
     Post(const Post&p) = default;
     Post& operator=(const Post&p) = default;
-    Post(StatementRow& row)
-    {
-        int idx = 0;
-        post_id       = row.getInt(idx++);
-        user_id       = row.getInt(idx++);      
-        author        = row.getString(idx++);
-        title         = row.getString(idx++);
-        content       = row.getString(idx++);
-        like_count    = row.getInt(idx++);
-        comment_count = row.getInt(idx++);
-        view_count    = row.getInt(idx++);
-        create_time   = row.getString(idx++);
-    };
+    Post(StatementRow& row);
 
-    Post(MYSQL_ROW& row)
-    {
-        int idx = 0;
-        post_id       = std::stoi(row[idx++]);
-        user_id       = std::stoi(row[idx++]);      
-        author        = row[idx++];
-        title         = row[idx++];
-        content       = row[idx++];
-        like_count    = std::stoi(row[idx++]);
-        comment_count = std::stoi(row[idx++]);
-        view_count    = std::stoi(row[idx++]);
-        create_time   = row[idx++];
-    };
+    Post(MYSQL_ROW& row);
 
-    void print()
-    {
-        std::cout<<"post_id:\t"<<post_id<<std::endl;
-        std::cout<<"user_id:\t"<<user_id<<std::endl;
-        std::cout<<"author:\t\t"<<author<<std::endl;
-        std::cout<<"title:\t\t"<<title<<std::endl;
-        std::cout<<"content:\t"<<content<<std::endl;
-        std::cout<<"like_count:\t"<<like_count<<std::endl;
-        std::cout<<"comment_count:\t"<<comment_count<<std::endl;
-        std::cout<<"view_count:\t"<<view_count<<std::endl;
-        std::cout<<"create_time:\t"<<create_time<<std::endl;
-        std::cout<<std::endl;
-    }
+    Post(std::unordered_map<std::string, std::string>& fields);
+
+    void print();
 };
 #endif

@@ -28,7 +28,9 @@ class RedisService
         bool getCreateTime(int user_id, std::string& time) const;
         bool getAvatar(int user_id, std::string& avatar) const;
 
+        bool createPostIndex(std::unordered_map<std::string, std::string>& members);
         bool setPost(const Post& p) const;
+        bool inPost(const Post& p) const;
         void delPostPage() const;
         bool getPostPage(
             int page, int size, 
@@ -39,6 +41,10 @@ class RedisService
         bool getPosts(
             int page, int size, 
             std::vector<Post>& posts) const;
+        bool getPostsPipeline(
+            const std::vector<int>& ids,
+            std::vector<Post>& posts,
+            std::vector<int>& missPos);
 
         bool getPostCount(int user_id, int& count) const;
         bool setPostCount(int user_id, const int count) const;
@@ -57,10 +63,15 @@ class RedisService
         bool getComments(
             int post_id, int page, int size, 
             std::vector<int>& comments_id) const;
+        bool getCommentsPipeline(
+            const std::vector<int>& ids,
+            std::vector<Comment>& comments,
+            std::vector<int>& missPos);
         bool getChildComments(
             int comment_id,
             std::vector<int>& comments_id) const;
-        
+
+        bool existPostIndex() const;
         bool existPostCommentIndex(int post_id) const;
 
         bool updatePost(

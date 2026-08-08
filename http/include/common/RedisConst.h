@@ -33,6 +33,7 @@ namespace CommentField
 
     inline constexpr const char* AUTHOR             = "author";
     inline constexpr const char* REPLY_AUTHOR       = "reply_author";
+    inline constexpr const char* AVATAR             = "avatar";
 
     inline constexpr const char* CONTENT            = "content";
     inline constexpr const char* CREATE_TIME        = "create_time";

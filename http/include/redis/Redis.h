@@ -118,4 +118,8 @@ class Redis
             const std::string& key,
             const std::string& min,
             const std::string& max);
+
+        bool pipeline(
+            std::vector<std::string>& cmds, 
+            std::vector<std::unordered_map<std::string, std::string>>& values);
 };

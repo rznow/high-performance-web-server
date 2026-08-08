@@ -724,3 +724,52 @@ bool Redis::zremrangebyscore(
     freeReplyObject(reply);
     return true;
 }
+
+bool Redis::pipeline(
+    std::vector<std::string>& cmds, 
+    std::vector<std::unordered_map<std::string, std::string>>& values)
+{
+    for (size_t i = 0; i < cmds.size(); i++)
+    {
+        redisAppendCommand(
+            c,
+            cmds[i].data()
+        );
+    }
+    for (size_t i = 0; i < cmds.size(); i++)
+    {
+        redisReply* reply = nullptr;
+
+        redisGetReply(
+            c,
+            (void**)&reply
+        );
+
+        values.push_back({});
+
+        if (!reply)
+        {
+            continue;
+        }
+
+        if (reply->type == REDIS_REPLY_NIL ||
+            reply->elements == 0)
+        {
+            freeReplyObject(reply);
+            continue;
+        }
+
+        if(reply->type == REDIS_REPLY_ARRAY)
+        {
+            for(size_t j = 0; j < reply->elements; j += 2)
+            {
+                values[i].emplace(
+                    reply->element[j]->str,
+                    reply->element[j + 1]->str);
+            }
+        }
+
+        freeReplyObject(reply);
+    }
+    return true;
+}

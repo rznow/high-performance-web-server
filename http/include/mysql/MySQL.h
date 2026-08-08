@@ -45,6 +45,7 @@ public:
 
     MYSQL* get();
 
+    void getAllPostIds(std::unordered_map<std::string, std::string>& members);
     void getPosts(std::vector<Post>& posts, size_t size,size_t offset);
     void getPosts(
         const std::vector<int>& ids, 

@@ -36,6 +36,8 @@ PostService::PostService():
 
 
     });
+
+    initPostIndex();
 }
 
 PostService::~PostService(){
@@ -49,6 +51,27 @@ PostService& PostService::getInstance()
 {
     static PostService ps;
     return ps;
+}
+
+void PostService::initPostIndex()
+{
+    auto& redis = RedisService::getInstance();
+
+    if (redis.existPostIndex())
+        return;
+
+    auto mysql = pool.getConnection();
+
+    std::unordered_map<std::string, std::string> members;
+
+    mysql->getAllPostIds(members);
+
+    if (members.empty())
+    {
+        return;
+    }
+
+    redis.createPostIndex(members);
 }
 
 int PostService::login(UserInfo& user, std::string name, std::string password)
@@ -116,7 +139,7 @@ bool PostService::get(int post_id, Post& p)
     {
         // std::cout<<"Post from mysql!"<<std::endl;
         PostCache::getInstance().put(p);
-        redis.setPost(p);
+        redis.inPost(p);
 
         std::vector<int> likes;
         mysql->getLikes(post_id, likes);
@@ -204,7 +227,8 @@ std::vector<Post> PostService::getPosts(size_t page, size_t size)
     {
         posts.resize(posts_id.size());
         std::vector<int> missPos;
-        getPosts(posts_id, posts, missPos);
+        // getPosts(posts_id, posts, missPos);
+        redis.getPostsPipeline(posts_id, posts, missPos);
         std::vector<int> missIds;
         for(auto pos : missPos)
         {
@@ -216,7 +240,7 @@ std::vector<Post> PostService::getPosts(size_t page, size_t size)
             mysql->getPosts(missIds, posts, missPos);
             for(auto i: missPos)
             {
-                redis.setPost(posts[i]);
+                redis.inPost(posts[i]);
             }
         }
     }else
@@ -354,7 +378,8 @@ std::vector<Comment> PostService::getComments(size_t post_id, std::vector<int>& 
         }
         comments.resize(comments_id.size());
         std::vector<int> missCom;
-        getComments(comments_id, comments, missCom);
+        // getComments(comments_id, comments, missCom);
+        redis.getCommentsPipeline(comments_id, comments, missCom);
         std::vector<int> missIds;
         for(auto com : missCom)
         {
@@ -511,7 +536,7 @@ int PostService::getPostCommentCount(size_t post_id)
     if(mysql->getPost(post_id, p))
     {
         PostCache::getInstance().put(p);
-        redis.setPost(p);
+        redis.inPost(p);
         return p.comment_count;
     }
     return count;

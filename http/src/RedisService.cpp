@@ -133,7 +133,22 @@ bool RedisService::getAvatar(int user_id, std::string& avatar) const
     return true;
 }
 
-bool RedisService::setPost(const Post& p) const
+bool RedisService::createPostIndex(std::unordered_map<std::string, std::string>& members)
+{
+    auto redis = pool.getConnection();
+    std::vector<std::pair<double,std::string>> values;
+
+    for(auto &[member, score]:members)
+    {
+        values.emplace_back(
+            static_cast<double>(StringToDatetime(score)), 
+            member);
+    }
+
+    return redis->zadd(RedisKey::postIndex(), values);
+}
+
+bool RedisService::setPost(const Post& p) const         //新建帖子
 {
     auto redis = pool.getConnection();
 
@@ -157,6 +172,30 @@ bool RedisService::setPost(const Post& p) const
                 std::to_string(p.post_id)
                 }}
                 );
+    }
+
+    return res;
+}
+
+bool RedisService::inPost(const Post& p) const
+{
+    auto redis = pool.getConnection();
+
+    bool res = redis->hmset(RedisKey::post(p.post_id),{
+    {PostField::ID, std::to_string(p.post_id)},
+    {PostField::USER_ID, std::to_string(p.user_id)},
+    {PostField::AUTHOR, p.author},
+    {PostField::TITLE, p.title},
+    {PostField::CONTENT, p.content},
+    {PostField::LIKE, std::to_string(p.like_count)},
+    {PostField::COMMENT, std::to_string(p.comment_count)},
+    {PostField::VIEW, std::to_string(p.view_count)},
+    {PostField::TIME, p.create_time}
+    });
+
+    if(res) 
+    {
+        redis->expire(RedisKey::post(p.post_id), 1800);
     }
 
     return res;
@@ -206,9 +245,6 @@ bool RedisService::setPosts(const std::vector<Post>& posts) const
             });
     }
 
-    redis->zadd(RedisKey::postIndex(), members);
-    // redis->expire(RedisKey::postIndex(), 1800);
-
     return true;
 }
 
@@ -221,15 +257,7 @@ bool RedisService::getPost(int post_id, Post& p) const
     if(!redis->hgetAll(RedisKey::post(post_id), fields))
         return false;
 
-    p.post_id       = std::stoi(fields[PostField::ID]);
-    p.user_id       = std::stoi(fields[PostField::USER_ID]);
-    p.author        = fields[PostField::AUTHOR];
-    p.title         = fields[PostField::TITLE];
-    p.content       = fields[PostField::CONTENT];
-    p.like_count    = std::stoi(fields[PostField::LIKE]);
-    p.comment_count = std::stoi(fields[PostField::COMMENT]);
-    p.view_count    = std::stoi(fields[PostField::VIEW]);
-    p.create_time   = fields[PostField::TIME];
+    p = Post(fields);
 
     return true;
 }
@@ -238,21 +266,57 @@ bool RedisService::getPosts(
     int page, int size, 
     std::vector<Post>& posts) const
 {
+    // auto redis = pool.getConnection();
+
+    // std::vector<std::string> posts_id; 
+    // if(!redis->lrange(RedisKey::postsPage(page, size), posts_id))
+    //     return false;
+
+    // for(auto &i:posts_id)
+    // {
+    //     Post p;
+    //     getPost(std::stoi(i), p);
+    //     posts.emplace_back(std::move(p));
+    // }
+
+    return true;
+}
+
+bool RedisService::getPostsPipeline(
+    const std::vector<int>& ids,
+    std::vector<Post>& posts,
+    std::vector<int>& missPos)
+{
     auto redis = pool.getConnection();
+    std::vector<std::string> cmds;
+    std::vector<std::unordered_map<std::string, std::string>> values;
 
-    std::vector<std::string> posts_id; 
-    if(!redis->lrange(RedisKey::postsPage(page, size), posts_id))
-        return false;
-
-    for(auto &i:posts_id)
+    for (int id : ids)
     {
-        Post p;
-        getPost(std::stoi(i), p);
-        posts.emplace_back(std::move(p));
+        cmds.push_back(
+            "HGETALL " + RedisKey::post(id)
+        );
+    }
+    
+    redis->pipeline(cmds, values);
+
+    for (size_t i = 0; i < ids.size(); ++i)
+    {
+
+        if (values[i].empty())
+        {
+            missPos.push_back(i);
+            continue;
+        }
+
+        auto& fields = values[i];
+        posts[i] = Post(fields);
+        // posts[i].print();
     }
 
     return true;
 }
+
 
 bool RedisService::getPostCount(int user_id, int& count) const
 {
@@ -343,6 +407,7 @@ bool RedisService::setComment(const Comment& c) const
 
     {CommentField::AUTHOR, c.author},
     {CommentField::REPLY_AUTHOR, c.reply_author},
+    {CommentField::AVATAR, c.avatar},
 
     {CommentField::CONTENT, c.content},
     {CommentField::CREATE_TIME, c.create_time}
@@ -387,6 +452,7 @@ bool RedisService::setComments(
 
             {CommentField::AUTHOR, c.author},
             {CommentField::REPLY_AUTHOR, c.reply_author},
+            {CommentField::AVATAR, c.avatar},
 
             {CommentField::CONTENT, c.content},
             {CommentField::CREATE_TIME, c.create_time}
@@ -439,18 +505,7 @@ bool RedisService::getComment(int comment_id, Comment& c) const
     if(!redis->hgetAll(RedisKey::comment(comment_id), fields))
         return false;
 
-    c.comment_id      = std::stoi(fields[CommentField::ID]);
-    c.post_id         = std::stoi(fields[CommentField::POST_ID]);          //帖子的id
-    c.user_id         = std::stoi(fields[CommentField::USER_ID]);          //评论用户id
-
-    c.parent_id       = std::stoi(fields[CommentField::PARENT_ID]);       //父评论id
-    c.root_comment_id = std::stoi(fields[CommentField::ROOT_COMMENT_ID]);       //父评论id
-    c.reply_user_id   = std::stoi(fields[CommentField::REPLY_USER_ID]);       //父评论用户id
-
-    c.author          = fields[CommentField::AUTHOR];          //当前评论作者
-    c.reply_author    = fields[CommentField::REPLY_AUTHOR];          //父评论作者
-    c.content         = fields[CommentField::CONTENT];          //文本内容
-    c.create_time     = fields[CommentField::CREATE_TIME];
+    c = Comment(fields);
 
     return true;
 }
@@ -475,6 +530,40 @@ bool RedisService::getComments(
         comments_id.push_back(std::stoi(i));
     }
     redis->expire(RedisKey::rootCommentsPage(post_id), 1800);
+    return true;
+}
+
+bool RedisService::getCommentsPipeline(
+    const std::vector<int>& ids,
+    std::vector<Comment>& comments,
+    std::vector<int>& missPos)
+{
+    auto redis = pool.getConnection();
+    std::vector<std::string> cmds;
+    std::vector<std::unordered_map<std::string, std::string>> values;
+
+    for (int id : ids)
+    {
+        cmds.push_back(
+            "HGETALL " + RedisKey::comment(id)
+        );
+    }
+    
+    redis->pipeline(cmds, values);
+
+    for (size_t i = 0; i < ids.size(); ++i)
+    {
+        if (values[i].empty())
+        {
+            missPos.push_back(i);
+            continue;
+        }
+
+        auto& fields = values[i];
+        comments[i] = Comment(fields);
+        // comments[i].print();
+    }
+
     return true;
 }
 
@@ -519,6 +608,13 @@ bool RedisService::getChildComments(
     }
     redis->expire(RedisKey::commentChildren(comment_id), 1800);
     return true;
+}
+
+bool RedisService::existPostIndex() const
+{
+    auto redis = pool.getConnection();
+
+    return redis->exists(RedisKey::postIndex());
 }
 
 bool RedisService::existPostCommentIndex(int post_id) const
