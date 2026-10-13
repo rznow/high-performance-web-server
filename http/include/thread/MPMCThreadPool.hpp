@@ -5,8 +5,12 @@
 #include <thread>
 #include <functional>
 #include <condition_variable>
+#include <stdexcept>
 
 #include "MPMC.hpp"
+
+extern const int MAX_THREADS;
+extern const int MAX_HP_PER_THREAD;
 
 class MPMCThreadPool
 {
@@ -15,9 +19,9 @@ class MPMCThreadPool
         std::atomic<size_t> pending{0};
         std::vector<std::thread> threads;
         std::atomic<bool> stop_;
+
     public:
         MPMCThreadPool(int _size = 3);
-
         ~MPMCThreadPool();
 
         template<class F,class... Args>

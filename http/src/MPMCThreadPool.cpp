@@ -2,16 +2,21 @@
 
 MPMCThreadPool::MPMCThreadPool(int _size)
 {   
-    
+    if (_size <= 0 || _size > MAX_THREADS) {
+        throw std::invalid_argument("invalid thread count");
+    }
+
     stop_ = false;
 
     for(int i=0;i < _size;i++)
     {
-        threads.emplace_back([this]{
+        threads.emplace_back([this, i]{
+                thread_local int thread_id = i;
+
                 std::function<void()> task;
                 while(1)
                 {
-                    if(tasks.Dequeue(task))
+                    if(tasks.Dequeue(task, thread_id))
                     {
                         try{
                             task();
