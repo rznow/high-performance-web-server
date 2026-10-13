@@ -1,6 +1,7 @@
 #include "network/Reactor.h"
 #include "network/Connection.h"
 #include "http/HttpRequest.h"
+#include "thread/MPMCThreadPool.hpp"
 #include <unistd.h>
 #include <cerrno>
 #include <string>
@@ -19,7 +20,8 @@ Reactor::Reactor()
     stop = false;
 }
 
-Reactor::Reactor(int maxEvents, int i, ThreadPool* _pool)
+// Reactor::Reactor(int maxEvents, int i, ThreadPool* _pool)
+Reactor::Reactor(int maxEvents, int i, MPMCThreadPool* _pool)
 {
     epfd = epoll_create(1);
     events.resize(maxEvents);

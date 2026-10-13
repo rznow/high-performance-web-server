@@ -159,52 +159,52 @@ bool Statement::storeResult()
     return true;
 }
 
-// void Statement::bindResultInt(int index,int& value)
-// {
-//     if(resultBinds.size()<=index)
-//     {
-//         size_t oldSize = resultBinds.size();
-//         resultBinds.resize(index + 1);
-//         lengths.resize(index + 1);
-//         isNull.resize(index + 1);
+void Statement::bindResultInt(int index,int& value)
+{
+    if(resultBinds.size()<=index)
+    {
+        size_t oldSize = resultBinds.size();
+        resultBinds.resize(index + 1);
+        lengths.resize(index + 1);
+        isNull.resize(index + 1);
 
-//         for (size_t i = oldSize; i < resultBinds.size(); ++i) {
-//             memset(&resultBinds[i], 0, sizeof(MYSQL_BIND));
-//         }
-//     }
+        for (size_t i = oldSize; i < resultBinds.size(); ++i) {
+            memset(&resultBinds[i], 0, sizeof(MYSQL_BIND));
+        }
+    }
 
-//     resultBinds[index].buffer_type=MYSQL_TYPE_LONG;
-//     resultBinds[index].buffer=&value;
+    resultBinds[index].buffer_type=MYSQL_TYPE_LONG;
+    resultBinds[index].buffer=&value;
 
-//     resultBinds[index].length=&lengths[index];
+    resultBinds[index].length=&lengths[index];
 
-//     resultBinds[index].is_null=reinterpret_cast<bool*>(&isNull[index]);;
-// }
+    resultBinds[index].is_null=reinterpret_cast<bool*>(&isNull[index]);;
+}
 
-// void Statement::bindResultString(int index, char* buf, unsigned long size)
-// {
-//     if(resultBinds.size()<=index)
-//     {
-//         size_t oldSize = resultBinds.size();
-//         resultBinds.resize(index + 1);
-//         lengths.resize(index + 1);
-//         isNull.resize(index + 1);
+void Statement::bindResultString(int index, char* buf, unsigned long size)
+{
+    if(resultBinds.size()<=index)
+    {
+        size_t oldSize = resultBinds.size();
+        resultBinds.resize(index + 1);
+        lengths.resize(index + 1);
+        isNull.resize(index + 1);
 
-//         for (size_t i = oldSize; i < resultBinds.size(); ++i) {
-//             memset(&resultBinds[i], 0, sizeof(MYSQL_BIND));
-//         }
-//     }
+        for (size_t i = oldSize; i < resultBinds.size(); ++i) {
+            memset(&resultBinds[i], 0, sizeof(MYSQL_BIND));
+        }
+    }
 
-//     resultBinds[index].buffer_type=MYSQL_TYPE_STRING;
+    resultBinds[index].buffer_type=MYSQL_TYPE_STRING;
 
-//     resultBinds[index].buffer=buf;
+    resultBinds[index].buffer=buf;
 
-//     resultBinds[index].buffer_length=size;
+    resultBinds[index].buffer_length=size;
 
-//     resultBinds[index].length=&lengths[index];
+    resultBinds[index].length=&lengths[index];
 
-//     resultBinds[index].is_null=reinterpret_cast<bool*>(&isNull[index]);;
-// }
+    resultBinds[index].is_null=reinterpret_cast<bool*>(&isNull[index]);;
+}
 
 bool Statement::fetch()
 {

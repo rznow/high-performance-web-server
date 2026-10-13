@@ -3,6 +3,7 @@
 #include "http/HttpRequest.h"
 #include "http/HttpResponse.h"
 #include "thread/ThreadPool.hpp"
+#include "thread/MPMCThreadPool.hpp"
 #include "http/HttpServer.h"
 #include <iostream>
 
@@ -45,7 +46,8 @@ const std::string& Buffer::data() const
 }
 
 //--------------------------------------------Connection类--------------------------------------------//
-Connection::Connection(int _fd,ThreadPool* _pool):fd(_fd),connected(true),pool(_pool){};
+// Connection::Connection(int _fd,ThreadPool* _pool):fd(_fd),connected(true),pool(_pool){};
+Connection::Connection(int _fd,MPMCThreadPool* _pool):fd(_fd),connected(true),pool(_pool){};
 
 void Connection::handleRead(Reactor* reactor)
 {
@@ -126,7 +128,7 @@ void Connection::handleRead(Reactor* reactor)
                     // auto t1 = Clock::now();
 
                     self->outputbuffer.append(
-                        std::move(resp.toString())
+                        resp.toString()
                     );
 
                     reactor->enableWrite(self->fd);

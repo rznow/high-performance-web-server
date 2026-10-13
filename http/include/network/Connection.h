@@ -8,6 +8,7 @@ using namespace std;
 
 class Reactor;
 class ThreadPool;
+class MPMCThreadPool;
 class Buffer
 {
     private:
@@ -29,9 +30,11 @@ class Connection: public std::enable_shared_from_this<Connection>
         bool connected;
         Buffer inputbuffer;
         Buffer outputbuffer;
-        ThreadPool *pool;
+        // ThreadPool *pool;
+        MPMCThreadPool *pool;
     public:
-        Connection(int _fd, ThreadPool* _pool);
+        // Connection(int _fd, ThreadPool* _pool);
+        Connection(int _fd, MPMCThreadPool* _pool);
 
         void handleRead(Reactor* reactor);
 

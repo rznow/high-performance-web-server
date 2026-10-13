@@ -9,6 +9,7 @@
 #include "network/Reactor.h"
 #include "network/Acceptor.h"
 #include "thread/ThreadPool.hpp"
+#include "thread/MPMCThreadPool.hpp"
 #include "redis/RedisPool.h"
 #include "mysql/MySQLPool.h"
 #include "util/Config.h"
@@ -33,7 +34,8 @@ int main()
     vector<thread> threads;
 
     //创建线程池
-    ThreadPool threadpool(cfg.getInt("thread_num", 8));
+    // ThreadPool threadpool(cfg.getInt("thread_num", 8));
+    MPMCThreadPool threadpool(cfg.getInt("thread_num", 8));
     
     for(int i=0;i < cfg.getInt("reactor_num", 4); i++)
     {

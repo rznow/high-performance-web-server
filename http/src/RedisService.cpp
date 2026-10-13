@@ -177,7 +177,7 @@ bool RedisService::setPost(const Post& p) const         //新建帖子
     return res;
 }
 
-bool RedisService::inPost(const Post& p) const
+bool RedisService::inPost(const Post& p) const  //redis缓存帖子
 {
     auto redis = pool.getConnection();
 
@@ -529,7 +529,7 @@ bool RedisService::getComments(
     {
         comments_id.push_back(std::stoi(i));
     }
-    redis->expire(RedisKey::rootCommentsPage(post_id), 1800);
+    // redis->expire(RedisKey::rootCommentsPage(post_id), 1800);
     return true;
 }
 
@@ -606,7 +606,7 @@ bool RedisService::getChildComments(
     {
         comments_id.push_back(std::stoi(i));
     }
-    redis->expire(RedisKey::commentChildren(comment_id), 1800);
+    // redis->expire(RedisKey::commentChildren(comment_id), 1800);
     return true;
 }
 

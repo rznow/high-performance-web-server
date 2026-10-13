@@ -25,6 +25,11 @@ class ThreadPool
         void enqueue(F &&f,Args&&... args)
         {
             function<void()> task = bind(forward<F>(f), forward<Args> (args)...);
+            // function<void()> task = [=] { 
+            //     // std::invoke 完美支持成员函数和普通函数
+            //     // std::invoke(forward<F>(f), forward<Args>(args)...); 
+            //     f(args...);
+            // };
             {
                 unique_lock<mutex> ul(mtx);
 

@@ -29,7 +29,7 @@ private:
 
     friend class Statement;
 
-    std::vector<int>* ints = nullptr;
+    // std::vector<int>* ints = nullptr;
 
     std::vector<std::vector<char>>* buffers = nullptr;
 

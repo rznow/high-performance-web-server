@@ -15,6 +15,7 @@ using namespace std;
 
 class Connection;
 class ThreadPool;
+class MPMCThreadPool;
 //--------------------------------------------Reactor类--------------------------------------------//
 class Reactor
 {
@@ -26,7 +27,8 @@ class Reactor
         vector<epoll_event> events;
         atomic<bool> stop;
         unordered_map<int, shared_ptr<Connection>> connections;  
-        ThreadPool* pool;
+        // ThreadPool* pool;
+        MPMCThreadPool* pool;
         queue<function<void()>> responses;
         mutex mtx;
 
@@ -34,7 +36,9 @@ class Reactor
     public:
         Reactor();
 
-        Reactor(int maxEvents, int i, ThreadPool *_pool);
+        // Reactor(int maxEvents, int i, ThreadPool *_pool);
+
+        Reactor(int maxEvents, int i, MPMCThreadPool *_pool);
 
         int pushListen(int listenfd);
 

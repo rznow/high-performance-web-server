@@ -74,12 +74,21 @@ test: $(TARGET2)
 gdb: $(TARGET)
 	gdb ./$<
 
+memcheck: $(TARGET)
+	valgrind \
+	--tool=memcheck \
+	--leak-check=full \
+	--show-leak-kinds=all \
+	--track-origins=yes \
+	./$<
+
 clean:
 	rm -f build/*.o build/*.d $(TARGET)
 	rm -f workbench/*.o workbench/*.d $(TARGET2)
 
 # ---------------- wrk Benchmark ----------------
-HOST      ?= http://192.168.1.8:8080
+# HOST      ?= http://192.168.1.8:8080
+HOST      ?= http://10.249.70.130:8080
 PATH_URL  ?= /index.html
 THREADS   ?= 4
 CONNS     ?= 200

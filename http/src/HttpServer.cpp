@@ -805,8 +805,7 @@ HttpResponse HttpServer::post(const HttpRequest& request)
 
     size_t pos = path.find('=')+1;
     int id = std::stoi(path.substr(pos));
-
-    HttpResponse resp;
+    
     json j;
     Post p;
 
