@@ -19,12 +19,16 @@ CXXFLAGS = -std=c++20 \
 WRKFLAGS = -std=c++20 \
            -Iinclude \
            -Wall \
-           -O2 \
            -DNDEBUG \
            -MMD \
-           -MP
+           -MP \
+		   -g \
+		   -O1 \
+        #    -O2 \
 
-LDFLAGS  = -pthread
+LDFLAGS  = -pthread \
+		   -fno-omit-frame-pointer \
+		   -fsanitize=address,undefined
 
 LDLIBS = -lmysqlclient \
           -lssl \

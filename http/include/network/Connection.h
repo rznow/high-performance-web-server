@@ -5,7 +5,6 @@
 #include <memory>
 using namespace std;
 
-
 class Reactor;
 class ThreadPool;
 class MPMCThreadPool;

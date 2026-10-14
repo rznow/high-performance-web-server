@@ -87,36 +87,10 @@ void Connection::handleRead(Reactor* reactor)
         request.parseRequest(inputbuffer);
         auto self = shared_from_this();
         // auto t2 = Clock::now();
-
-        // std::cout<<"parse request: "<<t2-t1<<std::endl;
-        // if(request.getMethod() == "GET")
-        // {
-        //     HttpServer httpServer;
-        //     HttpResponse resp = httpServer.handleRequest(request);        
-        //     // //注册发送事件(需要在主业务逻辑中)
-        //     reactor->enResponse([self, resp = std::move(resp), reactor]{
-        //         self->outputbuffer.append(resp.toString());
-
-        //         reactor->enableWrite(self->fd);
-        //     }); 
-        // }else if(request.getMethod() == "POST")
-        // {
-        //     pool->enqueue([request, self, reactor] 
-        //         {
-        //             HttpServer httpServer;
-        //             HttpResponse resp = httpServer.handleRequest(request);
-        //             // //注册发送事件(需要在主业务逻辑中)
-        //             reactor->enResponse([self, resp = std::move(resp), reactor]{
-        //                 self->outputbuffer.append(resp.toString());
-
-        //                 reactor->enableWrite(self->fd);
-        //             }); 
-        //         }
-        //     );
-        // }
         // auto enqueueTime = Clock::now();
-        pool->enqueue([request, self, reactor] 
-            {
+        pool->enqueue(
+            reactor->get_no(),
+            [request = std::move(request), self, reactor]{
                 // auto t1 = Clock::now();
                 // std::cout<<"queue wait:"
                 //     <<t1-enqueueTime
@@ -126,24 +100,17 @@ void Connection::handleRead(Reactor* reactor)
                 // //注册发送事件(需要在主业务逻辑中)
                 reactor->enResponse([self, resp = std::move(resp), reactor]{
                     // auto t1 = Clock::now();
-
                     self->outputbuffer.append(
                         resp.toString()
                     );
-
                     reactor->enableWrite(self->fd);
-
-
                     // auto t2 = Clock::now();
-
                     // cout<<"response queue:"<<t2-t1<<endl;
                 }); 
                 // auto t2 = Clock::now();
-
                 // std::cout<<"http server: "<<t2-t1<<std::endl;
             }
         );
-        
     }
 }
 
@@ -152,6 +119,12 @@ void Connection::handleWrite(Reactor* reactor)
     //处理对应连接的写入(ET)
     // cout << outputbuffer.data() <<endl;
     // auto t1 = Clock::now();
+
+    if (reactor == nullptr) {
+        std::cerr << "handleWrite: reactor is nullptr\n";
+        return;
+    }
+
     while(!outputbuffer.empty())
     {
         int n = write(fd, outputbuffer.data().c_str(), outputbuffer.size());

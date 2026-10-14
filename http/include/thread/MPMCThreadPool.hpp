@@ -25,12 +25,12 @@ class MPMCThreadPool
         ~MPMCThreadPool();
 
         template<class F,class... Args>
-        void enqueue(F &&f,Args&&... args)
+        void enqueue(int reactor_id, F &&f, Args&&... args)
         {
             std::function<void()> task = bind(std::forward<F>(f), std::forward<Args> (args)...);
 
             if(stop_.load(std::memory_order_acquire)) return;
-            tasks.Enqueue(std::move(task));
+            tasks.Enqueue(std::move(task), reactor_id);
             pending.fetch_add(1, std::memory_order_release);
             pending.notify_one();
         }

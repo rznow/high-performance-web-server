@@ -97,14 +97,20 @@ void Reactor::enResponse(function<void()> task)
 
 void Reactor::responseLoop()
 {
-    // std::cout<<" ResponsesLoop: "<<responses.size()<<std::endl;
-    while(responses.size())
-    {
-        lock_guard<mutex> lg(mtx);
-        
-        auto response = responses.front();
+    while (true) {
+        std::function<void()> response;
 
-        responses.pop();
+        {
+            std::lock_guard<std::mutex> lg(mtx);
+
+            if (responses.empty()) {
+                break;
+            }
+
+            response = std::move(responses.front());
+            responses.pop();
+        }
+
         response();
     }
 }
